@@ -37,6 +37,8 @@ Effortlessly import **Adversaries** and **Environments** into Foundry VTT by pas
    SI.Open();   
    ```
 
+<p align="center"><img width="700" src="docs/buttons.webp"></p>
+
 2. **Paste Text:** Copy the statblock text from a PDF or document and paste it into the left panel. You can paste as many as you want.
 
 3. **Validate:** Click "Validate" to preview the data.
