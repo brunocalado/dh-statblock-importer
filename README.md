@@ -15,6 +15,8 @@ Effortlessly import **Adversaries** and **Environments** into Foundry VTT by pas
 
 * **Environments:** Detects Impulses, Difficulty, and Potential Adversaries.
 
+* **Mass Import:** You can paste how many statblocks you want.
+
 ### 🔍 Advanced Lookups
 
 * **Feature Linking:** Checks your configured Compendiums for existing features/abilities to prevent duplicates.
@@ -51,7 +53,11 @@ Click the **Config** button in the importer window to select which Compendiums s
 ## 📚 Formatting Guide
 
 For the best results, ensure your text follows the recommended format.
+
 📖 [**Read the Formatting Wiki**](https://github.com/brunocalado/dh-statblock-importer/wiki)
+
+📖 [**How to Use Unformatted Stats**](https://github.com/brunocalado/dh-statblock-importer/wiki/How-to-Use-Unformatted-Stats)
+
 
 ## 🚀 Installation
 

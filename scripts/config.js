@@ -43,9 +43,6 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     _onTabClick(event) {
         event.preventDefault();
         const target = event.currentTarget;
-
-        console.log("DH Config | Tab Click Triggered");
-
         const targetTab = target.dataset.target;
 
         // Remove active de todos
@@ -119,7 +116,5 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         await game.settings.set("dh-statblock-importer", "selectedActorCompendiums", selectedActors);
 
         await game.settings.set("dh-statblock-importer", "configInitialized", true);
-
-        ui.notifications.info("Statblock Importer configuration saved.");
     }
 }

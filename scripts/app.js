@@ -86,186 +86,260 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     const formElement = this.element;
     const textarea = formElement.querySelector("textarea[name='statblockText']");
     const previewBox = formElement.querySelector("#dh-importer-preview");
-    
+
     if (!textarea || !textarea.value.trim()) {
-        previewBox.innerHTML = `<p style="color:red">Please paste text to validate.</p>`;
-        return;
+      previewBox.innerHTML = `<p style="color:red">Please paste text to validate.</p>`;
+      return;
     }
 
-    const result = await StatblockImporter.parseStatblockData(textarea.value.trim());
-    
-    let html = "";
-    const data = result.systemData;
-    const items = result.items || [];
-    const isEnvironment = result.actorType === "environment";
+    const text = textarea.value.trim();
+    const blocks = StatblockImporter.splitStatblocks(text);
+    const isMultiple = blocks.length > 1;
 
-    const show = (label, value) => {
+    let fullHtml = "";
+
+    if (isMultiple) {
+      fullHtml += `<div class="dh-preview-item success" style="background:rgba(72,187,72,0.2);padding:8px;margin-bottom:10px;border-radius:4px;"><strong>Batch Mode:</strong> ${blocks.length} statblocks detected</div>`;
+    }
+
+    for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
+      const block = blocks[blockIndex];
+      const result = await StatblockImporter.parseStatblockData(block);
+
+      let html = "";
+      const data = result.systemData;
+      const items = result.items || [];
+      const isEnvironment = result.actorType === "environment";
+
+      if (isMultiple) {
+        html += `<div style="border:1px solid var(--color-border-light-2);padding:8px;margin-bottom:10px;border-radius:4px;"><strong style="font-size:1.1em;">#${blockIndex + 1}: ${result.name}</strong><hr style="margin:5px 0;">`;
+      }
+
+      const show = (label, value) => {
         if (value !== undefined && value !== null && value !== "") {
-            return `<div class="dh-preview-item success"><strong>${label}:</strong> ${value}</div>`;
+          return `<div class="dh-preview-item success"><strong>${label}:</strong> ${value}</div>`;
         }
         return `<div class="dh-preview-item warning"><strong>${label}:</strong> Not Found</div>`;
-    };
+      };
 
-    html += show("Actor Type", isEnvironment ? "Environment" : "Adversary");
-    html += show("Name", result.name);
-    html += show("Tier", data.tier);
-    html += show("Type", data.type);
-    
-    if (data.type === "horde") {
+      html += show("Actor Type", isEnvironment ? "Environment" : "Adversary");
+      html += show("Name", result.name);
+      html += show("Tier", data.tier);
+      html += show("Type", data.type);
+
+      if (data.type === "horde") {
         html += show("Horde HP", data.hordeHp);
-    }
+      }
 
-    html += show("Difficulty", data.difficulty);
+      html += show("Difficulty", data.difficulty);
 
-    // Campos exclusivos de Adversary
-    if (!isEnvironment) {
+      // Campos exclusivos de Adversary
+      if (!isEnvironment) {
         if (data.damageThresholds) {
-            html += `<div class="dh-preview-item success"><strong>Thresholds:</strong> ${data.damageThresholds.major} / ${data.damageThresholds.severe}</div>`;
+          html += `<div class="dh-preview-item success"><strong>Thresholds:</strong> ${data.damageThresholds.major} / ${data.damageThresholds.severe}</div>`;
         } else {
-            html += `<div class="dh-preview-item warning"><strong>Thresholds:</strong> Not Found</div>`;
+          html += `<div class="dh-preview-item warning"><strong>Thresholds:</strong> Not Found</div>`;
         }
 
         if (data.resources?.hitPoints?.max) {
-            html += `<div class="dh-preview-item success"><strong>HP:</strong> ${data.resources.hitPoints.max}</div>`;
+          html += `<div class="dh-preview-item success"><strong>HP:</strong> ${data.resources.hitPoints.max}</div>`;
         } else {
-            html += `<div class="dh-preview-item warning"><strong>HP:</strong> Not Found</div>`;
+          html += `<div class="dh-preview-item warning"><strong>HP:</strong> Not Found</div>`;
         }
 
         if (data.resources?.stress?.max) {
-            html += `<div class="dh-preview-item success"><strong>Stress:</strong> ${data.resources.stress.max}</div>`;
+          html += `<div class="dh-preview-item success"><strong>Stress:</strong> ${data.resources.stress.max}</div>`;
         } else {
-            html += `<div class="dh-preview-item warning"><strong>Stress:</strong> Not Found</div>`;
+          html += `<div class="dh-preview-item warning"><strong>Stress:</strong> Not Found</div>`;
         }
 
         // Attack Section
         html += show("Attack Name", data.attack?.name);
         html += show("Attack Range", data.attack?.range);
         html += show("Attack Bonus", data.attack?.roll?.bonus);
-        
+
         // Attack Damage Preview
         if (data.attack?.damage?.parts?.length > 0) {
-            const part = data.attack.damage.parts[0];
-            let dmgString = "";
-            
-            if (part.value.custom?.enabled) {
-                dmgString = `${part.value.custom.formula} (Static)`;
-            } else {
-                const bonusStr = part.value.bonus ? `+${part.value.bonus}` : "";
-                dmgString = `${part.value.flatMultiplier}${part.value.dice}${bonusStr}`;
-            }
-            
-            const types = part.type ? part.type.join(", ") : "None";
-            let altString = "";
-            
-            if (part.valueAlt) {
-                const altBonusStr = part.valueAlt.bonus ? `+${part.valueAlt.bonus}` : "";
-                altString = ` <br><span style="color:var(--color-text-light-highlight)">[Horde: ${part.valueAlt.flatMultiplier}${part.valueAlt.dice}${altBonusStr}]</span>`;
-            }
+          const part = data.attack.damage.parts[0];
+          let dmgString = "";
 
-            html += `<div class="dh-preview-item success"><strong>Attack Damage:</strong> ${dmgString} [${types}]${altString}</div>`;
+          if (part.value.custom?.enabled) {
+            dmgString = `${part.value.custom.formula} (Static)`;
+          } else {
+            const bonusStr = part.value.bonus ? `+${part.value.bonus}` : "";
+            dmgString = `${part.value.flatMultiplier}${part.value.dice}${bonusStr}`;
+          }
+
+          const types = part.type ? part.type.join(", ") : "None";
+          let altString = "";
+
+          if (part.valueAlt) {
+            const altBonusStr = part.valueAlt.bonus ? `+${part.valueAlt.bonus}` : "";
+            altString = ` <br><span style="color:var(--color-text-light-highlight)">[Horde: ${part.valueAlt.flatMultiplier}${part.valueAlt.dice}${altBonusStr}]</span>`;
+          }
+
+          html += `<div class="dh-preview-item success"><strong>Attack Damage:</strong> ${dmgString} [${types}]${altString}</div>`;
         } else {
-            html += `<div class="dh-preview-item warning"><strong>Attack Damage:</strong> Not Found</div>`;
+          html += `<div class="dh-preview-item warning"><strong>Attack Damage:</strong> Not Found</div>`;
         }
 
         // Experiences
         if (data.experiences && Object.keys(data.experiences).length > 0) {
-            let expList = '<ul class="dh-preview-sublist">';
-            for (const [key, exp] of Object.entries(data.experiences)) {
-                expList += `<li>${exp.name} (${exp.value >= 0 ? '+' : ''}${exp.value})</li>`;
-            }
-            expList += '</ul>';
-            html += `<div class="dh-preview-item success"><strong>Experiences:</strong> Found ${Object.keys(data.experiences).length}${expList}</div>`;
+          let expList = '<ul class="dh-preview-sublist">';
+          for (const [key, exp] of Object.entries(data.experiences)) {
+            expList += `<li>${exp.name} (${exp.value >= 0 ? '+' : ''}${exp.value})</li>`;
+          }
+          expList += '</ul>';
+          html += `<div class="dh-preview-item success"><strong>Experiences:</strong> Found ${Object.keys(data.experiences).length}${expList}</div>`;
         } else {
-            html += `<div class="dh-preview-item warning"><strong>Experiences:</strong> Not Found</div>`;
+          html += `<div class="dh-preview-item warning"><strong>Experiences:</strong> Not Found</div>`;
         }
-    }
+      }
 
-    // Description
-    if (data.description) {
-         const descPreview = data.description.length > 100 ? data.description.substring(0, 100) + "..." : data.description;
-         html += `<div class="dh-preview-item success"><strong>Description:</strong><br><em style="font-size:0.9em">${descPreview}</em></div>`;
-    } else {
-         html += `<div class="dh-preview-item warning"><strong>Description:</strong> Not Found</div>`;
-    }
+      // Description
+      if (data.description) {
+        const descPreview = data.description.length > 100 ? data.description.substring(0, 100) + "..." : data.description;
+        html += `<div class="dh-preview-item success"><strong>Description:</strong><br><em style="font-size:0.9em">${descPreview}</em></div>`;
+      } else {
+        html += `<div class="dh-preview-item warning"><strong>Description:</strong> Not Found</div>`;
+      }
 
-    // Motives or Impulses
-    if (isEnvironment) {
+      // Motives or Impulses
+      if (isEnvironment) {
         html += show("Impulses", data.impulses);
-        
+
         // Preview de Potential Adversaries
         if (data.potentialAdversaries && Object.keys(data.potentialAdversaries).length > 0) {
-            let advList = '<ul class="dh-preview-sublist">';
-            for (const [key, group] of Object.entries(data.potentialAdversaries)) {
-                const count = group.adversaries ? group.adversaries.length : 0;
-                advList += `<li><strong>${group.label}</strong>: ${count} linked</li>`;
-            }
-            advList += '</ul>';
-            html += `<div class="dh-preview-item success"><strong>Potential Adversaries:</strong> Found groups${advList}</div>`;
+          let advList = '<ul class="dh-preview-sublist">';
+          for (const [key, group] of Object.entries(data.potentialAdversaries)) {
+            const count = group.adversaries ? group.adversaries.length : 0;
+            advList += `<li><strong>${group.label}</strong>: ${count} linked</li>`;
+          }
+          advList += '</ul>';
+          html += `<div class="dh-preview-item success"><strong>Potential Adversaries:</strong> Found groups${advList}</div>`;
         } else if (data.notes) {
-             html += `<div class="dh-preview-item warning"><strong>Potential Adversaries:</strong> Text found in Notes, but no groups parsed.</div>`;
+          html += `<div class="dh-preview-item warning"><strong>Potential Adversaries:</strong> Text found in Notes, but no groups parsed.</div>`;
         }
 
-    } else {
+      } else {
         html += show("Motives", data.motivesAndTactics);
-    }
+      }
 
-    // Features
-    if (items.length > 0) {
+      // Features
+      if (items.length > 0) {
         let featList = '<ul class="dh-preview-sublist">';
         for (const item of items) {
-            const isCompendium = item.flags?.dhImporter?.isCompendium;
-            const sourceLabel = isCompendium ? "<strong>(Compendium)</strong>" : "(New)";
-            const colorClass = isCompendium ? "color:var(--color-text-hyperlink)" : "";
-            
-            featList += `<li style="${colorClass}"><strong>${item.name}</strong> ${sourceLabel}</li>`;
+          const isCompendium = item.flags?.dhImporter?.isCompendium;
+          const sourceLabel = isCompendium ? "<strong>(Compendium)</strong>" : "(New)";
+          const colorClass = isCompendium ? "color:var(--color-text-hyperlink)" : "";
+
+          featList += `<li style="${colorClass}"><strong>${item.name}</strong> ${sourceLabel}</li>`;
         }
         featList += '</ul>';
         html += `<div class="dh-preview-item success"><strong>Features:</strong> Found ${items.length}${featList}</div>`;
-    } else {
+      } else {
         html += `<div class="dh-preview-item warning"><strong>Features:</strong> None detected</div>`;
+      }
+
+      // Fechar div do bloco se múltiplos
+      if (isMultiple) {
+        html += `</div>`;
+      }
+
+      fullHtml += html;
     }
 
-    previewBox.innerHTML = html;
+    previewBox.innerHTML = fullHtml;
   }
 
   static async _onParse(event, target) {
     const formElement = this.element;
     const textarea = formElement.querySelector("textarea[name='statblockText']");
-    
+
     if (!textarea || !textarea.value.trim()) {
       ui.notifications.warn("Please paste some text first.");
       return;
     }
 
     const text = textarea.value.trim();
-    
+    const blocks = StatblockImporter.splitStatblocks(text);
+    const isMultiple = blocks.length > 1;
+
     try {
-        const result = await StatblockImporter.parseStatblockData(text);
-        
+      const createdActors = [];
+
+      for (const block of blocks) {
+        const result = await StatblockImporter.parseStatblockData(block);
+
         const actorData = {
-            name: result.name,
-            type: result.actorType,
-            system: result.systemData,
-            items: result.items, 
-            img: result.actorType === "environment" 
-                ? "icons/environment/wilderness/cave-entrance.webp" 
-                : "icons/svg/mystery-man.svg"
+          name: result.name,
+          type: result.actorType,
+          system: result.systemData,
+          items: result.items,
+          img: result.actorType === "environment"
+            ? "icons/environment/wilderness/cave-entrance.webp"
+            : "icons/svg/mystery-man.svg"
         };
 
         const newActor = await Actor.create(actorData);
         if (newActor) {
-            newActor.sheet.render(true);
+          createdActors.push(newActor);
         }
+      }
+
+      // Se único, abrir a sheet
+      if (createdActors.length === 1) {
+        createdActors[0].sheet.render(true);
+      }
 
     } catch (error) {
-        console.error("DH Importer | Error creating actor:", error);
-        ui.notifications.error(error.message);
+      console.error("DH Importer | Error creating actor:", error);
     }
   }
 
   /* -------------------------------------------- */
   /* Parsing Logic                               */
   /* -------------------------------------------- */
+
+  /**
+   * Detecta e divide múltiplos statblocks em um texto.
+   * Retorna um array de strings, cada uma contendo um statblock completo.
+   */
+  static splitStatblocks(text) {
+    const lines = text.split(/\r?\n/);
+    // Aceita qualquer tipo após "Tier X", incluindo Horde com HP
+    const tierRegex = /^Tier\s+\d+\s+\S+(?:\s*\(\d+\/HP\))?$/i;
+
+    // Encontrar índices onde começam novos statblocks (linha do Tier)
+    const tierIndices = [];
+    for (let i = 0; i < lines.length; i++) {
+      if (tierRegex.test(lines[i].trim())) {
+        tierIndices.push(i);
+      }
+    }
+
+    // Se houver 0 ou 1 tier, retornar o texto original como único bloco
+    if (tierIndices.length <= 1) {
+      return [text];
+    }
+
+    // Dividir em blocos - cada bloco começa na linha ANTERIOR ao Tier (nome do ator)
+    const blocks = [];
+    for (let i = 0; i < tierIndices.length; i++) {
+      const nameLineIndex = tierIndices[i] - 1;
+      const startIndex = nameLineIndex >= 0 ? nameLineIndex : tierIndices[i];
+      const endIndex = (i + 1 < tierIndices.length) ? tierIndices[i + 1] - 1 : lines.length;
+
+      const blockLines = lines.slice(startIndex, endIndex);
+      const blockText = blockLines.join("\n").trim();
+
+      if (blockText.length > 0) {
+        blocks.push(blockText);
+      }
+    }
+
+    return blocks;
+  }
 
   static async parseStatblockData(text) {
       StatblockImporter.registerSettings();
