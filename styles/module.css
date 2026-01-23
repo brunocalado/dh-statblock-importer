@@ -1,0 +1,187 @@
+/* Scoped to our application ID defined in app.js */
+#dh-statblock-importer {
+    min-height: 500px;
+    min-width: 900px;
+    background: #242424 !important; 
+    box-shadow: 0 0 20px rgba(0,0,0,0.8);
+}
+
+#dh-statblock-importer .window-content {
+    padding: 8px !important;
+    background: #242424;
+}
+
+/* --- Layout Principal --- */
+.dh-importer-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.dh-importer-wrapper {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    gap: 1rem;
+    padding: 0;
+    box-sizing: border-box;
+    min-height: 0;
+}
+
+.dh-column {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.dh-importer-input-col { flex: 1.5; }
+.dh-importer-preview-col { flex: 1; }
+
+.dh-importer-input-col textarea {
+    flex: 1;
+    width: 100%;
+    resize: none;
+    font-family: monospace;
+    background: rgba(0, 0, 0, 0.7);
+    color: #ffffff;
+    border: 1px solid var(--color-border-light-2);
+    padding: 10px;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.dh-importer-input-col textarea:focus {
+    box-shadow: 0 0 5px var(--color-shadow-primary);
+    background: rgba(0, 0, 0, 0.85);
+}
+
+.dh-preview-box {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--color-border-light-2);
+    border-radius: 4px;
+    padding: 10px;
+    overflow-y: auto;
+    font-family: var(--font-primary);
+    font-size: 0.9em;
+    color: #e0e0e0;
+}
+
+.dh-preview-item {
+    margin-bottom: 5px;
+    padding: 4px;
+    border-bottom: 1px dashed rgba(255,255,255,0.1);
+}
+
+.dh-preview-item.success {
+    color: #cecece;
+    border-left: 3px solid #48bb48;
+    padding-left: 8px;
+}
+.dh-preview-item.success strong { color: #ffffff; }
+
+.dh-preview-item.warning {
+    color: #ababab;
+    border-left: 3px solid #ffa500;
+    padding-left: 8px;
+}
+
+.dh-preview-sublist {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 0.9em;
+}
+
+.dh-importer-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    padding-top: 10px;
+    margin-top: 5px;
+    border-top: 1px solid var(--color-border-light-2); 
+    background: rgba(0,0,0,0.2);
+    padding: 10px;
+}
+
+.dh-importer-actions button {
+    width: auto;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+button[data-action="config"] {
+    background: rgba(50, 50, 50, 0.5);
+    border: 1px solid #555;
+    margin-right: auto;
+}
+
+/* --- Config Window Tabs --- */
+.dh-config-nav {
+    display: flex;
+    border-bottom: 1px solid var(--color-border-light-2);
+    margin-bottom: 10px;
+    /* Removido gap para que se toquem ou usem todo o espaço fluidamente */
+    gap: 2px; 
+}
+
+.dh-config-tab-btn {
+    flex: 1; /* Estica para ocupar todo espaço disponível */
+    text-align: center; /* Centraliza o texto e ícone */
+    padding: 8px 16px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    color: var(--color-text-light-5);
+    transition: all 0.2s ease;
+}
+
+.dh-config-tab-btn:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--color-text-light-1);
+}
+
+.dh-config-tab-btn.active {
+    background: rgba(255,255,255,0.1);
+    color: var(--color-text-light-1);
+    border-color: var(--color-border-light-2);
+    font-weight: bold;
+}
+
+.dh-config-tab-content {
+    display: none;
+    height: 100%;
+}
+
+.dh-config-tab-content.active {
+    display: block;
+}
+
+.dh-config-list {
+    max-height: 400px; 
+    overflow-y: auto; 
+    border: 1px solid var(--color-border-light-2); 
+    padding: 5px; 
+    border-radius: 4px;
+    background: rgba(0,0,0,0.1);
+}
+
+.dh-config-item {
+    font-size: 14px; 
+    padding: 4px; 
+    display: flex; 
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.dh-config-item:hover {
+    background: rgba(255,255,255,0.05);
+}

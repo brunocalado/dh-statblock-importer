@@ -1,0 +1,88 @@
+{
+  "id": "dh-statblock-importer",
+  "title": "Daggerheart: Statblock Importer",
+  "version": "0.0.1",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  
+  "authors": [
+    {
+      "name": "Mestre Digital",
+      "flags": {}
+    }
+  ],  
+  
+  "esmodules": [
+    "scripts/main.js"
+  ],
+  "styles": [
+    "styles/module.css"
+  ],
+
+	"media": [{
+		"type": "setup",
+		"url": "modules/dh-statblock-importer/assets/images/thumbnail.webp",
+		"thumbnail": "modules/dh-statblock-importer/assets/images/thumbnail.webp"
+	}], 
+  
+  "relationships": {
+    "systems": [
+      {
+        "id": "daggerheart",
+        "type": "system",
+        "compatibility": {
+          "minimum": "1.4.4"
+        }
+      }
+    ]
+  },  
+
+  "url": "https://github.com/brunocalado/dh-statblock-importer",
+  "manifest": "https://raw.githubusercontent.com/brunocalado/dh-statblock-importer/main/module.json",
+  "download": "https://codeload.github.com/brunocalado/dh-statblock-importer/zip/main",
+
+  "packs": [
+    {
+      "label": "All Features",
+      "type": "Item",
+      "name": "all-features",
+      "path": "packs/all-features",
+      "system": "daggerheart",
+      "ownership": {
+        "PLAYER": "NONE",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {},
+      "banner": "modules/dh-statblock-importer/assets/images/banner.webp" 
+    },
+    {
+      "label": "Macros",
+      "type": "Macro",
+      "name": "macros",
+      "path": "packs/macros",
+      "system": "daggerheart",
+      "ownership": {
+        "PLAYER": "NONE",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {},
+      "banner": "modules/dh-statblock-importer/assets/images/banner.webp" 
+    }    
+  ],
+
+  "packFolders": [
+    {
+      "name": "Statblock Importer",
+      "sorting": "a",
+      "color": "#5c0547",
+      "packs": [        
+        "all-features",
+        "macros"
+      ],
+      "folders": []
+    }
+  ]    
+  
+}

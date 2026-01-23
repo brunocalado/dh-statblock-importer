@@ -1,0 +1,35 @@
+<div class="dh-importer-layout">
+    <div class="dh-importer-wrapper standard-form">
+        
+        {{!-- Coluna da Esquerda: Input --}}
+        <div class="dh-column dh-importer-input-col">
+            <p class="notes" style="margin-bottom: 5px; color: #ccc;">Paste the statblock text below.</p>
+            <textarea name="statblockText" placeholder="MASTER ASSASSIN&#10;Tier 2 Leader&#10;A seasoned killer...&#10;Motives & Tactics: Ambush...&#10;Difficulty: 14 | HP: 5&#10;FEATURES&#10;Horde (1d6) - Passive: ..."></textarea>
+        </div>
+
+        {{!-- Coluna da Direita: Validação --}}
+        <div class="dh-column dh-importer-preview-col">
+            <p class="notes" style="margin-bottom: 5px; color: #ccc;">Validation Preview</p>
+            <div class="dh-preview-box" id="dh-importer-preview">
+                <p style="color: grey; font-style: italic;">Click "Validate" to see identified fields here...</p>
+            </div>
+        </div>
+
+    </div>
+
+    {{!-- Rodapé com Ações --}}
+    <div class="dh-importer-actions">
+        {{!-- Botão de Configuração movido para cá --}}
+        <button type="button" data-action="config" title="Configure Compendiums">
+            <i class="fas fa-cog"></i> Config
+        </button>
+
+        <button type="button" data-action="validate">
+            <i class="fas fa-search"></i> Validate
+        </button>
+
+        <button type="button" data-action="parse" class="save-button">
+            <i class="fas fa-file-import"></i> Create Actor
+        </button>
+    </div>
+</div>
