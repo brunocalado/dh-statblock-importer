@@ -278,7 +278,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           items: result.items,
           img: result.actorType === "environment"
             ? "icons/environment/wilderness/cave-entrance.webp"
-            : "icons/svg/mystery-man.svg"
+            : "modules/dh-statblock-importer/assets/images/skull.webp"
         };
 
         const newActor = await Actor.create(actorData);

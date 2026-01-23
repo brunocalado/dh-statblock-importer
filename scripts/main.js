@@ -31,7 +31,7 @@ Hooks.on("renderActorDirectory", (app, html) => {
     btn.classList.add("create-actor");
     btn.style.flex = "0 0 100%";
     btn.style.maxWidth = "100%";
-    btn.style.marginTop = "6px";
+    btn.style.marginTop = "0";
     btn.innerHTML = `<i class="fas fa-file-import"></i> Statblock Importer`;
 
     btn.addEventListener("click", (e) => {

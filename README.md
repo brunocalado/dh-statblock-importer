@@ -34,8 +34,7 @@ Effortlessly import **Adversaries** and **Environments** into Foundry VTT by pas
 1. **Open the Importer:** Use the macro command:
 
    ```
-   SI.Open()
-   
+   SI.Open();   
    ```
 
 2. **Paste Text:** Copy the statblock text from a PDF or document and paste it into the left panel.
@@ -65,7 +64,6 @@ Install via the Foundry VTT Module browser or use this manifest link:
 
 ```
 https://raw.githubusercontent.com/brunocalado/dh-statblock-importer/main/module.json
-
 ```
 
 ## 📜 Changelog
