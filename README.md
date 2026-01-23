@@ -11,7 +11,7 @@ Effortlessly import **Adversaries** and **Environments** into Foundry VTT by pas
 
 ### 🛠️ Smart Parsing
 
-* **Adversaries:** Automatically detects Tier, Type, Difficulty, HP, Stress, Thresholds, Attack (Bonus, Name, Range, Damage), and Experiences.
+* **Adversaries:** Automatically detects Tier, Type, Difficulty, HP, Stress, Thresholds, Attack (Bonus, Name, Range, Damage), Experiences and Features.
 
 * **Environments:** Detects Impulses, Difficulty, and Potential Adversaries.
 
@@ -19,25 +19,25 @@ Effortlessly import **Adversaries** and **Environments** into Foundry VTT by pas
 
 ### 🔍 Advanced Lookups
 
-* **Feature Linking:** Checks your configured Compendiums for existing features/abilities to prevent duplicates.
+* **Feature Linking:** Checks your configured Compendiums for existing features.
 
-* **Potential Adversaries:** Identifies actor groups in Environments and links them to actors in your world or compendiums.
+* **Potential Adversaries:** Identifies actor groups in Environments and links them to actors in your compendiums.
 
 ### ✅ Validation & Preview
 
-* **Real-time Preview:** Verify parsed data (Stats, Damage, Features) before creating the actor.
+* **Real-time Preview:** Verify parsed data before creating the actor.
 
 * **Visual Feedback:** Clearly see which features are new and which are linked from Compendiums.
 
 ## ⚙️ Usage
 
-1. **Open the Importer:** Use the macro command:
+1. **Open the Importer:** You can use the button in Daggerheart Menu or Actors directory. You can also use the macro command:
 
    ```
    SI.Open();   
    ```
 
-2. **Paste Text:** Copy the statblock text from a PDF or document and paste it into the left panel.
+2. **Paste Text:** Copy the statblock text from a PDF or document and paste it into the left panel. You can paste as many as you want.
 
 3. **Validate:** Click "Validate" to preview the data.
 
@@ -80,21 +80,23 @@ You can read the full history of changes in the [CHANGELOG](CHANGELOG.md).
 
 # 🧰 My Daggerheart Modules
 
-| Module | Description | 
- | ----- | ----- | 
-| 💀 [**Adversary Manager**](https://github.com/brunocalado/daggerheart-advmanager) | Scale adversaries instantly and build balanced encounters in Foundry VTT. | 
-| ☠️ [**Death Moves**](https://github.com/brunocalado/daggerheart-death-moves) | Enhances the Death Move moment with immersive audio and visual effects. | 
-| 📏 [**Distances**](https://github.com/brunocalado/daggerheart-distances) | Visualizes combat ranges with customizable rings and hover calculations. | 
-| 🤖 [**Fear Macros**](https://github.com/brunocalado/daggerheart-fear-macros) | Automatically executes macros when the Fear resource is changed. | 
-| 😱 [**Fear Tracker**](https://github.com/brunocalado/daggerheart-fear-tracker) | Adds an animated slider bar with configurable fear tokens to the UI. | 
-| 🛒 [**Store**](https://github.com/brunocalado/daggerheart-store) | A dynamic, interactive, and fully configurable store for Foundry VTT. | 
-| 📦 [**Extra Content**](https://github.com/brunocalado/daggerheart-extra-content) | Homebrew for Daggerheart. | 
-| ⚡ [**Quick Actions**](https://github.com/brunocalado/daggerheart-quickactions) | Quick access to common mechanics like Falling Damage, Downtime, etc. | 
-| 📜 [**Quick Rules**](https://github.com/brunocalado/daggerheart-quickrules) | Fast and accessible reference guide for the core rules. | 
+| Module | Description |
+| :--- | :--- |
+| 💀 [**Adversary Manager**](https://github.com/brunocalado/daggerheart-advmanager) | Scale adversaries instantly and build balanced encounters in Foundry VTT. |
+| ☠️ [**Death Moves**](https://github.com/brunocalado/daggerheart-death-moves) | Enhances the Death Move moment with immersive audio and visual effects. |
+| 📏 [**Distances**](https://github.com/brunocalado/daggerheart-distances) | Visualizes combat ranges with customizable rings and hover calculations. |
+| 🤖 [**Fear Macros**](https://github.com/brunocalado/daggerheart-fear-macros) | Automatically executes macros when the Fear resource is changed. |
+| 😱 [**Fear Tracker**](https://github.com/brunocalado/daggerheart-fear-tracker) | Adds an animated slider bar with configurable fear tokens to the UI. |
+| 🎲 [**Stats**](https://github.com/brunocalado/daggerheart-stats) | Tracks dice rolls from GM and Players. |
+| 🧠 [**Statblock Importer**](https://github.com/brunocalado/dh-statblock-importer) | Import using a statblock. |
+| 🛒 [**Store**](https://github.com/brunocalado/daggerheart-store) | A dynamic, interactive, and fully configurable store for Foundry VTT. |
+| 📦 [**Extra Content**](https://github.com/brunocalado/daggerheart-extra-content) | Homebrew for Daggerheart. |
+| ⚡ [**Quick Actions**](https://github.com/brunocalado/daggerheart-quickactions) | Quick access to common mechanics like Falling Damage, Downtime, etc. |
+| 📜 [**Quick Rules**](https://github.com/brunocalado/daggerheart-quickrules) | Fast and accessible reference guide for the core rules. |
 
 # 🗺️ Adventures
 
-| Adventure | Description | 
- | ----- | ----- | 
-| ✨ [**I Wish**](https://github.com/brunocalado/i-wish-daggerheart-adventure) | A wealthy merchant is cursed; one final expedition may be the only hope. | 
+| Adventure | Description |
+| :--- | :--- |
+| ✨ [**I Wish**](https://github.com/brunocalado/i-wish-daggerheart-adventure) | A wealthy merchant is cursed; one final expedition may be the only hope. |
 | 💣 [**Suicide Squad**](https://github.com/brunocalado/suicide-squad-daggerheart-adventure) | Criminals forced to serve a ruthless master in a land on the brink of war. |
