@@ -54,7 +54,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           });
       }
 
-      // Actor Packs (NOVO)
+      // Actor Packs
       if (!game.settings.settings.has("dh-statblock-importer.selectedActorCompendiums")) {
           game.settings.register("dh-statblock-importer", "selectedActorCompendiums", {
               name: "Selected Actor Compendiums",
@@ -65,7 +65,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           });
       }
 
-      // Flag de Inicialização
+      // Initialization Flag
       if (!game.settings.settings.has("dh-statblock-importer.configInitialized")) {
           game.settings.register("dh-statblock-importer", "configInitialized", {
               name: "Config Initialized",
@@ -223,7 +223,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
       html += show("Difficulty", data.difficulty);
 
-      // Campos exclusivos de Adversary
+      // Exclusive Adversary Fields
       if (!isEnvironment) {
         if (data.damageThresholds) {
           html += `<div class="dh-preview-item success"><strong>Thresholds:</strong> ${data.damageThresholds.major} / ${data.damageThresholds.severe}</div>`;
@@ -298,7 +298,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       if (isEnvironment) {
         html += show("Impulses", data.impulses);
 
-        // Preview de Potential Adversaries
+        // Preview of Potential Adversaries
         if (data.potentialAdversaries && Object.keys(data.potentialAdversaries).length > 0) {
           let advList = '<ul class="dh-preview-sublist">';
           for (const [key, group] of Object.entries(data.potentialAdversaries)) {
@@ -331,7 +331,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
         html += `<div class="dh-preview-item warning"><strong>Features:</strong> None detected</div>`;
       }
 
-      // Fechar div do bloco se múltiplos
+      // Close block div if multiple
       if (isMultiple) {
         html += `</div>`;
       }
@@ -408,6 +408,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       try {
         StatblockImporter.debugLog(`Parsing block ${blockIndex}/${totalBlocks}`, { rawText: block });
 
+        // Parsing happens here. If validation fails (e.g., wrong type), parseStatblockData throws Error
         const result = await StatblockImporter.parseStatblockData(block, forceActorType);
 
         StatblockImporter.debugLog(`Parsed block ${blockIndex}: ${result.name}`, {
@@ -431,6 +432,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
         StatblockImporter.debugLog(`Creating actor: ${result.name}`, actorData);
 
+        // Actual creation. This is skipped if parseStatblockData throws an error.
         const newActor = await Actor.create(actorData);
         if (newActor) {
           createdActors.push(newActor);
@@ -438,6 +440,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
         }
 
       } catch (error) {
+        // Block creation failed, logging error and continuing to next block
         const firstLine = block.split(/\r?\n/)[0] || "Unknown";
         failedBlocks.push({ index: blockIndex, name: firstLine, error: error.message });
 
@@ -459,7 +462,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       if (isMultiple) {
         ui.notifications.info(`Successfully imported ${createdActors.length}/${totalBlocks} actors.`);
       }
-      // Se único, abrir a sheet
+      // If single, open the sheet
       if (createdActors.length === 1 && !isMultiple) {
         createdActors[0].sheet.render(true);
       }
@@ -477,15 +480,15 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   /* -------------------------------------------- */
 
   /**
-   * Detecta e divide múltiplos statblocks em um texto.
-   * Retorna um array de strings, cada uma contendo um statblock completo.
+   * Detects and splits multiple statblocks in a text.
+   * Returns an array of strings, each containing a complete statblock.
    */
   static splitStatblocks(text) {
     const lines = text.split(/\r?\n/);
-    // Aceita qualquer tipo após "Tier X", incluindo Horde com HP
+    // Accepts any type after "Tier X", including Horde with HP
     const tierRegex = /^Tier\s+\d+\s+\S+(?:\s*\(\d+\/HP\))?$/i;
 
-    // Encontrar índices onde começam novos statblocks (linha do Tier)
+    // Find indices where new statblocks begin (Tier line)
     const tierIndices = [];
     for (let i = 0; i < lines.length; i++) {
       if (tierRegex.test(lines[i].trim())) {
@@ -493,12 +496,12 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
     }
 
-    // Se houver 0 ou 1 tier, retornar o texto original como único bloco
+    // If 0 or 1 tier, return the original text as a single block
     if (tierIndices.length <= 1) {
       return [text];
     }
 
-    // Dividir em blocos - cada bloco começa na linha ANTERIOR ao Tier (nome do ator)
+    // Split into blocks - each block starts at the line BEFORE Tier (Actor Name)
     const blocks = [];
     for (let i = 0; i < tierIndices.length; i++) {
       const nameLineIndex = tierIndices[i] - 1;
@@ -525,7 +528,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
       if (rawLines.length === 0) throw new Error("Text content is empty.");
 
-      // --- SETUP DE COMPENDIUMS (FEATURES) ---
+      // --- FEATURE COMPENDIUM SETUP ---
       const selectedFeaturePacks = game.settings.get("dh-statblock-importer", "selectedCompendiums") || ["dh-statblock-importer.all-features"];
       const featureIndexMap = new Map();
 
@@ -541,8 +544,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           }
       }
 
-      // --- SETUP DE COMPENDIUMS (ADVERSARIES) ---
-      // Usado para Potential Adversaries lookup
+      // --- ADVERSARY COMPENDIUM SETUP ---
+      // Used for Potential Adversaries lookup
       const selectedActorPacks = game.settings.get("dh-statblock-importer", "selectedActorCompendiums") || ["daggerheart.adversaries"];
       let adversaryIndex = [];
 
@@ -550,12 +553,12 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           const pack = game.packs.get(packId);
           if (pack) {
               const index = await pack.getIndex({fields: ["name", "type"]});
-              // Combina todos os índices em um único array
+              // Combine all indices into a single array
               index.forEach(i => adversaryIndex.push(i));
           }
       }
 
-      // --- SETUP INICIAL ---
+      // --- INITIAL SETUP ---
 
       const name = rawLines[0];
 
@@ -577,7 +580,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       let statBlockLines = featuresIndex !== -1 ? rawLines.slice(0, featuresIndex) : rawLines;
       let featureBlockLines = featuresIndex !== -1 ? rawLines.slice(featuresIndex + 1) : [];
 
-      // --- PARSING MULTILINHA ---
+      // --- MULTILINE PARSING ---
       
       let descriptionBuffer = [];
       let motivesBuffer = [];
@@ -602,7 +605,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       for (let i = 0; i < statBlockLines.length; i++) {
           const line = statBlockLines[i];
 
-          // 1. Tier/Type e Horde HP
+          // 1. Tier/Type and Horde HP
           const tierMatch = line.match(/^Tier\s+(\d+)\s+(.+)$/i);
           if (tierMatch) {
               systemData.tier = parseInt(tierMatch[1], 10);
@@ -619,6 +622,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
               // Validate adversary type (only for adversaries, not environments)
               if (actorType === "adversary" && !StatblockImporter.VALID_ADVERSARY_TYPES.includes(systemData.type)) {
+                  // This error is caught in _onParse / _onValidate, preventing creation
                   throw new Error(`Invalid adversary type: "${rawType}". Valid types are: ${StatblockImporter.VALID_ADVERSARY_TYPES.join(", ")}`);
               }
 
@@ -626,7 +630,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               continue;
           }
 
-          // 2. Marcadores de Início de Buffer
+          // 2. Buffer Start Markers
           const motivesMatch = line.match(/^Motives\s*(?:&|and)\s*Tactics:\s*(.*)$/i);
           if (motivesMatch) {
               captureState = "motives";
@@ -653,7 +657,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               continue; 
           }
 
-          // 4. Texto Livre
+          // 4. Free Text
           if (i > 0 && captureState !== "none") {
               if (captureState === "description") descriptionBuffer.push(line);
               else if (captureState === "motives") motivesBuffer.push(line);
@@ -662,7 +666,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           }
       }
 
-      // --- ESTRUTURAÇÃO DOS DADOS ---
+      // --- DATA STRUCTURING ---
       
       if (descriptionBuffer.length > 0) systemData.description = descriptionBuffer.join(" ");
       
@@ -670,7 +674,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           // Environments
           if (impulsesBuffer.length > 0) systemData.impulses = impulsesBuffer.join(" ");
           
-          // --- LÓGICA DE POTENTIAL ADVERSARIES ---
+          // --- POTENTIAL ADVERSARIES LOGIC ---
           if (potentialAdvBuffer.length > 0) {
               const advText = potentialAdvBuffer.join(" ");
               systemData.notes = advText;
@@ -687,7 +691,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   const actorNames = actorsList.split(",").map(a => a.trim());
                   const foundUuids = [];
 
-                  // Busca UUIDs nos compêndios de atores configurados
+                  // Search UUIDs in configured actor compendiums
                   for (const actorName of actorNames) {
                       const found = adversaryIndex.find(a => a.name.toLowerCase() === actorName.toLowerCase() && a.type === "adversary");
                       if (found) {
@@ -711,14 +715,14 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           systemData.experiences = {};
       }
 
-      // --- PROCESSAR SEGMENTOS (Comum) ---
+      // --- PROCESS SEGMENTS (Common) ---
       for (let segment of statSegments) {
           const difficultyMatch = segment.match(/Diffi\s*culty:\s*(\d+)/i);
           if (difficultyMatch) systemData.difficulty = parseInt(difficultyMatch[1], 10);
 
           if (actorType === "environment") continue;
 
-          // --- STATS DE ADVERSARY ---
+          // --- ADVERSARY STATS ---
           const thresholdsMatch = segment.match(/Thresholds:\s*(\d+)\s*\/\s*(\d+)/i);
           if (thresholdsMatch) {
               systemData.damageThresholds = { major: parseInt(thresholdsMatch[1], 10), severe: parseInt(thresholdsMatch[2], 10) };
@@ -747,15 +751,31 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               }
           }
 
-          const damageDiceRegex = /^(\d+)d(\d+)([+-]\d+)?\s+(.+)$/i;
+          /**
+           * Damage Regex Explanation:
+           * 1. ^(\d+)d(\d+)       -> Matches "1d10" (Dice Count & Die Size)
+           * 2. (?:\s* -> Start optional non-capturing group for spacing
+           * 3. ([+\-]\s*\d+)      -> Capturing group for Bonus (e.g. "+3", " + 3"). Allows space inside.
+           * 4. )?                 -> End optional modifier group
+           * 5. \s+(.+)            -> Matches space and then the Type string (e.g. " phy")
+           */
+          const damageDiceRegex = /^(\d+)d(\d+)(?:\s*([+\-]\s*\d+))?\s+(.+)$/i;
           const damageStaticRegex = /^(\d+)\s+(.+)$/i;
+
           let dmgMatch = segment.match(damageDiceRegex);
           let isStatic = false;
-          if (!dmgMatch) { dmgMatch = segment.match(damageStaticRegex); isStatic = !!dmgMatch; }
+
+          if (!dmgMatch) { 
+              dmgMatch = segment.match(damageStaticRegex); 
+              isStatic = !!dmgMatch; 
+          }
 
           if (dmgMatch) {
               const types = [];
-              const rawTypes = (isStatic ? dmgMatch[2] : dmgMatch[4]).split("/").map(t => t.trim().toLowerCase());
+              // If static, types is in group 2. If dice, types is in group 4.
+              const rawTypeString = isStatic ? dmgMatch[2] : dmgMatch[4];
+              
+              const rawTypes = rawTypeString.split("/").map(t => t.trim().toLowerCase());
               if (rawTypes.includes("phy") || rawTypes.includes("physical")) types.push("physical");
               if (rawTypes.includes("mag") || rawTypes.includes("magical")) types.push("magical");
 
@@ -770,7 +790,13 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               } else {
                   damagePart.value.flatMultiplier = parseInt(dmgMatch[1], 10);
                   damagePart.value.dice = `d${dmgMatch[2]}`;
-                  if (dmgMatch[3]) damagePart.value.bonus = parseInt(dmgMatch[3], 10);
+                  
+                  // Handle optional bonus (Group 3)
+                  if (dmgMatch[3]) {
+                      // Remove all spaces to handle " + 3" becoming "+3"
+                      const cleanBonus = dmgMatch[3].replace(/\s/g, "");
+                      damagePart.value.bonus = parseInt(cleanBonus, 10);
+                  }
               }
               if (types.length > 0) systemData.attack.damage.parts = [damagePart];
           }
@@ -797,7 +823,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
             }
       }
 
-      // --- PARSING DE FEATURES ---
+      // --- FEATURE PARSING ---
       let currentFeature = null;
 
       const pushCurrentFeature = async () => {
@@ -871,7 +897,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           } else {
               if (currentFeature) {
                   let cleanedLine = replaceNameInText(line);
-                  let desc = currentFeature.system.description.replace("</p>", ""); // Abre a tag
+                  let desc = currentFeature.system.description.replace("</p>", ""); // Opens the tag
                   
                   if (line.trim().startsWith("•") || line.trim().startsWith("- ")) {
                       desc += `</p><p>${cleanedLine}</p>`;
