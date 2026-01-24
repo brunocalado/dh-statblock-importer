@@ -85,6 +85,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   static async _onValidate(event, target) {
     const formElement = this.element;
     const textarea = formElement.querySelector("textarea[name='statblockText']");
+    const modeSelect = formElement.querySelector("select[name='importMode']");
     const previewBox = formElement.querySelector("#dh-importer-preview");
 
     if (!textarea || !textarea.value.trim()) {
@@ -93,6 +94,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     }
 
     const text = textarea.value.trim();
+    const forceActorType = modeSelect?.value || "adversary";
     const blocks = StatblockImporter.splitStatblocks(text);
     const isMultiple = blocks.length > 1;
 
@@ -104,7 +106,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
     for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
       const block = blocks[blockIndex];
-      const result = await StatblockImporter.parseStatblockData(block);
+      const result = await StatblockImporter.parseStatblockData(block, forceActorType);
 
       let html = "";
       const data = result.systemData;
@@ -255,6 +257,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   static async _onParse(event, target) {
     const formElement = this.element;
     const textarea = formElement.querySelector("textarea[name='statblockText']");
+    const modeSelect = formElement.querySelector("select[name='importMode']");
 
     if (!textarea || !textarea.value.trim()) {
       ui.notifications.warn("Please paste some text first.");
@@ -262,6 +265,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     }
 
     const text = textarea.value.trim();
+    const forceActorType = modeSelect?.value || "adversary";
     const blocks = StatblockImporter.splitStatblocks(text);
     const isMultiple = blocks.length > 1;
 
@@ -269,7 +273,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       const createdActors = [];
 
       for (const block of blocks) {
-        const result = await StatblockImporter.parseStatblockData(block);
+        const result = await StatblockImporter.parseStatblockData(block, forceActorType);
 
         const actorData = {
           name: result.name,
@@ -341,7 +345,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     return blocks;
   }
 
-  static async parseStatblockData(text) {
+  static async parseStatblockData(text, forceActorType = null) {
       StatblockImporter.registerSettings();
 
       const rawLines = text.split(/\r?\n/)
@@ -370,7 +374,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       // Usado para Potential Adversaries lookup
       const selectedActorPacks = game.settings.get("dh-statblock-importer", "selectedActorCompendiums") || ["daggerheart.adversaries"];
       let adversaryIndex = [];
-      
+
       for (const packId of selectedActorPacks) {
           const pack = game.packs.get(packId);
           if (pack) {
@@ -381,11 +385,11 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // --- SETUP INICIAL ---
-      
+
       const name = rawLines[0];
-      const envTypes = ["exploration", "event", "social", "traversal"];
-      
-      let actorType = "adversary"; 
+
+      // Use forced actor type from combobox
+      let actorType = forceActorType || "adversary"; 
 
       const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const nameRegex = new RegExp(escapeRegExp(name), 'gi');
@@ -432,31 +436,25 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           if (tierMatch) {
               systemData.tier = parseInt(tierMatch[1], 10);
               let rawType = tierMatch[2].trim();
-              
+
               const hordeMatch = rawType.match(/Horde\s*\((\d+)\/HP\)/i);
-              
+
               if (hordeMatch) {
-                  systemData.type = "horde"; 
+                  systemData.type = "horde";
                   systemData.hordeHp = parseInt(hordeMatch[1], 10);
-                  actorType = "adversary";
               } else {
-                  const typeLower = rawType.toLowerCase();
-                  systemData.type = typeLower;
-                  if (envTypes.includes(typeLower)) {
-                      actorType = "environment";
-                  } else {
-                      actorType = "adversary";
-                  }
+                  systemData.type = rawType.toLowerCase();
               }
-              
+
               captureState = "description";
-              continue; 
+              continue;
           }
 
           // 2. Marcadores de Início de Buffer
-          if (line.startsWith("Motives & Tactics:")) {
+          const motivesMatch = line.match(/^Motives\s*(?:&|and)\s*Tactics:\s*(.*)$/i);
+          if (motivesMatch) {
               captureState = "motives";
-              motivesBuffer.push(line.replace("Motives & Tactics:", "").trim());
+              motivesBuffer.push(motivesMatch[1].trim());
               continue;
           }
 
@@ -666,7 +664,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       };
 
       for (const line of featureBlockLines) {
-          const featureMatch = line.match(/^(.+?)\s+-\s+(Passive|Action|Reaction):\s*(.*)$/i);
+          const featureMatch = line.match(/^(.+?)\s*[-–—]\s*(Passive|Action|Reaction):\s*(.*)$/i);
           
           if (featureMatch) {
               if (currentFeature) {

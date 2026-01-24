@@ -123,6 +123,29 @@
     margin-right: auto;
 }
 
+.dh-mode-select {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9em;
+    color: #fff;
+}
+
+.dh-mode-select select {
+    padding: 5px 10px;
+    background: #1a1a1a;
+    border: 1px solid #666;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.dh-mode-select select option {
+    background: #1a1a1a;
+    color: #fff;
+}
+
 /* --- Config Window Tabs --- */
 .dh-config-nav {
     display: flex;
