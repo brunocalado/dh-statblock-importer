@@ -6,7 +6,10 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
  * Main Importer Application using V13 ApplicationV2 standards.
  */
 export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2) {
-  
+
+  /** Valid adversary types (lowercase) */
+  static VALID_ADVERSARY_TYPES = ["bruiser", "horde", "leader", "minion", "ranged", "skulk", "social", "solo", "standard", "support"];
+
   /** @override */
   static DEFAULT_OPTIONS = {
     id: "dh-statblock-importer",
@@ -72,6 +75,66 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               default: false
           });
       }
+
+      // Folder Names
+      if (!game.settings.settings.has("dh-statblock-importer.adversaryFolderName")) {
+          game.settings.register("dh-statblock-importer", "adversaryFolderName", {
+              name: "Adversary Folder Name",
+              scope: "world",
+              config: false,
+              type: String,
+              default: "💀 Imported Adversaries"
+          });
+      }
+
+      if (!game.settings.settings.has("dh-statblock-importer.environmentFolderName")) {
+          game.settings.register("dh-statblock-importer", "environmentFolderName", {
+              name: "Environment Folder Name",
+              scope: "world",
+              config: false,
+              type: String,
+              default: "🏰 Imported Environments"
+          });
+      }
+
+      // Debug Mode
+      if (!game.settings.settings.has("dh-statblock-importer.debugMode")) {
+          game.settings.register("dh-statblock-importer", "debugMode", {
+              name: "Debug Mode",
+              scope: "client",
+              config: false,
+              type: Boolean,
+              default: false
+          });
+      }
+  }
+
+  /**
+   * Log debug messages if debug mode is enabled
+   */
+  static debugLog(message, data = null) {
+      const debugMode = game.settings.get("dh-statblock-importer", "debugMode");
+      if (debugMode) {
+          console.log(`DH Importer [DEBUG] | ${message}`);
+          if (data !== null) {
+              console.log(data);
+          }
+      }
+  }
+
+  /**
+   * Log error messages (always logs, but with more detail in debug mode)
+   */
+  static errorLog(message, error = null, context = null) {
+      const debugMode = game.settings.get("dh-statblock-importer", "debugMode");
+      console.error(`DH Importer [ERROR] | ${message}`);
+      if (error) {
+          console.error(error);
+      }
+      if (debugMode && context) {
+          console.log("DH Importer [DEBUG] | Error Context:");
+          console.log(context);
+      }
   }
 
   /* -------------------------------------------- */
@@ -104,9 +167,34 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       fullHtml += `<div class="dh-preview-item success" style="background:rgba(72,187,72,0.2);padding:8px;margin-bottom:10px;border-radius:4px;"><strong>Batch Mode:</strong> ${blocks.length} statblocks detected</div>`;
     }
 
+    let validBlockCount = 0;
+
     for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
       const block = blocks[blockIndex];
-      const result = await StatblockImporter.parseStatblockData(block, forceActorType);
+      let result;
+
+      try {
+        result = await StatblockImporter.parseStatblockData(block, forceActorType);
+      } catch (error) {
+        // Show error in preview for this block
+        const firstLine = block.split(/\r?\n/)[0] || "Unknown";
+        if (isMultiple) {
+          fullHtml += `<div style="border:1px solid #ff6b6b;padding:8px;margin-bottom:10px;border-radius:4px;background:rgba(255,107,107,0.1);">
+            <strong style="font-size:1.1em;color:#ff6b6b;">#${blockIndex + 1}: ${firstLine}</strong>
+            <hr style="margin:5px 0;border-color:#ff6b6b;">
+            <div class="dh-preview-item" style="color:#ff6b6b;border-left:3px solid #ff6b6b;padding-left:8px;">
+              <strong>Skipped:</strong> ${error.message}
+            </div>
+          </div>`;
+        } else {
+          fullHtml += `<div class="dh-preview-item" style="color:#ff6b6b;border-left:3px solid #ff6b6b;padding-left:8px;">
+            <strong>Error:</strong> ${error.message}
+          </div>`;
+        }
+        continue;
+      }
+
+      validBlockCount++;
 
       let html = "";
       const data = result.systemData;
@@ -268,36 +356,119 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     const forceActorType = modeSelect?.value || "adversary";
     const blocks = StatblockImporter.splitStatblocks(text);
     const isMultiple = blocks.length > 1;
+    const totalBlocks = blocks.length;
 
+    StatblockImporter.debugLog(`Starting import of ${totalBlocks} statblock(s)`, { forceActorType });
+
+    const createdActors = [];
+    const failedBlocks = [];
+
+    // Get or create folders
+    const adversaryFolderName = game.settings.get("dh-statblock-importer", "adversaryFolderName");
+    const environmentFolderName = game.settings.get("dh-statblock-importer", "environmentFolderName");
+
+    const getOrCreateFolder = async (name, color) => {
+      let folder = game.folders.find(f => f.name === name && f.type === "Actor");
+      if (!folder) {
+        folder = await Folder.create({
+          name: name,
+          type: "Actor",
+          color: color
+        });
+      }
+      return folder;
+    };
+
+    let adversaryFolder, environmentFolder;
     try {
-      const createdActors = [];
+      adversaryFolder = await getOrCreateFolder(adversaryFolderName, "#430047");
+      environmentFolder = await getOrCreateFolder(environmentFolderName, "#2a3d00");
+    } catch (error) {
+      StatblockImporter.errorLog("Failed to create folders", error);
+      ui.notifications.error("Failed to create import folders.");
+      return;
+    }
 
-      for (const block of blocks) {
+    // Progress notification for batch imports
+    let progressNotification = null;
+    if (isMultiple) {
+      progressNotification = ui.notifications.info(`Importing statblocks... (0/${totalBlocks})`, { progress: true });
+    }
+
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i];
+      const blockIndex = i + 1;
+
+      // Update progress bar for batch imports
+      if (progressNotification) {
+        const pct = blockIndex / totalBlocks;
+        progressNotification.update({ pct: pct, message: `Importing statblocks... (${blockIndex}/${totalBlocks})` });
+      }
+
+      try {
+        StatblockImporter.debugLog(`Parsing block ${blockIndex}/${totalBlocks}`, { rawText: block });
+
         const result = await StatblockImporter.parseStatblockData(block, forceActorType);
+
+        StatblockImporter.debugLog(`Parsed block ${blockIndex}: ${result.name}`, {
+          actorType: result.actorType,
+          systemData: result.systemData,
+          itemsCount: result.items?.length || 0
+        });
+
+        const targetFolder = result.actorType === "environment" ? environmentFolder : adversaryFolder;
 
         const actorData = {
           name: result.name,
           type: result.actorType,
           system: result.systemData,
           items: result.items,
+          folder: targetFolder?.id,
           img: result.actorType === "environment"
             ? "icons/environment/wilderness/cave-entrance.webp"
             : "modules/dh-statblock-importer/assets/images/skull.webp"
         };
 
+        StatblockImporter.debugLog(`Creating actor: ${result.name}`, actorData);
+
         const newActor = await Actor.create(actorData);
         if (newActor) {
           createdActors.push(newActor);
+          StatblockImporter.debugLog(`Successfully created actor: ${newActor.name} (ID: ${newActor.id})`);
         }
-      }
 
+      } catch (error) {
+        const firstLine = block.split(/\r?\n/)[0] || "Unknown";
+        failedBlocks.push({ index: blockIndex, name: firstLine, error: error.message });
+
+        StatblockImporter.errorLog(`Failed to import block ${blockIndex}: ${firstLine}`, error, {
+          blockIndex,
+          rawText: block,
+          forceActorType
+        });
+      }
+    }
+
+    // Complete progress bar
+    if (progressNotification) {
+      progressNotification.update({ pct: 1, message: "Import complete!" });
+    }
+
+    // Show results
+    if (createdActors.length > 0) {
+      if (isMultiple) {
+        ui.notifications.info(`Successfully imported ${createdActors.length}/${totalBlocks} actors.`);
+      }
       // Se único, abrir a sheet
-      if (createdActors.length === 1) {
+      if (createdActors.length === 1 && !isMultiple) {
         createdActors[0].sheet.render(true);
       }
+    }
 
-    } catch (error) {
-      console.error("DH Importer | Error creating actor:", error);
+    // Report failures
+    if (failedBlocks.length > 0) {
+      ui.notifications.warn(`Failed to import ${failedBlocks.length} statblock(s). Check console for details.`);
+      console.warn("DH Importer | Failed imports:", failedBlocks);
     }
   }
 
@@ -444,6 +615,11 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   systemData.hordeHp = parseInt(hordeMatch[1], 10);
               } else {
                   systemData.type = rawType.toLowerCase();
+              }
+
+              // Validate adversary type (only for adversaries, not environments)
+              if (actorType === "adversary" && !StatblockImporter.VALID_ADVERSARY_TYPES.includes(systemData.type)) {
+                  throw new Error(`Invalid adversary type: "${rawType}". Valid types are: ${StatblockImporter.VALID_ADVERSARY_TYPES.join(", ")}`);
               }
 
               captureState = "description";
@@ -629,12 +805,18 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
           const found = featureIndexMap.get(currentFeature.name.toLowerCase());
           if (found) {
-              const doc = await found.pack.getDocument(found.uuid);
-              if (doc) {
-                  const itemData = doc.toObject();
-                  foundry.utils.mergeObject(itemData, { flags: { dhImporter: { isCompendium: true } } });
-                  items.push(itemData);
-                  return; 
+              StatblockImporter.debugLog(`Found compendium match for feature: ${currentFeature.name}`, { uuid: found.uuid });
+              try {
+                  const doc = await fromUuid(found.uuid);
+                  if (doc) {
+                      const itemData = doc.toObject();
+                      foundry.utils.mergeObject(itemData, { flags: { dhImporter: { isCompendium: true } } });
+                      items.push(itemData);
+                      StatblockImporter.debugLog(`Using compendium feature: ${doc.name}`);
+                      return;
+                  }
+              } catch (error) {
+                  StatblockImporter.errorLog(`Failed to load compendium feature: ${currentFeature.name}`, error, { uuid: found.uuid });
               }
           }
           

@@ -9,7 +9,7 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             title: "Importer Configuration",
             icon: "fas fa-cog",
             resizable: false,
-            width: 450,
+            width: 620,
             height: "auto"
         },
         form: {
@@ -99,7 +99,12 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             }))
             .sort((a, b) => a.title.localeCompare(b.title));
 
-        return { featureCompendiums, actorCompendiums };
+        // --- General Settings ---
+        const adversaryFolderName = game.settings.get("dh-statblock-importer", "adversaryFolderName");
+        const environmentFolderName = game.settings.get("dh-statblock-importer", "environmentFolderName");
+        const debugMode = game.settings.get("dh-statblock-importer", "debugMode");
+
+        return { featureCompendiums, actorCompendiums, adversaryFolderName, environmentFolderName, debugMode };
     }
 
     static async formHandler(event, form, formData) {
@@ -114,6 +119,19 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         const actorChecks = form.querySelectorAll("input[name='actorCompendiums']:checked");
         actorChecks.forEach(cb => selectedActors.push(cb.value));
         await game.settings.set("dh-statblock-importer", "selectedActorCompendiums", selectedActors);
+
+        // Salvar General Settings (Folder Names)
+        const adversaryFolderInput = form.querySelector("input[name='adversaryFolderName']");
+        const environmentFolderInput = form.querySelector("input[name='environmentFolderName']");
+        const debugModeInput = form.querySelector("input[name='debugMode']");
+
+        if (adversaryFolderInput?.value) {
+            await game.settings.set("dh-statblock-importer", "adversaryFolderName", adversaryFolderInput.value);
+        }
+        if (environmentFolderInput?.value) {
+            await game.settings.set("dh-statblock-importer", "environmentFolderName", environmentFolderInput.value);
+        }
+        await game.settings.set("dh-statblock-importer", "debugMode", debugModeInput?.checked || false);
 
         await game.settings.set("dh-statblock-importer", "configInitialized", true);
     }

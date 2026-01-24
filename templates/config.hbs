@@ -9,6 +9,9 @@
         <button type="button" class="dh-config-tab-btn" data-action="tab" data-target="actors">
             <i class="fas fa-users"></i> Actors
         </button>
+        <button type="button" class="dh-config-tab-btn" data-action="tab" data-target="general">
+            <i class="fas fa-sliders-h"></i> General
+        </button>
     </nav>
     
     {{!-- Aba: Features --}}
@@ -35,11 +38,38 @@
             <label class="checkbox dh-config-item">
                 <input type="checkbox" name="actorCompendiums" value="{{this.id}}" {{checked this.selected}} style="margin-right: 8px;">
                 <span style="flex: 1;">
-                    {{this.title}} 
+                    {{this.title}}
                     <span style="color:var(--color-text-light-5); font-size: 0.85em; display: block;">{{this.id}}</span>
                 </span>
             </label>
             {{/each}}
+        </div>
+    </div>
+
+    {{!-- Aba: General --}}
+    <div class="dh-config-tab-content" data-tab="general">
+        <p class="notes" style="font-size: 0.9em; margin-bottom: 10px;"><strong>General Settings:</strong> Configure import behavior.</p>
+
+        <div class="form-group">
+            <label for="adversaryFolderName">Adversary Folder Name</label>
+            <input type="text" name="adversaryFolderName" value="{{adversaryFolderName}}" placeholder="💀 Imported Adversaries">
+            <p class="hint">Folder where imported adversaries will be placed.</p>
+        </div>
+
+        <div class="form-group">
+            <label for="environmentFolderName">Environment Folder Name</label>
+            <input type="text" name="environmentFolderName" value="{{environmentFolderName}}" placeholder="🏰 Imported Environments">
+            <p class="hint">Folder where imported environments will be placed.</p>
+        </div>
+
+        <hr style="margin: 15px 0; border-color: var(--color-border-light-2);">
+
+        <div class="form-group">
+            <label class="checkbox dh-debug-checkbox">
+                <input type="checkbox" name="debugMode" {{checked debugMode}}>
+                <span>Debug Mode</span>
+            </label>
+            <p class="hint">When enabled, detailed parsing information and errors will be logged to the browser console (F12).</p>
         </div>
     </div>
 
