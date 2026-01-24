@@ -1,7 +1,7 @@
 {
   "id": "dh-statblock-importer",
   "title": "Daggerheart: Statblock Importer",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "compatibility": {
     "minimum": "13",
     "verified": "13"
@@ -69,7 +69,20 @@
       },
       "flags": {},
       "banner": "modules/dh-statblock-importer/assets/images/banner.webp" 
-    }    
+    },
+    {
+      "label": "Instructions",
+      "type": "JournalEntry",
+      "name": "journal",
+      "path": "packs/journal",
+      "system": "daggerheart",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {},
+      "banner": "modules/dh-statblock-importer/assets/images/banner.webp" 
+    }     
   ],
 
   "packFolders": [
@@ -79,7 +92,8 @@
       "color": "#5c0547",
       "packs": [        
         "all-features",
-        "macros"
+        "macros",
+        "journal"
       ],
       "folders": []
     }

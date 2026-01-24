@@ -19,16 +19,24 @@
 
     {{!-- Rodapé com Ações --}}
     <div class="dh-importer-actions">
-        {{!-- Botão de Configuração movido para cá --}}
-        <button type="button" data-action="config" title="Configure Compendiums">
-            <i class="fas fa-cog"></i> Config
-        </button>
+        {{!-- Botões de Config e Instruções --}}
+        <div style="display:flex; gap:5px; margin-right:auto;">
+            <button type="button" data-action="config" title="Configure Compendiums" style="margin-right: 0;">
+                <i class="fas fa-cog"></i> Config
+            </button>
+            <button type="button" data-action="instructions" title="Open Instructions">
+                <i class="fas fa-book"></i> Instructions
+            </button>
+        </div>
 
         <label class="dh-mode-select">
             <span>Mode:</span>
             <select name="importMode">
                 <option value="adversary">Adversary</option>
                 <option value="environment">Environment</option>
+                <option value="loot">Loot</option>
+                <option value="consumable">Consumable</option>
+                <option value="weapon">Weapon</option>
             </select>
         </label>
 
@@ -37,7 +45,7 @@
         </button>
 
         <button type="button" data-action="parse" class="save-button">
-            <i class="fas fa-file-import"></i> Create Actor
+            <i class="fas fa-file-import"></i> Create
         </button>
     </div>
 </div>

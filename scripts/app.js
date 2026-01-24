@@ -51,7 +51,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     actions: {
       parse: StatblockImporter._onParse,
       validate: StatblockImporter._onValidate,
-      config: StatblockImporter._onConfig
+      config: StatblockImporter._onConfig,
+      instructions: StatblockImporter._onInstructions
     }
   };
 
@@ -100,7 +101,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           });
       }
 
-      // Folder Names
+      // Folder Names (Actors)
       if (!game.settings.settings.has("dh-statblock-importer.adversaryFolderName")) {
           game.settings.register("dh-statblock-importer", "adversaryFolderName", {
               name: "Adversary Folder Name",
@@ -118,6 +119,37 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               config: false,
               type: String,
               default: "🏰 Imported Environments"
+          });
+      }
+
+      // Folder Names (Items)
+      if (!game.settings.settings.has("dh-statblock-importer.lootFolderName")) {
+          game.settings.register("dh-statblock-importer", "lootFolderName", {
+              name: "Loot Folder Name",
+              scope: "world",
+              config: false,
+              type: String,
+              default: "👑 Imported Loot"
+          });
+      }
+
+      if (!game.settings.settings.has("dh-statblock-importer.consumableFolderName")) {
+          game.settings.register("dh-statblock-importer", "consumableFolderName", {
+              name: "Consumable Folder Name",
+              scope: "world",
+              config: false,
+              type: String,
+              default: "🧪 Imported Consumables"
+          });
+      }
+
+      if (!game.settings.settings.has("dh-statblock-importer.weaponFolderName")) {
+          game.settings.register("dh-statblock-importer", "weaponFolderName", {
+              name: "Weapon Folder Name",
+              scope: "world",
+              config: false,
+              type: String,
+              default: "⚔️ Imported Weapons"
           });
       }
 
@@ -169,6 +201,32 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       new StatblockConfig().render(true);
   }
 
+  static async _onInstructions(event, target) {
+      try {
+          const doc = await fromUuid("Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp");
+          if (doc) {
+              doc.sheet.render(true);
+          } else {
+              ui.notifications.warn("Instructions Journal Entry not found in Compendium.");
+              console.warn("DH Importer | Could not find JournalEntry with UUID: Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp");
+          }
+      } catch (err) {
+          StatblockImporter.errorLog("Error opening instructions", err);
+          ui.notifications.error("Failed to open instructions.");
+      }
+  }
+
+  /**
+   * Helper to determine the default image based on mode and actor type
+   */
+  static _getDefaultImage(mode, actorType = null) {
+      if (mode === "loot") return "icons/containers/chest/chest-reinforced-steel-green.webp";
+      if (mode === "consumable") return "icons/consumables/potions/potion-flask-corled-pink-red.webp";
+      if (mode === "weapon") return "icons/weapons/swords/sword-guard-flanged-purple.webp";
+      if (actorType === "environment") return "icons/environment/wilderness/cave-entrance.webp";
+      return "modules/dh-statblock-importer/assets/images/skull.webp";
+  }
+
   static async _onValidate(event, target) {
     const formElement = this.element;
     const textarea = formElement.querySelector("textarea[name='statblockText']");
@@ -181,54 +239,58 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     }
 
     const text = textarea.value.trim();
-    const forceActorType = modeSelect?.value || "adversary";
-    const blocks = StatblockImporter.splitStatblocks(text);
-    const isMultiple = blocks.length > 1;
+    const mode = modeSelect?.value || "adversary";
+    
+    // Determine parsing strategy
+    let blocks = [];
+    let isItemMode = (mode === "loot" || mode === "consumable" || mode === "weapon");
 
+    if (isItemMode) {
+        blocks = StatblockImporter.splitSimpleItems(text);
+    } else {
+        blocks = StatblockImporter.splitStatblocks(text);
+    }
+
+    const isMultiple = blocks.length > 1;
     let fullHtml = "";
 
     if (isMultiple) {
-      fullHtml += `<div class="dh-preview-item success" style="background:rgba(72,187,72,0.2);padding:8px;margin-bottom:10px;border-radius:4px;"><strong>Batch Mode:</strong> ${blocks.length} statblocks detected</div>`;
+      fullHtml += `<div class="dh-preview-item success" style="background:rgba(72,187,72,0.2);padding:8px;margin-bottom:10px;border-radius:4px;"><strong>Batch Mode:</strong> ${blocks.length} items detected</div>`;
     }
-
-    let validBlockCount = 0;
 
     for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
       const block = blocks[blockIndex];
       let result;
 
       try {
-        result = await StatblockImporter.parseStatblockData(block, forceActorType);
-      } catch (error) {
-        // Show error in preview for this block
-        const firstLine = block.split(/\r?\n/)[0] || "Unknown";
-        if (isMultiple) {
-          fullHtml += `<div style="border:1px solid #ff6b6b;padding:8px;margin-bottom:10px;border-radius:4px;background:rgba(255,107,107,0.1);">
-            <strong style="font-size:1.1em;color:#ff6b6b;">#${blockIndex + 1}: ${firstLine}</strong>
-            <hr style="margin:5px 0;border-color:#ff6b6b;">
-            <div class="dh-preview-item" style="color:#ff6b6b;border-left:3px solid #ff6b6b;padding-left:8px;">
-              <strong>Skipped:</strong> ${error.message}
-            </div>
-          </div>`;
+        if (mode === "weapon") {
+            result = StatblockImporter.parseWeaponData(block);
+        } else if (mode === "loot" || mode === "consumable") {
+            result = StatblockImporter.parseSimpleItemData(block, mode);
         } else {
-          fullHtml += `<div class="dh-preview-item" style="color:#ff6b6b;border-left:3px solid #ff6b6b;padding-left:8px;">
-            <strong>Error:</strong> ${error.message}
-          </div>`;
+            result = await StatblockImporter.parseStatblockData(block, mode);
         }
+      } catch (error) {
+        const firstLine = block.split(/\r?\n/)[0] || "Unknown";
+        fullHtml += `<div class="dh-preview-item warning"><strong>#${blockIndex + 1} Error:</strong> ${error.message} (${firstLine})</div>`;
         continue;
       }
 
-      validBlockCount++;
+      // --- HTML Generation for Preview ---
+      const defaultImg = result.img || StatblockImporter._getDefaultImage(mode, result.actorType);
+      fullHtml += `<div class="dh-preview-entry">`;
+      
+      const labelPrefix = isMultiple ? `#${blockIndex + 1}: ` : "";
+      
+      fullHtml += `
+          <div class="dh-preview-header">
+              <img src="${defaultImg}" class="dh-preview-img" data-idx="${blockIndex}" title="Click to change image">
+              <div class="dh-preview-name">${labelPrefix}${result.name}</div>
+          </div>
+      `;
 
-      let html = "";
-      const data = result.systemData;
-      const items = result.items || [];
-      const isEnvironment = result.actorType === "environment";
-
-      if (isMultiple) {
-        html += `<div style="border:1px solid var(--color-border-light-2);padding:8px;margin-bottom:10px;border-radius:4px;"><strong style="font-size:1.1em;">#${blockIndex + 1}: ${result.name}</strong><hr style="margin:5px 0;">`;
-      }
-
+      fullHtml += `<div class="dh-preview-body">`;
+      
       const show = (label, value) => {
         if (value !== undefined && value !== null && value !== "") {
           return `<div class="dh-preview-item success"><strong>${label}:</strong> ${value}</div>`;
@@ -236,140 +298,72 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
         return `<div class="dh-preview-item warning"><strong>${label}:</strong> Not Found</div>`;
       };
 
-      html += show("Actor Type", isEnvironment ? "Environment" : "Adversary");
-      html += show("Name", result.name);
-      html += show("Tier", data.tier);
-      html += show("Type", data.type);
-
-      if (data.type === "horde") {
-        html += show("Horde HP", data.hordeHp);
-      }
-
-      html += show("Difficulty", data.difficulty);
-
-      // Exclusive Adversary Fields
-      if (!isEnvironment) {
-        if (data.damageThresholds) {
-          html += `<div class="dh-preview-item success"><strong>Thresholds:</strong> ${data.damageThresholds.major} / ${data.damageThresholds.severe}</div>`;
-        } else {
-          html += `<div class="dh-preview-item warning"><strong>Thresholds:</strong> Not Found</div>`;
-        }
-
-        if (data.resources?.hitPoints?.max) {
-          html += `<div class="dh-preview-item success"><strong>HP:</strong> ${data.resources.hitPoints.max}</div>`;
-        } else {
-          html += `<div class="dh-preview-item warning"><strong>HP:</strong> Not Found</div>`;
-        }
-
-        if (data.resources?.stress?.max) {
-          html += `<div class="dh-preview-item success"><strong>Stress:</strong> ${data.resources.stress.max}</div>`;
-        } else {
-          html += `<div class="dh-preview-item warning"><strong>Stress:</strong> Not Found</div>`;
-        }
-
-        // Attack Section
-        html += show("Attack Name", data.attack?.name);
-        html += show("Attack Range", data.attack?.range);
-        html += show("Attack Bonus", data.attack?.roll?.bonus);
-
-        // Attack Damage Preview
-        if (data.attack?.damage?.parts?.length > 0) {
-          const part = data.attack.damage.parts[0];
-          let dmgString = "";
-
-          if (part.value.custom?.enabled) {
-            dmgString = `${part.value.custom.formula} (Static)`;
-          } else {
-            const bonusStr = part.value.bonus ? `+${part.value.bonus}` : "";
-            dmgString = `${part.value.flatMultiplier}${part.value.dice}${bonusStr}`;
+      if (mode === "weapon") {
+          // WEAPON PREVIEW
+          fullHtml += show("Type", "Weapon");
+          fullHtml += show("Tier", result.system.tier);
+          fullHtml += show("Trait", result.system.attack.roll.trait);
+          fullHtml += show("Range", result.system.attack.range);
+          
+          if (result.system.attack.damage.parts.length > 0) {
+              const part = result.system.attack.damage.parts[0];
+              const dmgStr = `${part.value.flatMultiplier > 1 ? part.value.flatMultiplier : ""}${part.value.dice}${part.value.bonus ? (part.value.bonus > 0 ? "+"+part.value.bonus : part.value.bonus) : ""} ${part.type.join("/")}`;
+              fullHtml += show("Damage", dmgStr);
           }
+          
+          fullHtml += show("Burden", result.system.burden);
+          
+          // Show combined description (Feature + Desc)
+          const descPreview = result.system.description.length > 100 ? result.system.description.substring(0, 100) + "..." : result.system.description;
+          fullHtml += `<div class="dh-preview-item success"><strong>Full Description:</strong><br><em style="font-size:0.9em">${descPreview}</em></div>`;
 
-          const types = part.type ? part.type.join(", ") : "None";
-          let altString = "";
-
-          if (part.valueAlt) {
-            const altBonusStr = part.valueAlt.bonus ? `+${part.valueAlt.bonus}` : "";
-            altString = ` <br><span style="color:var(--color-text-light-highlight)">[Horde: ${part.valueAlt.flatMultiplier}${part.valueAlt.dice}${altBonusStr}]</span>`;
-          }
-
-          html += `<div class="dh-preview-item success"><strong>Attack Damage:</strong> ${dmgString} [${types}]${altString}</div>`;
-        } else {
-          html += `<div class="dh-preview-item warning"><strong>Attack Damage:</strong> Not Found</div>`;
-        }
-
-        // Experiences
-        if (data.experiences && Object.keys(data.experiences).length > 0) {
-          let expList = '<ul class="dh-preview-sublist">';
-          for (const [key, exp] of Object.entries(data.experiences)) {
-            expList += `<li>${exp.name} (${exp.value >= 0 ? '+' : ''}${exp.value})</li>`;
-          }
-          expList += '</ul>';
-          html += `<div class="dh-preview-item success"><strong>Experiences:</strong> Found ${Object.keys(data.experiences).length}${expList}</div>`;
-        } else {
-          html += `<div class="dh-preview-item warning"><strong>Experiences:</strong> Not Found</div>`;
-        }
-      }
-
-      // Description
-      if (data.description) {
-        const descPreview = data.description.length > 100 ? data.description.substring(0, 100) + "..." : data.description;
-        html += `<div class="dh-preview-item success"><strong>Description:</strong><br><em style="font-size:0.9em">${descPreview}</em></div>`;
+      } else if (isItemMode) {
+          // SIMPLE ITEM PREVIEW
+          fullHtml += show("Type", result.type);
+          fullHtml += `<div class="dh-preview-item success"><strong>Description:</strong><br><em style="font-size:0.9em">${result.system.description}</em></div>`;
       } else {
-        html += `<div class="dh-preview-item warning"><strong>Description:</strong> Not Found</div>`;
-      }
+          // ACTOR PREVIEW
+          const data = result.systemData;
+          const isEnvironment = result.actorType === "environment";
 
-      // Motives or Impulses
-      if (isEnvironment) {
-        html += show("Impulses", data.impulses);
+          fullHtml += show("Actor Type", isEnvironment ? "Environment" : "Adversary");
+          fullHtml += show("Tier", data.tier);
+          fullHtml += show("Type", data.type);
+          if (data.type === "horde") fullHtml += show("Horde HP", data.hordeHp);
+          fullHtml += show("Difficulty", data.difficulty);
 
-        // Preview of Potential Adversaries
-        if (data.potentialAdversaries && Object.keys(data.potentialAdversaries).length > 0) {
-          let advList = '<ul class="dh-preview-sublist">';
-          for (const [key, group] of Object.entries(data.potentialAdversaries)) {
-            const count = group.adversaries ? group.adversaries.length : 0;
-            advList += `<li><strong>${group.label}</strong>: ${count} linked</li>`;
+          if (!isEnvironment) {
+             if (data.resources?.hitPoints?.max) fullHtml += show("HP", data.resources.hitPoints.max);
+             fullHtml += show("Attack", data.attack?.name);
           }
-          advList += '</ul>';
-          html += `<div class="dh-preview-item success"><strong>Potential Adversaries:</strong> Found groups${advList}</div>`;
-        } else if (data.notes) {
-          html += `<div class="dh-preview-item warning"><strong>Potential Adversaries:</strong> Text found in Notes, but no groups parsed.</div>`;
-        }
-
-      } else {
-        html += show("Motives", data.motivesAndTactics);
       }
 
-      // Features
-      if (items.length > 0) {
-        let featList = '<ul class="dh-preview-sublist">';
-        for (const item of items) {
-          const isCompendium = item.flags?.dhImporter?.isCompendium;
-          const sourceLabel = isCompendium ? "<strong>(Compendium)</strong>" : "(New)";
-          const colorClass = isCompendium ? "color:var(--color-text-hyperlink)" : "";
-
-          featList += `<li style="${colorClass}"><strong>${item.name}</strong> ${sourceLabel}</li>`;
-        }
-        featList += '</ul>';
-        html += `<div class="dh-preview-item success"><strong>Features:</strong> Found ${items.length}${featList}</div>`;
-      } else {
-        html += `<div class="dh-preview-item warning"><strong>Features:</strong> None detected</div>`;
-      }
-
-      // Close block div if multiple
-      if (isMultiple) {
-        html += `</div>`;
-      }
-
-      fullHtml += html;
+      fullHtml += `</div></div>`; 
     }
 
     previewBox.innerHTML = fullHtml;
+
+    const images = previewBox.querySelectorAll(".dh-preview-img");
+    images.forEach(img => {
+        img.addEventListener("click", ev => {
+            const fp = new foundry.applications.apps.FilePicker({
+                type: "image",
+                current: img.getAttribute("src"),
+                callback: (path) => {
+                    img.src = path;
+                    img.style.borderColor = "#9cff2e";
+                }
+            });
+            fp.render(true);
+        });
+    });
   }
 
   static async _onParse(event, target) {
     const formElement = this.element;
     const textarea = formElement.querySelector("textarea[name='statblockText']");
     const modeSelect = formElement.querySelector("select[name='importMode']");
+    const previewBox = formElement.querySelector("#dh-importer-preview");
 
     if (!textarea || !textarea.value.trim()) {
       ui.notifications.warn("Please paste some text first.");
@@ -377,165 +371,190 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     }
 
     const text = textarea.value.trim();
-    const forceActorType = modeSelect?.value || "adversary";
-    const blocks = StatblockImporter.splitStatblocks(text);
-    const isMultiple = blocks.length > 1;
+    const mode = modeSelect?.value || "adversary";
+    const isItemMode = (mode === "loot" || mode === "consumable" || mode === "weapon");
+
+    let blocks = [];
+    if (isItemMode) {
+        blocks = StatblockImporter.splitSimpleItems(text);
+    } else {
+        blocks = StatblockImporter.splitStatblocks(text);
+    }
+
     const totalBlocks = blocks.length;
+    StatblockImporter.debugLog(`Starting import of ${totalBlocks} objects (${mode})`);
 
-    StatblockImporter.debugLog(`Starting import of ${totalBlocks} statblock(s)`, { forceActorType });
-
-    const createdActors = [];
+    const createdObjects = [];
     const failedBlocks = [];
 
-    // Get or create folders (ROOT LEVEL)
-    const adversaryFolderName = game.settings.get("dh-statblock-importer", "adversaryFolderName");
-    const environmentFolderName = game.settings.get("dh-statblock-importer", "environmentFolderName");
+    // --- FOLDER SETUP ---
+    let targetFolder = null;
 
-    const getOrCreateFolder = async (name, color) => {
-      let folder = game.folders.find(f => f.name === name && f.type === "Actor");
-      if (!folder) {
-        folder = await Folder.create({
-          name: name,
-          type: "Actor",
-          color: color
-        });
-      }
-      return folder;
-    };
-
-    let adversaryFolder, environmentFolder;
     try {
-      adversaryFolder = await getOrCreateFolder(adversaryFolderName, "#430047");
-      environmentFolder = await getOrCreateFolder(environmentFolderName, "#2a3d00");
+        if (isItemMode) {
+            // 1. Find or Create ROOT Item Folder (Fixed Name/Color)
+            const rootName = "📦 Imported Items";
+            const rootColor = "#052e00";
+            
+            let rootFolder = game.folders.find(f => f.name === rootName && f.type === "Item");
+            if (!rootFolder) {
+                rootFolder = await Folder.create({ name: rootName, type: "Item", color: rootColor });
+            }
+
+            // 2. Determine Subfolder Settings based on Mode
+            let settingKey = "";
+            let defaultName = "";
+            let color = "#333333";
+
+            if (mode === "loot") {
+                settingKey = "lootFolderName";
+                defaultName = "👑 Imported Loot";
+                color = "#5c4600";
+            } else if (mode === "consumable") {
+                settingKey = "consumableFolderName";
+                defaultName = "🧪 Imported Consumables";
+                color = "#750027";
+            } else if (mode === "weapon") {
+                settingKey = "weaponFolderName";
+                defaultName = "⚔️ Imported Weapons";
+                color = "#002b3d"; // Deep Blue/Teal
+            }
+
+            const subFolderName = game.settings.get("dh-statblock-importer", settingKey) || defaultName;
+            
+            // 3. Find or Create Subfolder (Parent = Root)
+            targetFolder = game.folders.find(f => f.name === subFolderName && f.type === "Item" && f.folder?.id === rootFolder.id);
+            if (!targetFolder) {
+                targetFolder = await Folder.create({ 
+                    name: subFolderName, 
+                    type: "Item", 
+                    color: color,
+                    folder: rootFolder.id // Set parent
+                });
+            }
+
+        } else {
+            // Actor Folder Logic (Existing)
+            const advName = game.settings.get("dh-statblock-importer", "adversaryFolderName");
+            const envName = game.settings.get("dh-statblock-importer", "environmentFolderName");
+            
+            if (mode === "environment") {
+                 let f = game.folders.find(f => f.name === envName && f.type === "Actor");
+                 if (!f) f = await Folder.create({ name: envName, type: "Actor", color: "#2a3d00" });
+                 targetFolder = f;
+            } else {
+                 let f = game.folders.find(f => f.name === advName && f.type === "Actor");
+                 if (!f) f = await Folder.create({ name: advName, type: "Actor", color: "#430047" });
+                 targetFolder = f;
+            }
+        }
     } catch (error) {
-      StatblockImporter.errorLog("Failed to create folders", error);
-      ui.notifications.error("Failed to create import folders.");
-      return;
+        StatblockImporter.errorLog("Failed to create/find folders", error);
+        return;
     }
 
-    // Progress notification for batch imports
-    let progressNotification = null;
-    if (isMultiple) {
-      progressNotification = ui.notifications.info(`Importing statblocks... (0/${totalBlocks})`, { progress: true });
-    }
+    const progressNotification = (blocks.length > 1) 
+        ? ui.notifications.info(`Importing... (0/${totalBlocks})`, { progress: true }) 
+        : null;
 
     for (let i = 0; i < blocks.length; i++) {
-      const block = blocks[i];
-      const blockIndex = i + 1;
-
-      // Update progress bar for batch imports
-      if (progressNotification) {
-        const pct = blockIndex / totalBlocks;
-        progressNotification.update({ pct: pct, message: `Importing statblocks... (${blockIndex}/${totalBlocks})` });
-      }
-
-      try {
-        StatblockImporter.debugLog(`Parsing block ${blockIndex}/${totalBlocks}`, { rawText: block });
-
-        // Parsing happens here. If validation fails (e.g., wrong type), parseStatblockData throws Error
-        const result = await StatblockImporter.parseStatblockData(block, forceActorType);
-
-        StatblockImporter.debugLog(`Parsed block ${blockIndex}: ${result.name}`, {
-          actorType: result.actorType,
-          systemData: result.systemData,
-          itemsCount: result.items?.length || 0
-        });
-
-        // Determine correct folder based on hierarchy requirements
-        let targetFolder;
-        if (result.actorType === "environment") {
-            // It is an environment, organize by Type -> Tier using ENVIRONMENT colors
-            targetFolder = await StatblockImporter._ensureFolderHierarchy(
-                environmentFolder,
-                result.systemData.type,
-                result.systemData.tier,
-                StatblockImporter.ENVIRONMENT_TYPE_COLORS
-            );
-        } else {
-            // It is an adversary, organize by Type -> Tier using ADVERSARY colors
-            targetFolder = await StatblockImporter._ensureFolderHierarchy(
-                adversaryFolder, 
-                result.systemData.type, 
-                result.systemData.tier,
-                StatblockImporter.TYPE_COLORS
-            );
+        const block = blocks[i];
+        if (progressNotification) {
+            progressNotification.update({ pct: (i + 1) / totalBlocks, message: `Importing... (${i + 1}/${totalBlocks})` });
         }
 
-        const actorData = {
-          name: result.name,
-          type: result.actorType,
-          system: result.systemData,
-          items: result.items,
-          folder: targetFolder?.id,
-          img: result.actorType === "environment"
-            ? "icons/environment/wilderness/cave-entrance.webp"
-            : "modules/dh-statblock-importer/assets/images/skull.webp"
-        };
+        try {
+            // Check for Custom Image in DOM
+            let finalImg = null;
+            if (previewBox) {
+                const imgEl = previewBox.querySelector(`.dh-preview-img[data-idx="${i}"]`);
+                if (imgEl) finalImg = imgEl.getAttribute("src");
+            }
 
-        StatblockImporter.debugLog(`Creating actor: ${result.name}`, actorData);
+            if (isItemMode) {
+                let result;
+                if (mode === "weapon") {
+                    result = StatblockImporter.parseWeaponData(block);
+                } else {
+                    result = StatblockImporter.parseSimpleItemData(block, mode);
+                }
 
-        // Actual creation. This is skipped if parseStatblockData throws an error.
-        const newActor = await Actor.create(actorData);
-        if (newActor) {
-          createdActors.push(newActor);
-          StatblockImporter.debugLog(`Successfully created actor: ${newActor.name} (ID: ${newActor.id})`);
+                const itemData = {
+                    name: result.name,
+                    type: result.type,
+                    system: result.system,
+                    img: finalImg || result.img, 
+                    folder: targetFolder?.id
+                };
+                const newItem = await Item.create(itemData);
+                if (newItem) createdObjects.push(newItem);
+
+            } else {
+                const result = await StatblockImporter.parseStatblockData(block, mode);
+                
+                let actorFolder = targetFolder;
+                if (result.actorType === "environment") {
+                    actorFolder = await StatblockImporter._ensureFolderHierarchy(
+                        targetFolder,
+                        result.systemData.type,
+                        result.systemData.tier,
+                        StatblockImporter.ENVIRONMENT_TYPE_COLORS
+                    );
+                } else {
+                    actorFolder = await StatblockImporter._ensureFolderHierarchy(
+                        targetFolder, 
+                        result.systemData.type, 
+                        result.systemData.tier,
+                        StatblockImporter.TYPE_COLORS
+                    );
+                }
+
+                // Default if not custom
+                const defaultActorImg = result.actorType === "environment"
+                    ? "icons/environment/wilderness/cave-entrance.webp"
+                    : "modules/dh-statblock-importer/assets/images/skull.webp";
+
+                const actorData = {
+                    name: result.name,
+                    type: result.actorType,
+                    system: result.systemData,
+                    items: result.items,
+                    folder: actorFolder?.id,
+                    img: finalImg || defaultActorImg
+                };
+                
+                const newActor = await Actor.create(actorData);
+                if (newActor) createdObjects.push(newActor);
+            }
+
+        } catch (error) {
+            const firstLine = block.split(/\r?\n/)[0] || "Unknown";
+            failedBlocks.push({ index: i + 1, name: firstLine, error: error.message });
+            StatblockImporter.errorLog(`Failed to import block ${i + 1}`, error);
         }
-
-      } catch (error) {
-        // Block creation failed, logging error and continuing to next block
-        const firstLine = block.split(/\r?\n/)[0] || "Unknown";
-        failedBlocks.push({ index: blockIndex, name: firstLine, error: error.message });
-
-        StatblockImporter.errorLog(`Failed to import block ${blockIndex}: ${firstLine}`, error, {
-          blockIndex,
-          rawText: block,
-          forceActorType
-        });
-      }
     }
 
-    // Complete progress bar
-    if (progressNotification) {
-      progressNotification.update({ pct: 1, message: "Import complete!" });
+    if (progressNotification) progressNotification.update({ pct: 1, message: "Import complete!" });
+
+    if (createdObjects.length > 0) {
+        if (blocks.length > 1) ui.notifications.info(`Imported ${createdObjects.length} objects.`);
+        if (createdObjects.length === 1 && !blocks.length > 1) createdObjects[0].sheet.render(true);
     }
 
-    // Show results
-    if (createdActors.length > 0) {
-      if (isMultiple) {
-        ui.notifications.info(`Successfully imported ${createdActors.length}/${totalBlocks} actors.`);
-      }
-      // If single, open the sheet
-      if (createdActors.length === 1 && !isMultiple) {
-        createdActors[0].sheet.render(true);
-      }
-    }
-
-    // Report failures
     if (failedBlocks.length > 0) {
-      ui.notifications.warn(`Failed to import ${failedBlocks.length} statblock(s). Check console for details.`);
-      console.warn("DH Importer | Failed imports:", failedBlocks);
+        ui.notifications.warn(`Failed to import ${failedBlocks.length} items. Check console.`);
     }
   }
 
   /**
    * Helper to ensure the folder hierarchy (Type -> Tier) exists inside the root folder.
-   * @param {Folder} rootFolder The root "Imported Adversaries/Environments" folder
-   * @param {string} type The adversary/environment type (e.g., "solo", "social")
-   * @param {number} tier The tier number (e.g., 1)
-   * @param {Object} colorMap The map of colors to use for the type folder
-   * @returns {Promise<Folder>} The final folder where the actor should be placed
    */
   static async _ensureFolderHierarchy(rootFolder, type, tier, colorMap) {
       if (!type) type = "Unknown";
       
-      // 1. Resolve Type Name (Capitalized) and Color
       const typeKey = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
-      
-      // Look up color in the provided map, fallback to Unknown key, fallback to grey
       const color = colorMap[typeKey] || colorMap["Unknown"] || "#333333";
 
-      // 2. Find or Create Type Folder (Parent: Root)
-      // Must check f.folder?.id (v12/v13 structure) or f.folder (v10 structure). In V12+, folder references are typically IDs.
       let typeFolder = game.folders.find(f => f.name === typeKey && f.type === "Actor" && f.folder?.id === rootFolder.id);
       
       if (!typeFolder) {
@@ -544,11 +563,10 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               type: "Actor",
               folder: rootFolder.id,
               color: color,
-              sorting: "a" // Sort alphabetically
+              sorting: "a"
           });
       }
 
-      // 3. Find or Create Tier Folder (Parent: Type)
       const tierName = `Tier ${tier}`;
       let tierFolder = game.folders.find(f => f.name === tierName && f.type === "Actor" && f.folder?.id === typeFolder.id);
       
@@ -565,49 +583,212 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   }
 
   /* -------------------------------------------- */
-  /* Parsing Logic                               */
+  /* Splitter Logic                              */
   /* -------------------------------------------- */
 
   /**
-   * Detects and splits multiple statblocks in a text.
-   * Returns an array of strings, each containing a complete statblock.
+   * Detects and splits multiple statblocks (Actors) based on "Tier X".
    */
   static splitStatblocks(text) {
     const lines = text.split(/\r?\n/);
-    // Accepts any type after "Tier X", including Horde with HP
     const tierRegex = /^Tier\s+\d+\s+\S+(?:\s*\(\d+\/HP\))?$/i;
-
-    // Find indices where new statblocks begin (Tier line)
     const tierIndices = [];
     for (let i = 0; i < lines.length; i++) {
-      if (tierRegex.test(lines[i].trim())) {
-        tierIndices.push(i);
-      }
+      if (tierRegex.test(lines[i].trim())) tierIndices.push(i);
     }
 
-    // If 0 or 1 tier, return the original text as a single block
-    if (tierIndices.length <= 1) {
-      return [text];
-    }
+    if (tierIndices.length <= 1) return [text];
 
-    // Split into blocks - each block starts at the line BEFORE Tier (Actor Name)
     const blocks = [];
     for (let i = 0; i < tierIndices.length; i++) {
       const nameLineIndex = tierIndices[i] - 1;
       const startIndex = nameLineIndex >= 0 ? nameLineIndex : tierIndices[i];
       const endIndex = (i + 1 < tierIndices.length) ? tierIndices[i + 1] - 1 : lines.length;
-
       const blockLines = lines.slice(startIndex, endIndex);
       const blockText = blockLines.join("\n").trim();
-
-      if (blockText.length > 0) {
-        blocks.push(blockText);
-      }
+      if (blockText.length > 0) blocks.push(blockText);
     }
-
     return blocks;
   }
 
+  /**
+   * Detects and splits multiple Items based on blank lines.
+   * Assumes blocks of text separated by at least one empty line are distinct items.
+   */
+  static splitSimpleItems(text) {
+      // Split by double newlines (one or more empty lines in between text)
+      return text.split(/\n\s*\n/).map(t => t.trim()).filter(t => t.length > 0);
+  }
+
+  /* -------------------------------------------- */
+  /* Parsing Logic                               */
+  /* -------------------------------------------- */
+
+  /**
+   * Parses simple item format (Loot/Consumable):
+   * Line 1: Title
+   * Line 2+: Description
+   */
+  static parseSimpleItemData(text, type) {
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length === 0) throw new Error("Empty item block");
+      
+      const name = lines[0];
+      const description = lines.length > 1 ? lines.slice(1).join(" ") : "";
+      
+      const img = StatblockImporter._getDefaultImage(type);
+
+      return {
+          name,
+          type,
+          img,
+          system: {
+              description: description
+          }
+      };
+  }
+
+  /**
+   * Parses Weapon format:
+   * Line 1: Tier(opt) Name Trait Range Damage Burden Feature(opt)
+   * Line 2+: Description
+   */
+  static parseWeaponData(text) {
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length === 0) throw new Error("Empty weapon block");
+
+      let firstLine = lines[0];
+      const descriptionLines = lines.length > 1 ? lines.slice(1) : [];
+
+      // 1. Extract Tier (optional)
+      let tier = 1;
+      const tierMatch = firstLine.match(/^Tier\s+(\d+)\s+/i);
+      if (tierMatch) {
+          tier = parseInt(tierMatch[1], 10);
+          firstLine = firstLine.substring(tierMatch[0].length); // Remove Tier X from start
+      }
+
+      // 2. Main Regex for: Trait | Range | Damage | Burden
+      // We look for this sequence. Everything before is Name. Everything after is Feature.
+      const traitRegex = "(Agility|Finesse|Strength|Knowledge|Presence|Instinct)";
+      const rangeRegex = "(Melee|Very Close|Close|Far|Very Far)";
+      const burdenRegex = "(One-Handed|Two-Handed)";
+      const damageRegex = "(\\d*d\\d+(?:[+-]\\d+)?\\s+\\S+)"; // e.g. "d8 phy" or "1d8+3 mag/phy"
+
+      // Composite regex: Trait -space- Range -space- Damage -space- Burden
+      const coreRegex = new RegExp(`${traitRegex}\\s+${rangeRegex}\\s+${damageRegex}\\s+${burdenRegex}`, "i");
+      
+      const match = firstLine.match(coreRegex);
+
+      if (!match) {
+          throw new Error("Invalid weapon format. Could not find sequence: Trait Range Damage Burden");
+      }
+
+      // Extract parts
+      const traitRaw = match[1];
+      const rangeRaw = match[2];
+      const damageRaw = match[3];
+      const burdenRaw = match[4];
+
+      // Name is everything before the match
+      const name = firstLine.substring(0, match.index).trim();
+      
+      // Feature is everything after the match
+      const featureText = firstLine.substring(match.index + match[0].length).trim();
+
+      // Combine Feature + Description
+      let fullDescription = "";
+      if (featureText) fullDescription += `<p><strong>${featureText}</strong></p>`;
+      if (descriptionLines.length > 0) fullDescription += `<p>${descriptionLines.join(" ")}</p>`;
+
+      // --- MAPPINGS ---
+      
+      // Trait -> Lowercase
+      const trait = traitRaw.toLowerCase();
+
+      // Range -> CamelCase
+      const rangeMap = {
+          "melee": "melee",
+          "very close": "veryClose",
+          "close": "close",
+          "far": "far",
+          "very far": "veryFar"
+      };
+      const range = rangeMap[rangeRaw.toLowerCase()] || "melee";
+
+      // Burden -> CamelCase
+      const burden = burdenRaw.toLowerCase() === "one-handed" ? "oneHanded" : "twoHanded";
+
+      // Damage Parsing
+      const damageParts = [];
+      const dmgParse = damageRaw.match(/^(\d*)d(\d+)([+-]\d+)?\s+(.+)$/);
+      
+      if (dmgParse) {
+          const flatMultStr = dmgParse[1]; // Empty means 1
+          const dieSize = `d${dmgParse[2]}`;
+          const bonusStr = dmgParse[3]; // +X or -X
+          const typeStr = dmgParse[4].toLowerCase(); // phy or phy/mag
+
+          const flatMultiplier = flatMultStr ? parseInt(flatMultStr, 10) : 1;
+          const bonus = bonusStr ? parseInt(bonusStr.replace(/\s/g, ""), 10) : null;
+
+          // Parse Types
+          const rawTypes = typeStr.split("/");
+          const types = [];
+          rawTypes.forEach(t => {
+              if (t.includes("phy")) types.push("physical");
+              if (t.includes("mag")) types.push("magical");
+          });
+
+          // Construct JSON Object
+          const damagePart = {
+              "type": types,
+              "value": {
+                  "multiplier": "prof", // Default per JSON example, though weapons usually just use flat stats? Sticking to prompt.
+                  "dice": dieSize,
+                  "flatMultiplier": flatMultiplier,
+                  "bonus": bonus,
+                  "custom": { "enabled": false, "formula": "" }
+              },
+              "applyTo": "hitPoints",
+              "resultBased": false,
+              "valueAlt": { // Default boilerplate
+                  "multiplier": "prof",
+                  "flatMultiplier": 1,
+                  "dice": "d6",
+                  "bonus": null,
+                  "custom": { "enabled": false, "formula": "" }
+              },
+              "base": false
+          };
+          damageParts.push(damagePart);
+      }
+
+      // --- RESULT ---
+      return {
+          name,
+          type: "weapon",
+          img: StatblockImporter._getDefaultImage("weapon"),
+          system: {
+              tier: tier,
+              burden: burden,
+              description: fullDescription,
+              attack: {
+                  range: range,
+                  roll: { trait: trait },
+                  damage: {
+                      parts: damageParts,
+                      includeBase: false,
+                      direct: false
+                  }
+              }
+          }
+      };
+  }
+
+  /**
+   * Parses complex Actor Statblocks
+   */
   static async parseStatblockData(text, forceActorType = null) {
       StatblockImporter.registerSettings();
 
@@ -634,7 +815,6 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // --- ADVERSARY COMPENDIUM SETUP ---
-      // Used for Potential Adversaries lookup
       const selectedActorPacks = game.settings.get("dh-statblock-importer", "selectedActorCompendiums") || ["daggerheart.adversaries"];
       let adversaryIndex = [];
 
@@ -642,16 +822,12 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           const pack = game.packs.get(packId);
           if (pack) {
               const index = await pack.getIndex({fields: ["name", "type"]});
-              // Combine all indices into a single array
               index.forEach(i => adversaryIndex.push(i));
           }
       }
 
       // --- INITIAL SETUP ---
-
       const name = rawLines[0];
-
-      // Use forced actor type from combobox
       let actorType = forceActorType || "adversary"; 
 
       const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -670,14 +846,11 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       let featureBlockLines = featuresIndex !== -1 ? rawLines.slice(featuresIndex + 1) : [];
 
       // --- MULTILINE PARSING ---
-      
       let descriptionBuffer = [];
       let motivesBuffer = [];
       let impulsesBuffer = [];
       let potentialAdvBuffer = [];
-      
       let captureState = "none"; 
-      
       let statSegments = [];
 
       const isStatLine = (line) => {
@@ -694,14 +867,13 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       for (let i = 0; i < statBlockLines.length; i++) {
           const line = statBlockLines[i];
 
-          // 1. Tier/Type and Horde HP
+          // Tier/Type
           const tierMatch = line.match(/^Tier\s+(\d+)\s+(.+)$/i);
           if (tierMatch) {
               systemData.tier = parseInt(tierMatch[1], 10);
               let rawType = tierMatch[2].trim();
 
               const hordeMatch = rawType.match(/Horde\s*\((\d+)\/HP\)/i);
-
               if (hordeMatch) {
                   systemData.type = "horde";
                   systemData.hordeHp = parseInt(hordeMatch[1], 10);
@@ -709,9 +881,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   systemData.type = rawType.toLowerCase();
               }
 
-              // Validate adversary type (only for adversaries, not environments)
               if (actorType === "adversary" && !StatblockImporter.VALID_ADVERSARY_TYPES.includes(systemData.type)) {
-                  // This error is caught in _onParse / _onValidate, preventing creation
                   throw new Error(`Invalid adversary type: "${rawType}". Valid types are: ${StatblockImporter.VALID_ADVERSARY_TYPES.join(", ")}`);
               }
 
@@ -719,7 +889,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               continue;
           }
 
-          // 2. Buffer Start Markers
+          // Buffer Start Markers
           const motivesMatch = line.match(/^Motives\s*(?:&|and)\s*Tactics:\s*(.*)$/i);
           if (motivesMatch) {
               captureState = "motives";
@@ -739,14 +909,14 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               continue;
           }
 
-          // 3. Stat Line
+          // Stat Line
           if (isStatLine(line)) {
               const parts = line.split("|").map(p => p.trim()).filter(p => p.length > 0);
               statSegments.push(...parts);
               continue; 
           }
 
-          // 4. Free Text
+          // Free Text
           if (i > 0 && captureState !== "none") {
               if (captureState === "description") descriptionBuffer.push(line);
               else if (captureState === "motives") motivesBuffer.push(line);
@@ -756,36 +926,27 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // --- DATA STRUCTURING ---
-      
       if (descriptionBuffer.length > 0) systemData.description = descriptionBuffer.join(" ");
       
       if (actorType === "environment") {
-          // Environments
           if (impulsesBuffer.length > 0) systemData.impulses = impulsesBuffer.join(" ");
           
-          // --- POTENTIAL ADVERSARIES LOGIC ---
           if (potentialAdvBuffer.length > 0) {
               const advText = potentialAdvBuffer.join(" ");
               systemData.notes = advText;
-
               systemData.potentialAdversaries = {};
               
               const groupRegex = /([^(,]+)\s*\(([^)]+)\)/g;
               let match;
-              
               while ((match = groupRegex.exec(advText)) !== null) {
                   const groupLabel = match[1].trim();
                   const actorsList = match[2];
-                  
                   const actorNames = actorsList.split(",").map(a => a.trim());
                   const foundUuids = [];
 
-                  // Search UUIDs in configured actor compendiums
                   for (const actorName of actorNames) {
                       const found = adversaryIndex.find(a => a.name.toLowerCase() === actorName.toLowerCase() && a.type === "adversary");
-                      if (found) {
-                          foundUuids.push(found.uuid);
-                      }
+                      if (found) foundUuids.push(found.uuid);
                   }
 
                   const groupId = foundry.utils.randomID();
@@ -796,22 +957,19 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               }
           }
       } else {
-          // Adversaries
           if (motivesBuffer.length > 0) systemData.motivesAndTactics = motivesBuffer.join(" ");
-          
           systemData.resources = { hitPoints: { value: 0 }, stress: { value: 0 } };
           systemData.attack = { roll: {}, img: "icons/magic/death/skull-humanoid-white-blue.webp", damage: { parts: [], includeBase: false, direct: false } };
           systemData.experiences = {};
       }
 
-      // --- PROCESS SEGMENTS (Common) ---
+      // --- PROCESS SEGMENTS ---
       for (let segment of statSegments) {
           const difficultyMatch = segment.match(/Diffi\s*culty:\s*(\d+)/i);
           if (difficultyMatch) systemData.difficulty = parseInt(difficultyMatch[1], 10);
 
           if (actorType === "environment") continue;
 
-          // --- ADVERSARY STATS ---
           const thresholdsMatch = segment.match(/Thresholds:\s*(\d+)\s*\/\s*(\d+)/i);
           if (thresholdsMatch) {
               systemData.damageThresholds = { major: parseInt(thresholdsMatch[1], 10), severe: parseInt(thresholdsMatch[2], 10) };
@@ -840,17 +998,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               }
           }
 
-          /**
-           * Damage Regex Explanation:
-           * 1. ^(\d+)d(\d+)       -> Matches "1d10" (Dice Count & Die Size)
-           * 2. (?:\s* -> Start optional non-capturing group for spacing
-           * 3. ([+\-]\s*\d+)      -> Capturing group for Bonus (e.g. "+3", " + 3"). Allows space inside.
-           * 4. )?                 -> End optional modifier group
-           * 5. \s+(.+)            -> Matches space and then the Type string (e.g. " phy")
-           */
           const damageDiceRegex = /^(\d+)d(\d+)(?:\s*([+\-]\s*\d+))?\s+(.+)$/i;
           const damageStaticRegex = /^(\d+)\s+(.+)$/i;
-
           let dmgMatch = segment.match(damageDiceRegex);
           let isStatic = false;
 
@@ -861,9 +1010,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
           if (dmgMatch) {
               const types = [];
-              // If static, types is in group 2. If dice, types is in group 4.
               const rawTypeString = isStatic ? dmgMatch[2] : dmgMatch[4];
-              
               const rawTypes = rawTypeString.split("/").map(t => t.trim().toLowerCase());
               if (rawTypes.includes("phy") || rawTypes.includes("physical")) types.push("physical");
               if (rawTypes.includes("mag") || rawTypes.includes("magical")) types.push("magical");
@@ -879,10 +1026,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               } else {
                   damagePart.value.flatMultiplier = parseInt(dmgMatch[1], 10);
                   damagePart.value.dice = `d${dmgMatch[2]}`;
-                  
-                  // Handle optional bonus (Group 3)
                   if (dmgMatch[3]) {
-                      // Remove all spaces to handle " + 3" becoming "+3"
                       const cleanBonus = dmgMatch[3].replace(/\s/g, "");
                       damagePart.value.bonus = parseInt(cleanBonus, 10);
                   }
@@ -890,8 +1034,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               if (types.length > 0) systemData.attack.damage.parts = [damagePart];
           }
           
-           // Experience
-            if (segment.startsWith("Experience:")) {
+           if (segment.startsWith("Experience:")) {
                 const expContent = segment.substring("Experience:".length).trim();
                 const expItems = expContent.split(",").map(e => e.trim());
     
@@ -901,12 +1044,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                         const expName = expMatch[1].trim();
                         const expValue = parseInt(expMatch[2], 10);
                         const id = foundry.utils.randomID();
-                        
-                        systemData.experiences[id] = {
-                            name: expName,
-                            value: expValue,
-                            description: ""
-                        };
+                        systemData.experiences[id] = { name: expName, value: expValue, description: "" };
                     }
                 }
             }
@@ -920,14 +1058,12 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
           const found = featureIndexMap.get(currentFeature.name.toLowerCase());
           if (found) {
-              StatblockImporter.debugLog(`Found compendium match for feature: ${currentFeature.name}`, { uuid: found.uuid });
               try {
                   const doc = await fromUuid(found.uuid);
                   if (doc) {
                       const itemData = doc.toObject();
                       foundry.utils.mergeObject(itemData, { flags: { dhImporter: { isCompendium: true } } });
                       items.push(itemData);
-                      StatblockImporter.debugLog(`Using compendium feature: ${doc.name}`);
                       return;
                   }
               } catch (error) {
@@ -940,7 +1076,6 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               const lines = finalDesc.split("</p>").map(l => l.replace("<p>", "").trim()).filter(l => l);
               let listBuffer = [];
               let htmlParts = [];
-              
               for (let l of lines) {
                   if (l.startsWith("•") || l.startsWith("- ")) {
                       listBuffer.push(`<li>${l.substring(1).trim()}</li>`);
@@ -962,7 +1097,6 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
       for (const line of featureBlockLines) {
           const featureMatch = line.match(/^(.+?)\s*[-–—]\s*(Passive|Action|Reaction):\s*(.*)$/i);
-          
           if (featureMatch) {
               if (currentFeature) {
                   await pushCurrentFeature();
@@ -986,14 +1120,12 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           } else {
               if (currentFeature) {
                   let cleanedLine = replaceNameInText(line);
-                  let desc = currentFeature.system.description.replace("</p>", ""); // Opens the tag
-                  
+                  let desc = currentFeature.system.description.replace("</p>", "");
                   if (line.trim().startsWith("•") || line.trim().startsWith("- ")) {
                       desc += `</p><p>${cleanedLine}</p>`;
                   } else {
                       desc += " " + cleanedLine + "</p>";
                   }
-                  
                   currentFeature.system.description = desc;
               }
           }

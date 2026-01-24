@@ -102,9 +102,21 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         // --- General Settings ---
         const adversaryFolderName = game.settings.get("dh-statblock-importer", "adversaryFolderName");
         const environmentFolderName = game.settings.get("dh-statblock-importer", "environmentFolderName");
+        const lootFolderName = game.settings.get("dh-statblock-importer", "lootFolderName");
+        const consumableFolderName = game.settings.get("dh-statblock-importer", "consumableFolderName");
+        const weaponFolderName = game.settings.get("dh-statblock-importer", "weaponFolderName");
         const debugMode = game.settings.get("dh-statblock-importer", "debugMode");
 
-        return { featureCompendiums, actorCompendiums, adversaryFolderName, environmentFolderName, debugMode };
+        return { 
+            featureCompendiums, 
+            actorCompendiums, 
+            adversaryFolderName, 
+            environmentFolderName, 
+            lootFolderName,
+            consumableFolderName,
+            weaponFolderName,
+            debugMode 
+        };
     }
 
     static async formHandler(event, form, formData) {
@@ -123,14 +135,17 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         // Salvar General Settings (Folder Names)
         const adversaryFolderInput = form.querySelector("input[name='adversaryFolderName']");
         const environmentFolderInput = form.querySelector("input[name='environmentFolderName']");
+        const lootFolderInput = form.querySelector("input[name='lootFolderName']");
+        const consumableFolderInput = form.querySelector("input[name='consumableFolderName']");
+        const weaponFolderInput = form.querySelector("input[name='weaponFolderName']");
         const debugModeInput = form.querySelector("input[name='debugMode']");
 
-        if (adversaryFolderInput?.value) {
-            await game.settings.set("dh-statblock-importer", "adversaryFolderName", adversaryFolderInput.value);
-        }
-        if (environmentFolderInput?.value) {
-            await game.settings.set("dh-statblock-importer", "environmentFolderName", environmentFolderInput.value);
-        }
+        if (adversaryFolderInput?.value) await game.settings.set("dh-statblock-importer", "adversaryFolderName", adversaryFolderInput.value);
+        if (environmentFolderInput?.value) await game.settings.set("dh-statblock-importer", "environmentFolderName", environmentFolderInput.value);
+        if (lootFolderInput?.value) await game.settings.set("dh-statblock-importer", "lootFolderName", lootFolderInput.value);
+        if (consumableFolderInput?.value) await game.settings.set("dh-statblock-importer", "consumableFolderName", consumableFolderInput.value);
+        if (weaponFolderInput?.value) await game.settings.set("dh-statblock-importer", "weaponFolderName", weaponFolderInput.value);
+        
         await game.settings.set("dh-statblock-importer", "debugMode", debugModeInput?.checked || false);
 
         await game.settings.set("dh-statblock-importer", "configInitialized", true);
