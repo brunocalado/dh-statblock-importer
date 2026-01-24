@@ -10,6 +10,30 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   /** Valid adversary types (lowercase) */
   static VALID_ADVERSARY_TYPES = ["bruiser", "horde", "leader", "minion", "ranged", "skulk", "social", "solo", "standard", "support"];
 
+  /** Folder Colors based on Adversary Type */
+  static TYPE_COLORS = {
+      "Bruiser": "#4a0404",      // Deep Blood Red
+      "Horde": "#0f3d0f",        // Dark Forest Green
+      "Leader": "#5c4905",       // Dark Bronze/Brown
+      "Minion": "#2f3f4f",       // Dark Slate
+      "Ranged": "#002366",       // Navy Blue
+      "Skulk": "#1a0033",        // Deep Indigo/Black
+      "Social": "#660033",       // Deep Maroon/Pink
+      "Solo": "#000000",         // Black
+      "Standard": "#3b1e08",     // Dark Chocolate
+      "Support": "#004d40",      // Deep Teal
+      "Unknown": "#333333"       // Dark Gray
+  };
+
+  /** Folder Colors based on Environment Type */
+  static ENVIRONMENT_TYPE_COLORS = {
+      "Event": "#4a0404",        // Deep Blood Red
+      "Traversal": "#0f3d0f",    // Dark Forest Green
+      "Exploration": "#5c4905",  // Dark Bronze/Brown
+      "Social": "#002366",       // Navy Blue
+      "Unknown": "#333333"       // Dark Gray
+  };
+
   /** @override */
   static DEFAULT_OPTIONS = {
     id: "dh-statblock-importer",
@@ -363,7 +387,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     const createdActors = [];
     const failedBlocks = [];
 
-    // Get or create folders
+    // Get or create folders (ROOT LEVEL)
     const adversaryFolderName = game.settings.get("dh-statblock-importer", "adversaryFolderName");
     const environmentFolderName = game.settings.get("dh-statblock-importer", "environmentFolderName");
 
@@ -417,7 +441,25 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           itemsCount: result.items?.length || 0
         });
 
-        const targetFolder = result.actorType === "environment" ? environmentFolder : adversaryFolder;
+        // Determine correct folder based on hierarchy requirements
+        let targetFolder;
+        if (result.actorType === "environment") {
+            // It is an environment, organize by Type -> Tier using ENVIRONMENT colors
+            targetFolder = await StatblockImporter._ensureFolderHierarchy(
+                environmentFolder,
+                result.systemData.type,
+                result.systemData.tier,
+                StatblockImporter.ENVIRONMENT_TYPE_COLORS
+            );
+        } else {
+            // It is an adversary, organize by Type -> Tier using ADVERSARY colors
+            targetFolder = await StatblockImporter._ensureFolderHierarchy(
+                adversaryFolder, 
+                result.systemData.type, 
+                result.systemData.tier,
+                StatblockImporter.TYPE_COLORS
+            );
+        }
 
         const actorData = {
           name: result.name,
@@ -473,6 +515,53 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       ui.notifications.warn(`Failed to import ${failedBlocks.length} statblock(s). Check console for details.`);
       console.warn("DH Importer | Failed imports:", failedBlocks);
     }
+  }
+
+  /**
+   * Helper to ensure the folder hierarchy (Type -> Tier) exists inside the root folder.
+   * @param {Folder} rootFolder The root "Imported Adversaries/Environments" folder
+   * @param {string} type The adversary/environment type (e.g., "solo", "social")
+   * @param {number} tier The tier number (e.g., 1)
+   * @param {Object} colorMap The map of colors to use for the type folder
+   * @returns {Promise<Folder>} The final folder where the actor should be placed
+   */
+  static async _ensureFolderHierarchy(rootFolder, type, tier, colorMap) {
+      if (!type) type = "Unknown";
+      
+      // 1. Resolve Type Name (Capitalized) and Color
+      const typeKey = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
+      
+      // Look up color in the provided map, fallback to Unknown key, fallback to grey
+      const color = colorMap[typeKey] || colorMap["Unknown"] || "#333333";
+
+      // 2. Find or Create Type Folder (Parent: Root)
+      // Must check f.folder?.id (v12/v13 structure) or f.folder (v10 structure). In V12+, folder references are typically IDs.
+      let typeFolder = game.folders.find(f => f.name === typeKey && f.type === "Actor" && f.folder?.id === rootFolder.id);
+      
+      if (!typeFolder) {
+          typeFolder = await Folder.create({
+              name: typeKey,
+              type: "Actor",
+              folder: rootFolder.id,
+              color: color,
+              sorting: "a" // Sort alphabetically
+          });
+      }
+
+      // 3. Find or Create Tier Folder (Parent: Type)
+      const tierName = `Tier ${tier}`;
+      let tierFolder = game.folders.find(f => f.name === tierName && f.type === "Actor" && f.folder?.id === typeFolder.id);
+      
+      if (!tierFolder) {
+          tierFolder = await Folder.create({
+              name: tierName,
+              type: "Actor",
+              folder: typeFolder.id,
+              sorting: "a"
+          });
+      }
+
+      return tierFolder;
   }
 
   /* -------------------------------------------- */
