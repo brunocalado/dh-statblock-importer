@@ -153,6 +153,16 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           });
       }
 
+      if (!game.settings.settings.has("dh-statblock-importer.armorFolderName")) {
+          game.settings.register("dh-statblock-importer", "armorFolderName", {
+              name: "Armor Folder Name",
+              scope: "world",
+              config: false,
+              type: String,
+              default: "🛡️ Imported Armors"
+          });
+      }
+
       // Debug Mode
       if (!game.settings.settings.has("dh-statblock-importer.debugMode")) {
           game.settings.register("dh-statblock-importer", "debugMode", {
@@ -223,6 +233,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       if (mode === "loot") return "icons/containers/chest/chest-reinforced-steel-green.webp";
       if (mode === "consumable") return "icons/consumables/potions/potion-flask-corled-pink-red.webp";
       if (mode === "weapon") return "icons/weapons/swords/sword-guard-flanged-purple.webp";
+      if (mode === "armor") return "icons/equipment/chest/breastplate-banded-leather-purple.webp";
       if (actorType === "environment") return "icons/environment/wilderness/cave-entrance.webp";
       return "modules/dh-statblock-importer/assets/images/skull.webp";
   }
@@ -243,7 +254,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     
     // Determine parsing strategy
     let blocks = [];
-    let isItemMode = (mode === "loot" || mode === "consumable" || mode === "weapon");
+    let isItemMode = (mode === "loot" || mode === "consumable" || mode === "weapon" || mode === "armor");
 
     if (isItemMode) {
         blocks = StatblockImporter.splitSimpleItems(text);
@@ -265,6 +276,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       try {
         if (mode === "weapon") {
             result = StatblockImporter.parseWeaponData(block);
+        } else if (mode === "armor") {
+            result = StatblockImporter.parseArmorData(block);
         } else if (mode === "loot" || mode === "consumable") {
             result = StatblockImporter.parseSimpleItemData(block, mode);
         } else {
@@ -304,18 +317,30 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           fullHtml += show("Tier", result.system.tier);
           fullHtml += show("Trait", result.system.attack.roll.trait);
           fullHtml += show("Range", result.system.attack.range);
-          
+
           if (result.system.attack.damage.parts.length > 0) {
               const part = result.system.attack.damage.parts[0];
               const dmgStr = `${part.value.flatMultiplier > 1 ? part.value.flatMultiplier : ""}${part.value.dice}${part.value.bonus ? (part.value.bonus > 0 ? "+"+part.value.bonus : part.value.bonus) : ""} ${part.type.join("/")}`;
               fullHtml += show("Damage", dmgStr);
           }
-          
+
           fullHtml += show("Burden", result.system.burden);
-          
+
           // Show combined description (Feature + Desc)
           const descPreview = result.system.description.length > 100 ? result.system.description.substring(0, 100) + "..." : result.system.description;
           fullHtml += `<div class="dh-preview-item success"><strong>Full Description:</strong><br><em style="font-size:0.9em">${descPreview}</em></div>`;
+
+      } else if (mode === "armor") {
+          // ARMOR PREVIEW
+          fullHtml += show("Type", "Armor");
+          fullHtml += show("Tier", result.system.tier);
+          fullHtml += show("Base Score", result.system.baseScore);
+          fullHtml += show("Thresholds", `${result.system.baseThresholds?.major || "?"}/${result.system.baseThresholds?.severe || "?"}`);
+
+          if (result.system.description) {
+              const descPreview = result.system.description.length > 100 ? result.system.description.substring(0, 100) + "..." : result.system.description;
+              fullHtml += `<div class="dh-preview-item success"><strong>Description:</strong><br><em style="font-size:0.9em">${descPreview}</em></div>`;
+          }
 
       } else if (isItemMode) {
           // SIMPLE ITEM PREVIEW
@@ -333,8 +358,76 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           fullHtml += show("Difficulty", data.difficulty);
 
           if (!isEnvironment) {
+             // ADVERSARY SPECIFIC FIELDS
              if (data.resources?.hitPoints?.max) fullHtml += show("HP", data.resources.hitPoints.max);
-             fullHtml += show("Attack", data.attack?.name);
+             if (data.resources?.stress?.max) fullHtml += show("Stress", data.resources.stress.max);
+
+             // Damage Thresholds
+             if (data.damageThresholds?.major || data.damageThresholds?.severe) {
+                 const threshStr = `${data.damageThresholds.major || "?"}/${data.damageThresholds.severe || "?"}`;
+                 fullHtml += show("Thresholds", threshStr);
+             }
+
+             // Attack details - separate fields
+             if (data.attack?.name) fullHtml += show("Attack", data.attack.name);
+             if (data.attack?.range) fullHtml += show("Range", data.attack.range);
+             if (data.attack?.roll?.bonus) fullHtml += show("ATK Bonus", data.attack.roll.bonus);
+
+             // Damage - dice and type separate
+             if (data.attack?.damage?.parts?.length > 0) {
+                 const part = data.attack.damage.parts[0];
+                 const dmgVal = part.value;
+                 let dmgDice = "";
+                 if (dmgVal.custom?.enabled && dmgVal.custom?.formula) {
+                     dmgDice = dmgVal.custom.formula;
+                 } else {
+                     dmgDice = `${dmgVal.flatMultiplier > 1 ? dmgVal.flatMultiplier : ""}${dmgVal.dice}${dmgVal.bonus ? (dmgVal.bonus > 0 ? "+"+dmgVal.bonus : dmgVal.bonus) : ""}`;
+                 }
+                 fullHtml += show("Damage", dmgDice);
+                 if (part.type?.length > 0) fullHtml += show("Damage Type", part.type.join("/"));
+             }
+
+             // Experiences
+             const expEntries = Object.values(data.experiences || {});
+             if (expEntries.length > 0) {
+                 const expStr = expEntries.map(e => `${e.name} ${e.value >= 0 ? "+"+e.value : e.value}`).join(", ");
+                 fullHtml += show("Experience", expStr);
+             }
+
+             // Motives & Tactics
+             if (data.motivesAndTactics) {
+                 const motivesPreview = data.motivesAndTactics.length > 80 ? data.motivesAndTactics.substring(0, 80) + "..." : data.motivesAndTactics;
+                 fullHtml += `<div class="dh-preview-item success"><strong>Motives:</strong> <em>${motivesPreview}</em></div>`;
+             }
+          } else {
+             // ENVIRONMENT SPECIFIC FIELDS
+             if (data.impulses) {
+                 const impulsesPreview = data.impulses.length > 80 ? data.impulses.substring(0, 80) + "..." : data.impulses;
+                 fullHtml += `<div class="dh-preview-item success"><strong>Impulses:</strong> <em>${impulsesPreview}</em></div>`;
+             }
+
+             // Potential Adversaries
+             const potAdvEntries = Object.values(data.potentialAdversaries || {});
+             if (potAdvEntries.length > 0) {
+                 const potAdvStr = potAdvEntries.map(p => `${p.name} (${p.quantity})`).join(", ");
+                 fullHtml += show("Potential Adversaries", potAdvStr);
+             }
+          }
+
+          // Description (both types)
+          if (data.description) {
+              const descPreview = data.description.length > 100 ? data.description.substring(0, 100) + "..." : data.description;
+              fullHtml += `<div class="dh-preview-item success"><strong>Description:</strong> <em style="font-size:0.9em">${descPreview}</em></div>`;
+          }
+
+          // Features - one per line with source indicator
+          if (result.items?.length > 0) {
+              fullHtml += `<div class="dh-preview-item success"><strong>Features (${result.items.length}):</strong></div>`;
+              for (const item of result.items) {
+                  const isCompendium = item.flags?.dhImporter?.isCompendium === true;
+                  const sourceTag = isCompendium ? '<span style="color:#48bb48">(Compendium)</span>' : '<span style="color:#ffaa00">(New)</span>';
+                  fullHtml += `<div class="dh-preview-subitem">• ${item.name} ${sourceTag}</div>`;
+              }
           }
       }
 
@@ -372,7 +465,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
     const text = textarea.value.trim();
     const mode = modeSelect?.value || "adversary";
-    const isItemMode = (mode === "loot" || mode === "consumable" || mode === "weapon");
+    const isItemMode = (mode === "loot" || mode === "consumable" || mode === "weapon" || mode === "armor");
 
     let blocks = [];
     if (isItemMode) {
@@ -418,6 +511,10 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                 settingKey = "weaponFolderName";
                 defaultName = "⚔️ Imported Weapons";
                 color = "#002b3d"; // Deep Blue/Teal
+            } else if (mode === "armor") {
+                settingKey = "armorFolderName";
+                defaultName = "🛡️ Imported Armors";
+                color = "#3d2b00"; // Bronze/Brown
             }
 
             const subFolderName = game.settings.get("dh-statblock-importer", settingKey) || defaultName;
@@ -475,6 +572,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                 let result;
                 if (mode === "weapon") {
                     result = StatblockImporter.parseWeaponData(block);
+                } else if (mode === "armor") {
+                    result = StatblockImporter.parseArmorData(block);
                 } else {
                     result = StatblockImporter.parseSimpleItemData(block, mode);
                 }
@@ -787,6 +886,74 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   }
 
   /**
+   * Parses Armor items
+   * Format: [Tier X] Name X / Y Z [FeatureName: FeatureDescription]
+   * Examples:
+   *   Improved Gambeson Armor 7 / 16 4 Flexible: +1 to Evasion
+   *   Tier 2 Improved Chainmail Armor 11 / 24 5 Heavy: −1 to Evasion
+   */
+  static parseArmorData(text) {
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length === 0) throw new Error("Empty armor block");
+
+      let firstLine = lines[0];
+      const descriptionLines = lines.length > 1 ? lines.slice(1) : [];
+
+      // 1. Extract Tier (optional)
+      let tier = 1;
+      const tierMatch = firstLine.match(/^Tier\s+(\d+)\s+/i);
+      if (tierMatch) {
+          tier = parseInt(tierMatch[1], 10);
+          firstLine = firstLine.substring(tierMatch[0].length);
+      }
+
+      // 2. Main Regex for: Thresholds (X / Y) and Base Score (Z)
+      // Pattern: Name ... X / Y Z [Feature]
+      const thresholdRegex = /(\d+)\s*\/\s*(\d+)\s+(\d+)(?:\s+(.*))?$/;
+      const match = firstLine.match(thresholdRegex);
+
+      if (!match) {
+          throw new Error("Invalid armor format. Could not find: Thresholds (X/Y) and Base Score");
+      }
+
+      const major = parseInt(match[1], 10);
+      const severe = parseInt(match[2], 10);
+      const baseScore = parseInt(match[3], 10);
+      const featureText = match[4]?.trim() || "";
+
+      // Name is everything before the thresholds
+      const name = firstLine.substring(0, match.index).trim();
+
+      // Build description: Feature (if exists and not "—") + description lines
+      let fullDescription = "";
+
+      // Parse feature if it's not empty or just a dash
+      if (featureText && featureText !== "—" && featureText !== "-") {
+          fullDescription += `<p><strong>${featureText}</strong></p>`;
+      }
+
+      if (descriptionLines.length > 0) {
+          fullDescription += `<p>${descriptionLines.join(" ")}</p>`;
+      }
+
+      // --- RESULT ---
+      return {
+          name,
+          type: "armor",
+          img: StatblockImporter._getDefaultImage("armor"),
+          system: {
+              tier: tier,
+              baseScore: baseScore,
+              baseThresholds: {
+                  major: major,
+                  severe: severe
+              },
+              description: fullDescription
+          }
+      };
+  }
+
+  /**
    * Parses complex Actor Statblocks
    */
   static async parseStatblockData(text, forceActorType = null) {
@@ -1090,6 +1257,9 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               if (listBuffer.length > 0) htmlParts.push(`<ul>${listBuffer.join("")}</ul>`);
               finalDesc = htmlParts.join("");
           }
+
+          // Wrap dice rolls in [[/r ]] format (e.g., 1d6, 2d8+3, 1d4-1)
+          finalDesc = finalDesc.replace(/\b(\d+d\d+(?:[+-]\d+)?)\b/g, '[[/r $1]]');
 
           currentFeature.system.description = finalDesc;
           items.push(currentFeature);
