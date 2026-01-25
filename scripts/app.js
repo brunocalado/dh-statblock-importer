@@ -163,6 +163,17 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           });
       }
 
+      // Separator Mode (blankLine or separator)
+      if (!game.settings.settings.has("dh-statblock-importer.separatorMode")) {
+          game.settings.register("dh-statblock-importer", "separatorMode", {
+              name: "Separator Mode",
+              scope: "world",
+              config: false,
+              type: String,
+              default: "blankLine"
+          });
+      }
+
       // Debug Mode
       if (!game.settings.settings.has("dh-statblock-importer.debugMode")) {
           game.settings.register("dh-statblock-importer", "debugMode", {
@@ -385,6 +396,18 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                  }
                  fullHtml += show("Damage", dmgDice);
                  if (part.type?.length > 0) fullHtml += show("Damage Type", part.type.join("/"));
+
+                 // Horde Damage (valueAlt)
+                 if (data.type === "horde" && part.valueAlt) {
+                     const altVal = part.valueAlt;
+                     let hordeDmg = "";
+                     if (altVal.custom?.enabled && altVal.custom?.formula) {
+                         hordeDmg = altVal.custom.formula;
+                     } else {
+                         hordeDmg = `${altVal.flatMultiplier > 1 ? altVal.flatMultiplier : ""}${altVal.dice}${altVal.bonus ? (altVal.bonus > 0 ? "+"+altVal.bonus : altVal.bonus) : ""}`;
+                     }
+                     fullHtml += show("Horde Damage", hordeDmg);
+                 }
              }
 
              // Experiences
@@ -689,6 +712,14 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
    * Detects and splits multiple statblocks (Actors) based on "Tier X".
    */
   static splitStatblocks(text) {
+    const separatorMode = game.settings.get("dh-statblock-importer", "separatorMode") || "blankLine";
+
+    // If using === separator, split by that first
+    if (separatorMode === "separator") {
+        return text.split(/^===$/m).map(t => t.trim()).filter(t => t.length > 0);
+    }
+
+    // Default: detect by Tier line pattern
     const lines = text.split(/\r?\n/);
     const tierRegex = /^Tier\s+\d+\s+\S+(?:\s*\(\d+\/HP\))?$/i;
     const tierIndices = [];
@@ -711,11 +742,17 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   }
 
   /**
-   * Detects and splits multiple Items based on blank lines.
-   * Assumes blocks of text separated by at least one empty line are distinct items.
+   * Detects and splits multiple Items based on separator mode.
    */
   static splitSimpleItems(text) {
-      // Split by double newlines (one or more empty lines in between text)
+      const separatorMode = game.settings.get("dh-statblock-importer", "separatorMode") || "blankLine";
+
+      if (separatorMode === "separator") {
+          // Split by === separator
+          return text.split(/^===$/m).map(t => t.trim()).filter(t => t.length > 0);
+      }
+
+      // Default: split by double newlines (one or more empty lines in between text)
       return text.split(/\n\s*\n/).map(t => t.trim()).filter(t => t.length > 0);
   }
 
@@ -1262,6 +1299,126 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           finalDesc = finalDesc.replace(/\b(\d+d\d+(?:[+-]\d+)?)\b/g, '[[/r $1]]');
 
           currentFeature.system.description = finalDesc;
+
+          // Detect actions in description and add them to system.actions
+          const detectedActions = {};
+
+          // Detect "Mark Stress" / "Mark a Stress" / "Mark 1 Stress"
+          if (/mark\s+(a\s+|1\s+)?stress/i.test(finalDesc)) {
+              const actionId = foundry.utils.randomID(16);
+              detectedActions[actionId] = {
+                  type: "effect",
+                  _id: actionId,
+                  systemPath: "actions",
+                  baseAction: false,
+                  description: "",
+                  chatDisplay: true,
+                  originItem: { type: "itemCollection" },
+                  actionType: "action",
+                  triggers: [],
+                  cost: [{
+                      scalable: false,
+                      key: "stress",
+                      value: 1,
+                      itemId: null,
+                      step: null,
+                      consumeOnSuccess: false
+                  }],
+                  uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
+                  effects: [],
+                  target: { type: "any", amount: null },
+                  name: "Mark Stress",
+                  range: ""
+              };
+          }
+
+          // Detect "Spend Fear" / "Spend a Fear" / "Spend 1 Fear"
+          if (/spend\s+(a\s+|1\s+)?fear/i.test(finalDesc)) {
+              const actionId = foundry.utils.randomID(16);
+              detectedActions[actionId] = {
+                  type: "effect",
+                  _id: actionId,
+                  systemPath: "actions",
+                  baseAction: false,
+                  description: "",
+                  chatDisplay: true,
+                  originItem: { type: "itemCollection" },
+                  actionType: "action",
+                  triggers: [],
+                  cost: [{
+                      scalable: false,
+                      key: "fear",
+                      value: 1,
+                      itemId: null,
+                      step: null,
+                      consumeOnSuccess: false
+                  }],
+                  uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
+                  effects: [],
+                  target: { type: "any", amount: null },
+                  name: "Spend Fear",
+                  range: ""
+              };
+          }
+
+          // Detect damage dice patterns (e.g., 1d10+3, 2d6 + 1, 1d12 - 2)
+          // Extract from [[/r ...]] wrapped dice rolls
+          const diceMatches = finalDesc.matchAll(/\[\[\/r\s+(\d+d\d+)(?:\s*([+-])\s*(\d+))?\]\]/g);
+          for (const match of diceMatches) {
+              const diceBase = match[1]; // e.g., "1d10"
+              const sign = match[2] || ""; // e.g., "+" or "-"
+              const modifier = match[3] || ""; // e.g., "3"
+              const formula = sign && modifier ? `${diceBase}${sign}${modifier}` : diceBase;
+
+              const actionId = foundry.utils.randomID(16);
+              detectedActions[actionId] = {
+                  type: "damage",
+                  _id: actionId,
+                  systemPath: "actions",
+                  baseAction: false,
+                  description: "",
+                  chatDisplay: true,
+                  originItem: { type: "itemCollection" },
+                  actionType: "action",
+                  triggers: [],
+                  cost: [],
+                  uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
+                  damage: {
+                      parts: [{
+                          value: {
+                              custom: { enabled: true, formula: formula },
+                              multiplier: "prof",
+                              flatMultiplier: 1,
+                              dice: "d6",
+                              bonus: null
+                          },
+                          applyTo: "hitPoints",
+                          type: ["physical"],
+                          base: false,
+                          resultBased: false,
+                          valueAlt: {
+                              multiplier: "prof",
+                              flatMultiplier: 1,
+                              dice: "d6",
+                              bonus: null,
+                              custom: { enabled: false, formula: "" }
+                          }
+                      }],
+                      includeBase: false,
+                      direct: false
+                  },
+                  target: { type: "any", amount: null },
+                  effects: [],
+                  name: `Damage (${formula})`,
+                  range: ""
+              };
+          }
+
+          // Add detected actions to feature if any were found
+          if (Object.keys(detectedActions).length > 0) {
+              currentFeature.system.actions = detectedActions;
+          }
+
           items.push(currentFeature);
       };
 

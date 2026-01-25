@@ -252,7 +252,9 @@ textarea[name="statblockText"]:focus {
 
 .dh-config-tab-content {
     display: none;
-    min-height: 420px; /* Fixed minimum height to prevent jumping */
+    min-height: 480px; /* Fixed minimum height to prevent jumping */
+    max-height: 480px; /* Fixed height for all tabs */
+    overflow-y: auto;
 }
 
 .dh-config-tab-content.active {
@@ -291,8 +293,9 @@ textarea[name="statblockText"]:focus {
     color: var(--color-text-light-highlight);
 }
 
-#dh-statblock-config .form-group input[type="text"] {
-    width: 50%; /* Reduced width */
+#dh-statblock-config .form-group input[type="text"],
+#dh-statblock-config .form-group select {
+    width: 100%;
     background: rgba(0,0,0,0.3);
     border: 1px solid var(--color-border-light-2);
     color: white;

@@ -80,6 +80,15 @@
 
         <hr style="margin: 10px 0; border-color: var(--color-border-light-2);">
 
+        <div class="form-group">
+            <label for="separatorMode">Bulk Import Separator</label>
+            <select name="separatorMode" style="width: 100%;">
+                <option value="blankLine" {{#if (eq separatorMode "blankLine")}}selected{{/if}}>Blank Line (default)</option>
+                <option value="separator" {{#if (eq separatorMode "separator")}}selected{{/if}}>=== Separator</option>
+            </select>
+            <p class="hint" style="margin-top: 4px; font-size: 0.85em;">How to separate multiple entries when importing in bulk.</p>
+        </div>
+
         <div class="form-group dh-debug-row">
             <label class="checkbox dh-debug-checkbox">
                 <input type="checkbox" name="debugMode" {{checked debugMode}}>

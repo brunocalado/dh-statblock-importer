@@ -9,7 +9,7 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             title: "Importer Configuration",
             icon: "fas fa-cog",
             resizable: false,
-            width: 450,
+            width: 520,
             height: "auto"
         },
         form: {
@@ -59,9 +59,6 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         if (content) {
             content.classList.add("active");
         }
-
-        // Força recalculo da altura da janela
-        this.setPosition({ height: "auto" });
     }
 
     async _prepareContext(options) {
@@ -106,6 +103,7 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         const consumableFolderName = game.settings.get("dh-statblock-importer", "consumableFolderName");
         const weaponFolderName = game.settings.get("dh-statblock-importer", "weaponFolderName");
         const armorFolderName = game.settings.get("dh-statblock-importer", "armorFolderName");
+        const separatorMode = game.settings.get("dh-statblock-importer", "separatorMode") || "blankLine";
         const debugMode = game.settings.get("dh-statblock-importer", "debugMode");
 
         return {
@@ -117,6 +115,7 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             consumableFolderName,
             weaponFolderName,
             armorFolderName,
+            separatorMode,
             debugMode
         };
     }
@@ -141,6 +140,7 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         const consumableFolderInput = form.querySelector("input[name='consumableFolderName']");
         const weaponFolderInput = form.querySelector("input[name='weaponFolderName']");
         const armorFolderInput = form.querySelector("input[name='armorFolderName']");
+        const separatorModeInput = form.querySelector("select[name='separatorMode']");
         const debugModeInput = form.querySelector("input[name='debugMode']");
 
         if (adversaryFolderInput?.value) await game.settings.set("dh-statblock-importer", "adversaryFolderName", adversaryFolderInput.value);
@@ -149,7 +149,8 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         if (consumableFolderInput?.value) await game.settings.set("dh-statblock-importer", "consumableFolderName", consumableFolderInput.value);
         if (weaponFolderInput?.value) await game.settings.set("dh-statblock-importer", "weaponFolderName", weaponFolderInput.value);
         if (armorFolderInput?.value) await game.settings.set("dh-statblock-importer", "armorFolderName", armorFolderInput.value);
-        
+        if (separatorModeInput?.value) await game.settings.set("dh-statblock-importer", "separatorMode", separatorModeInput.value);
+
         await game.settings.set("dh-statblock-importer", "debugMode", debugModeInput?.checked || false);
 
         await game.settings.set("dh-statblock-importer", "configInitialized", true);
