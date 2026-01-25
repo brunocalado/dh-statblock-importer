@@ -163,6 +163,16 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           });
       }
 
+      if (!game.settings.settings.has("dh-statblock-importer.featureFolderName")) {
+          game.settings.register("dh-statblock-importer", "featureFolderName", {
+              name: "Feature Folder Name",
+              scope: "world",
+              config: false,
+              type: String,
+              default: "✨ Imported Features"
+          });
+      }
+
       // Separator Mode (blankLine or separator)
       if (!game.settings.settings.has("dh-statblock-importer.separatorMode")) {
           game.settings.register("dh-statblock-importer", "separatorMode", {
@@ -245,6 +255,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       if (mode === "consumable") return "icons/consumables/potions/potion-flask-corled-pink-red.webp";
       if (mode === "weapon") return "icons/weapons/swords/sword-guard-flanged-purple.webp";
       if (mode === "armor") return "icons/equipment/chest/breastplate-banded-leather-purple.webp";
+      if (mode === "feature") return "icons/magic/symbols/star-solid-gold.webp";
       if (actorType === "environment") return "icons/environment/wilderness/cave-entrance.webp";
       return "modules/dh-statblock-importer/assets/images/skull.webp";
   }
@@ -265,7 +276,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     
     // Determine parsing strategy
     let blocks = [];
-    let isItemMode = (mode === "loot" || mode === "consumable" || mode === "weapon" || mode === "armor");
+    let isItemMode = (mode === "loot" || mode === "consumable" || mode === "weapon" || mode === "armor" || mode === "feature");
 
     if (isItemMode) {
         blocks = StatblockImporter.splitSimpleItems(text);
@@ -289,6 +300,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
             result = StatblockImporter.parseWeaponData(block);
         } else if (mode === "armor") {
             result = StatblockImporter.parseArmorData(block);
+        } else if (mode === "feature") {
+            result = StatblockImporter.parseFeatureData(block);
         } else if (mode === "loot" || mode === "consumable") {
             result = StatblockImporter.parseSimpleItemData(block, mode);
         } else {
@@ -347,6 +360,17 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           fullHtml += show("Tier", result.system.tier);
           fullHtml += show("Base Score", result.system.baseScore);
           fullHtml += show("Thresholds", `${result.system.baseThresholds?.major || "?"}/${result.system.baseThresholds?.severe || "?"}`);
+
+          if (result.system.description) {
+              const descPreview = result.system.description.length > 100 ? result.system.description.substring(0, 100) + "..." : result.system.description;
+              fullHtml += `<div class="dh-preview-item success"><strong>Description:</strong><br><em style="font-size:0.9em">${descPreview}</em></div>`;
+          }
+
+      } else if (mode === "feature") {
+          // FEATURE PREVIEW
+          fullHtml += show("Type", "Feature");
+          const formLabel = result.system.featureForm ? (result.system.featureForm.charAt(0).toUpperCase() + result.system.featureForm.slice(1)) : "Passive";
+          fullHtml += show("Action Type", formLabel);
 
           if (result.system.description) {
               const descPreview = result.system.description.length > 100 ? result.system.description.substring(0, 100) + "..." : result.system.description;
@@ -492,7 +516,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
     const text = textarea.value.trim();
     const mode = modeSelect?.value || "adversary";
-    const isItemMode = (mode === "loot" || mode === "consumable" || mode === "weapon" || mode === "armor");
+    const isItemMode = (mode === "loot" || mode === "consumable" || mode === "weapon" || mode === "armor" || mode === "feature");
 
     let blocks = [];
     if (isItemMode) {
@@ -542,6 +566,10 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                 settingKey = "armorFolderName";
                 defaultName = "🛡️ Imported Armors";
                 color = "#3d2b00"; // Bronze/Brown
+            } else if (mode === "feature") {
+                settingKey = "featureFolderName";
+                defaultName = "✨ Imported Features";
+                color = "#4a3d00"; // Gold/Yellow
             }
 
             const subFolderName = game.settings.get("dh-statblock-importer", settingKey) || defaultName;
@@ -601,6 +629,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                     result = StatblockImporter.parseWeaponData(block);
                 } else if (mode === "armor") {
                     result = StatblockImporter.parseArmorData(block);
+                } else if (mode === "feature") {
+                    result = StatblockImporter.parseFeatureData(block);
                 } else {
                     result = StatblockImporter.parseSimpleItemData(block, mode);
                 }
@@ -609,7 +639,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                     name: result.name,
                     type: result.type,
                     system: result.system,
-                    img: finalImg || result.img, 
+                    img: finalImg || result.img,
                     folder: targetFolder?.id
                 };
                 const newItem = await Item.create(itemData);
@@ -763,6 +793,44 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   /* -------------------------------------------- */
   /* Parsing Logic                               */
   /* -------------------------------------------- */
+
+  /**
+   * Parses feature format:
+   * Line 1: Title - ActionType (optional)
+   * Line 2+: Description
+   *
+   * ActionType can be: Action, Reaction, Passive
+   * If not specified, defaults to Passive
+   */
+  static parseFeatureData(text) {
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length === 0) throw new Error("Empty feature block");
+
+      const firstLine = lines[0];
+      let name = firstLine;
+      let featureForm = "passive"; // default
+
+      // Check for ActionType: "Name - Action", "Name - Reaction", "Name - Passive"
+      const actionMatch = firstLine.match(/^(.+?)\s*[-–—]\s*(Action|Reaction|Passive)$/i);
+      if (actionMatch) {
+          name = actionMatch[1].trim();
+          featureForm = actionMatch[2].toLowerCase();
+      }
+
+      const description = lines.length > 1 ? lines.slice(1).join(" ") : "";
+
+      const img = StatblockImporter._getDefaultImage("feature");
+
+      return {
+          name,
+          type: "feature",
+          img,
+          system: {
+              featureForm: featureForm,
+              description: description
+          }
+      };
+  }
 
   /**
    * Parses simple item format (Loot/Consumable):

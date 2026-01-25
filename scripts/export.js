@@ -166,24 +166,29 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
     _formatAdversary(actor) {
         const sys = actor.system;
         const lines = [];
+        const actorName = actor.name;
 
         // Name (uppercase)
-        lines.push(actor.name.toUpperCase());
+        lines.push(actorName.toUpperCase());
 
-        // Tier and Type
+        // Tier and Type (special format for Horde)
         const tier = sys.tier || 1;
         const type = sys.type ? (sys.type.charAt(0).toUpperCase() + sys.type.slice(1)) : "Standard";
-        lines.push(`Tier ${tier} ${type}`);
+        if (sys.type === "horde" && sys.hordeHp) {
+            lines.push(`Tier ${tier} Horde (${sys.hordeHp}/HP)`);
+        } else {
+            lines.push(`Tier ${tier} ${type}`);
+        }
 
         // Description (strip HTML)
         if (sys.description) {
-            const desc = this._stripHtml(sys.description);
+            const desc = this._stripHtml(sys.description, actorName);
             if (desc) lines.push(desc);
         }
 
         // Motives & Tactics
         if (sys.motivesAndTactics) {
-            const motives = this._stripHtml(sys.motivesAndTactics);
+            const motives = this._stripHtml(sys.motivesAndTactics, actorName);
             if (motives) lines.push(`Motives & Tactics: ${motives}`);
         }
 
@@ -251,7 +256,7 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
             for (const feature of features) {
                 const featureForm = feature.system.featureForm || "passive";
                 const formLabel = featureForm.charAt(0).toUpperCase() + featureForm.slice(1);
-                const desc = this._stripHtml(feature.system.description || "");
+                const desc = this._stripHtml(feature.system.description || "", actorName);
                 lines.push(`${feature.name} - ${formLabel}: ${desc}`);
             }
         }
@@ -267,9 +272,10 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
     _formatEnvironment(actor) {
         const sys = actor.system;
         const lines = [];
+        const actorName = actor.name;
 
         // Name (uppercase)
-        lines.push(actor.name.toUpperCase());
+        lines.push(actorName.toUpperCase());
 
         // Tier and Type
         const tier = sys.tier || 1;
@@ -278,13 +284,13 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
 
         // Description (strip HTML)
         if (sys.description) {
-            const desc = this._stripHtml(sys.description);
+            const desc = this._stripHtml(sys.description, actorName);
             if (desc) lines.push(desc);
         }
 
         // Impulses
         if (sys.impulses) {
-            const impulses = this._stripHtml(sys.impulses);
+            const impulses = this._stripHtml(sys.impulses, actorName);
             if (impulses) lines.push(`Impulses: ${impulses}`);
         }
 
@@ -311,7 +317,7 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
             for (const feature of features) {
                 const featureForm = feature.system.featureForm || "passive";
                 const formLabel = featureForm.charAt(0).toUpperCase() + featureForm.slice(1);
-                const desc = this._stripHtml(feature.system.description || "");
+                const desc = this._stripHtml(feature.system.description || "", actorName);
                 lines.push(`${feature.name} - ${formLabel}: ${desc}`);
             }
         }
@@ -320,11 +326,12 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
     }
 
     /**
-     * Strip HTML tags from a string
+     * Strip HTML tags from a string and replace @Lookup[@name] with actor name
      * @param {string} html
+     * @param {string} actorName - The actor's name to replace @Lookup[@name] with
      * @returns {string}
      */
-    _stripHtml(html) {
+    _stripHtml(html, actorName = "") {
         if (!html) return "";
         // Replace common HTML patterns
         let text = html
@@ -338,6 +345,7 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
             .replace(/&lt;/g, "<")
             .replace(/&gt;/g, ">")
             .replace(/\[\[\/r\s+([^\]]+)\]\]/g, "$1") // Remove [[/r ]] wrappers
+            .replace(/@Lookup\[@name\]/gi, actorName) // Replace @Lookup[@name] with actor name
             .replace(/\s+/g, " ")
             .trim();
         return text;
@@ -415,12 +423,10 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
 
         try {
             await navigator.clipboard.writeText(textarea.value);
-            ui.notifications.info("Statblock copied to clipboard!");
         } catch (e) {
             // Fallback for older browsers
             textarea.select();
             document.execCommand("copy");
-            ui.notifications.info("Statblock copied to clipboard!");
         }
     }
 }
