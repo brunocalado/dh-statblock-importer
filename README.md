@@ -3,7 +3,7 @@
 
 <p align="center"><img width="600" src="assets/images/logo.webp"></p>
 
-Effortlessly import **Adversaries** and **Environments** into Foundry VTT by pasting text statblocks. This module parses raw text, detects stats, links features from compendiums, and creates actors instantly.
+Effortlessly import **Adversaries** and **Environments** and **more** into Foundry VTT by pasting text statblocks. This module parses raw text, detects stats, links features from compendiums, and creates actors instantly.
 
 <p align="center"><img width="800" src="docs/preview.webp"></p>
 
@@ -15,6 +15,8 @@ Effortlessly import **Adversaries** and **Environments** into Foundry VTT by pas
 
 * **Environments:** Detects Impulses, Difficulty, and Potential Adversaries.
 
+* **Weapons, Armors, Loot, Consumables, Domain Cards or Features:** You can easily add a lot of different content.
+
 * **Mass Import:** You can paste how many statblocks you want.
 
 ### 🔍 Advanced Lookups
@@ -23,11 +25,15 @@ Effortlessly import **Adversaries** and **Environments** into Foundry VTT by pas
 
 * **Potential Adversaries:** Identifies actor groups in Environments and links them to actors in your compendiums.
 
-### ✅ Validation & Preview
+### ✅ Validation & Organization
 
-* **Real-time Preview:** Verify parsed data before creating the actor.
+* **Real-time Preview:** Verify parsed data before creating the entity.
 
 * **Visual Feedback:** Clearly see which features are new and which are linked from Compendiums.
+
+* **Organized in Folders:** Imports are automatically organized into folders.
+
+<p align="center"><img width="800" src="docs/folders.webp"></p>
 
 ## ⚙️ Usage
 
@@ -43,7 +49,7 @@ Effortlessly import **Adversaries** and **Environments** into Foundry VTT by pas
 
 3. **Validate:** Click "Validate" to preview the data.
 
-4. **Create:** Click "Create Actor" to generate the Adversary or Environment.
+4. **Create:** Click "Create" to generate the entity (Adversary, Environment, Weapon, Armor, Loot, Consumable, Domain Card or Feature).
 
 ### ⚙️ Configuration
 
