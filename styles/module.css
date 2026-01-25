@@ -326,3 +326,187 @@ textarea[name="statblockText"]:focus {
     padding-top: 10px;
     border-top: 1px solid rgba(255,255,255,0.05); /* Optional separator */
 }
+
+/* ============================================== */
+/* Statblock Exporter Styles                     */
+/* ============================================== */
+
+#dh-statblock-exporter {
+    min-width: 700px;
+    background: #242424 !important;
+    box-shadow: 0 0 20px rgba(0,0,0,0.8);
+}
+
+#dh-statblock-exporter:not(.minimized) {
+    min-height: 400px;
+}
+
+#dh-statblock-exporter .window-content {
+    padding: 8px !important;
+    background: #242424;
+}
+
+/* --- Exporter Layout --- */
+.dh-exporter-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: visible;
+    padding-bottom: 2px;
+}
+
+.dh-exporter-wrapper {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    gap: 1rem;
+    padding: 0;
+    box-sizing: border-box;
+    min-height: 0;
+}
+
+/* Column Proportions */
+.dh-exporter-drop-col { flex: 1; }
+.dh-exporter-output-col { flex: 1.5; }
+
+/* --- Drop Zone --- */
+.dh-drop-zone {
+    flex: 1;
+    background: rgba(0,0,0,0.3);
+    border: 2px dashed var(--color-border-light-2);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    min-height: 150px;
+}
+
+.dh-drop-zone.drag-over {
+    border-color: var(--color-text-hyperlink);
+    background: rgba(100,149,237,0.1);
+    box-shadow: 0 0 15px rgba(100,149,237,0.3);
+}
+
+.dh-drop-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-light-5);
+    text-align: center;
+    padding: 20px;
+}
+
+.dh-dropped-actor {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.dh-dropped-img {
+    width: 64px;
+    height: 64px;
+    border: 2px solid var(--color-border-light-2);
+    border-radius: 6px;
+    object-fit: cover;
+    background: #000;
+}
+
+.dh-dropped-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dh-dropped-name {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--color-text-light-highlight);
+}
+
+.dh-dropped-type {
+    font-size: 0.95em;
+    color: var(--color-text-light-5);
+}
+
+.dh-clear-btn {
+    background: rgba(255,0,0,0.2);
+    border: 1px solid rgba(255,0,0,0.5);
+    color: #ff6666;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.dh-clear-btn:hover {
+    background: rgba(255,0,0,0.4);
+    border-color: #ff4444;
+}
+
+/* --- Output Textarea --- */
+#dh-statblock-exporter textarea[name="statblockOutput"] {
+    flex: 1;
+    background: rgba(0,0,0,0.3);
+    color: #e0e0e0;
+    font-family: monospace;
+    font-size: 13px;
+    border: 1px solid var(--color-border-light-2);
+    resize: none;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+#dh-statblock-exporter textarea[name="statblockOutput"]:focus {
+    border-color: var(--color-text-hyperlink);
+    box-shadow: 0 0 5px var(--color-text-hyperlink);
+}
+
+/* --- Exporter Action Bar --- */
+.dh-exporter-actions {
+    display: flex;
+    gap: 10px;
+    padding-top: 10px;
+    padding-bottom: 2px;
+    align-items: center;
+    justify-content: flex-end;
+    border-top: 1px solid var(--color-border-light-2);
+    margin-top: 10px;
+    flex-shrink: 0;
+}
+
+.dh-exporter-actions button {
+    background: #333;
+    border: 1px solid var(--color-border-light-2);
+    color: white;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.dh-exporter-actions button:hover {
+    background: #444;
+    border-color: var(--color-text-hyperlink);
+}
+
+.dh-exporter-actions button.save-button {
+    background: #2f4f2f;
+    border-color: #48bb48;
+}
+
+.dh-exporter-actions button.save-button:hover {
+    background: #3a633a;
+    box-shadow: 0 0 10px rgba(72,187,72,0.4);
+}

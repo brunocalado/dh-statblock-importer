@@ -1,4 +1,5 @@
 import { StatblockImporter } from "./app.js";
+import { StatblockExporter } from "./export.js";
 
 /**
  * Global API object for the module.
@@ -9,6 +10,13 @@ const SI = {
    */
   Open: () => {
     new StatblockImporter().render(true);
+  },
+
+  /**
+   * Opens the Statblock Exporter window (Create Statblock from Actor).
+   */
+  CreateStatblock: () => {
+    new StatblockExporter().render(true);
   }
 };
 

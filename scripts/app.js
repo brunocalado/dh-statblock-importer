@@ -370,78 +370,80 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
           if (!isEnvironment) {
              // ADVERSARY SPECIFIC FIELDS
-             if (data.resources?.hitPoints?.max) fullHtml += show("HP", data.resources.hitPoints.max);
-             if (data.resources?.stress?.max) fullHtml += show("Stress", data.resources.stress.max);
+             fullHtml += show("HP", data.resources?.hitPoints?.max);
+             fullHtml += show("Stress", data.resources?.stress?.max);
 
              // Damage Thresholds
-             if (data.damageThresholds?.major || data.damageThresholds?.severe) {
-                 const threshStr = `${data.damageThresholds.major || "?"}/${data.damageThresholds.severe || "?"}`;
-                 fullHtml += show("Thresholds", threshStr);
-             }
+             const threshStr = (data.damageThresholds?.major || data.damageThresholds?.severe)
+                 ? `${data.damageThresholds.major || "?"}/${data.damageThresholds.severe || "?"}`
+                 : null;
+             fullHtml += show("Thresholds", threshStr);
 
              // Attack details - separate fields
-             if (data.attack?.name) fullHtml += show("Attack", data.attack.name);
-             if (data.attack?.range) fullHtml += show("Range", data.attack.range);
-             if (data.attack?.roll?.bonus) fullHtml += show("ATK Bonus", data.attack.roll.bonus);
+             fullHtml += show("Attack", data.attack?.name);
+             fullHtml += show("Range", data.attack?.range);
+             fullHtml += show("ATK Bonus", data.attack?.roll?.bonus);
 
              // Damage - dice and type separate
+             let dmgDice = null;
+             let dmgType = null;
+             let hordeDmg = null;
              if (data.attack?.damage?.parts?.length > 0) {
                  const part = data.attack.damage.parts[0];
                  const dmgVal = part.value;
-                 let dmgDice = "";
                  if (dmgVal.custom?.enabled && dmgVal.custom?.formula) {
                      dmgDice = dmgVal.custom.formula;
-                 } else {
+                 } else if (dmgVal.dice) {
                      dmgDice = `${dmgVal.flatMultiplier > 1 ? dmgVal.flatMultiplier : ""}${dmgVal.dice}${dmgVal.bonus ? (dmgVal.bonus > 0 ? "+"+dmgVal.bonus : dmgVal.bonus) : ""}`;
                  }
-                 fullHtml += show("Damage", dmgDice);
-                 if (part.type?.length > 0) fullHtml += show("Damage Type", part.type.join("/"));
+                 if (part.type?.length > 0) dmgType = part.type.join("/");
 
                  // Horde Damage (valueAlt)
                  if (data.type === "horde" && part.valueAlt) {
                      const altVal = part.valueAlt;
-                     let hordeDmg = "";
                      if (altVal.custom?.enabled && altVal.custom?.formula) {
                          hordeDmg = altVal.custom.formula;
-                     } else {
+                     } else if (altVal.dice) {
                          hordeDmg = `${altVal.flatMultiplier > 1 ? altVal.flatMultiplier : ""}${altVal.dice}${altVal.bonus ? (altVal.bonus > 0 ? "+"+altVal.bonus : altVal.bonus) : ""}`;
                      }
-                     fullHtml += show("Horde Damage", hordeDmg);
                  }
              }
+             fullHtml += show("Damage", dmgDice);
+             fullHtml += show("Damage Type", dmgType);
+             if (data.type === "horde") fullHtml += show("Horde Damage", hordeDmg);
 
              // Experiences
              const expEntries = Object.values(data.experiences || {});
-             if (expEntries.length > 0) {
-                 const expStr = expEntries.map(e => `${e.name} ${e.value >= 0 ? "+"+e.value : e.value}`).join(", ");
-                 fullHtml += show("Experience", expStr);
-             }
+             const expStr = expEntries.length > 0
+                 ? expEntries.map(e => `${e.name} ${e.value >= 0 ? "+"+e.value : e.value}`).join(", ")
+                 : null;
+             fullHtml += show("Experience", expStr);
 
              // Motives & Tactics
-             if (data.motivesAndTactics) {
-                 const motivesPreview = data.motivesAndTactics.length > 80 ? data.motivesAndTactics.substring(0, 80) + "..." : data.motivesAndTactics;
-                 fullHtml += `<div class="dh-preview-item success"><strong>Motives:</strong> <em>${motivesPreview}</em></div>`;
-             }
+             const motivesPreview = data.motivesAndTactics
+                 ? (data.motivesAndTactics.length > 80 ? data.motivesAndTactics.substring(0, 80) + "..." : data.motivesAndTactics)
+                 : null;
+             fullHtml += show("Motives", motivesPreview);
           } else {
              // ENVIRONMENT SPECIFIC FIELDS
-             if (data.impulses) {
-                 const impulsesPreview = data.impulses.length > 80 ? data.impulses.substring(0, 80) + "..." : data.impulses;
-                 fullHtml += `<div class="dh-preview-item success"><strong>Impulses:</strong> <em>${impulsesPreview}</em></div>`;
-             }
+             const impulsesPreview = data.impulses
+                 ? (data.impulses.length > 80 ? data.impulses.substring(0, 80) + "..." : data.impulses)
+                 : null;
+             fullHtml += show("Impulses", impulsesPreview);
 
              // Potential Adversaries
              const potAdvEntries = Object.values(data.potentialAdversaries || {});
-             if (potAdvEntries.length > 0) {
-                 const potAdvStr = potAdvEntries.map(p => `${p.name} (${p.quantity})`).join(", ");
-                 fullHtml += show("Potential Adversaries", potAdvStr);
-             }
+             const potAdvStr = potAdvEntries.length > 0
+                 ? potAdvEntries.map(p => `${p.name} (${p.quantity})`).join(", ")
+                 : null;
+             fullHtml += show("Potential Adversaries", potAdvStr);
           }
 
           // Description (both types)
-          if (data.description) {
-              const descPreview = data.description.length > 100 ? data.description.substring(0, 100) + "..." : data.description;
-              fullHtml += `<div class="dh-preview-item success"><strong>Description:</strong> <em style="font-size:0.9em">${descPreview}</em></div>`;
-          }
+          const descPreview = data.description
+              ? (data.description.length > 100 ? data.description.substring(0, 100) + "..." : data.description)
+              : null;
+          fullHtml += show("Description", descPreview);
 
           // Features - one per line with source indicator
           if (result.items?.length > 0) {
@@ -451,6 +453,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   const sourceTag = isCompendium ? '<span style="color:#48bb48">(Compendium)</span>' : '<span style="color:#ffaa00">(New)</span>';
                   fullHtml += `<div class="dh-preview-subitem">• ${item.name} ${sourceTag}</div>`;
               }
+          } else {
+              fullHtml += show("Features", null);
           }
       }
 
@@ -1357,6 +1361,104 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   effects: [],
                   target: { type: "any", amount: null },
                   name: "Spend Fear",
+                  range: ""
+              };
+          }
+
+          // Detect "TRAIT Reaction Roll" patterns (e.g., "Strength Reaction Roll", "Agility Reaction Roll")
+          const traits = ["Strength", "Instinct", "Knowledge", "Finesse", "Presence", "Agility"];
+          for (const trait of traits) {
+              const reactionRollRegex = new RegExp(`${trait}\\s+Reaction\\s+Roll`, "i");
+              if (reactionRollRegex.test(finalDesc)) {
+                  const actionId = foundry.utils.randomID(16);
+                  detectedActions[actionId] = {
+                      type: "attack",
+                      _id: actionId,
+                      systemPath: "actions",
+                      baseAction: false,
+                      description: "",
+                      chatDisplay: true,
+                      originItem: { type: "itemCollection" },
+                      actionType: "action",
+                      triggers: [],
+                      cost: [],
+                      uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
+                      damage: {
+                          parts: [],
+                          includeBase: false,
+                          direct: false
+                      },
+                      target: { type: "any", amount: null },
+                      effects: [],
+                      roll: {
+                          type: null,
+                          trait: null,
+                          difficulty: null,
+                          bonus: null,
+                          advState: "neutral",
+                          diceRolling: {
+                              multiplier: "prof",
+                              flatMultiplier: 1,
+                              dice: "d6",
+                              compare: null,
+                              treshold: null
+                          },
+                          useDefault: false
+                      },
+                      save: {
+                          trait: trait.toLowerCase(),
+                          difficulty: null,
+                          damageMod: "none"
+                      },
+                      name: `${trait} Reaction Roll`,
+                      range: ""
+                  };
+              }
+          }
+
+          // Detect "make an attack" / "make a standard attack" / "make an attack roll"
+          if (/make\s+(a\s+)?(standard\s+)?attack(\s+roll)?/i.test(finalDesc)) {
+              const actionId = foundry.utils.randomID(16);
+              detectedActions[actionId] = {
+                  type: "attack",
+                  _id: actionId,
+                  systemPath: "actions",
+                  baseAction: false,
+                  description: "",
+                  chatDisplay: true,
+                  originItem: { type: "itemCollection" },
+                  actionType: "action",
+                  triggers: [],
+                  cost: [],
+                  uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
+                  damage: {
+                      parts: [],
+                      includeBase: false,
+                      direct: false
+                  },
+                  target: { type: "any", amount: null },
+                  effects: [],
+                  roll: {
+                      type: "attack",
+                      trait: null,
+                      difficulty: null,
+                      bonus: null,
+                      advState: "neutral",
+                      diceRolling: {
+                          multiplier: "prof",
+                          flatMultiplier: 1,
+                          dice: "d6",
+                          compare: null,
+                          treshold: null
+                      },
+                      useDefault: false
+                  },
+                  save: {
+                      trait: null,
+                      difficulty: null,
+                      damageMod: "none"
+                  },
+                  name: "Attack",
                   range: ""
               };
           }
