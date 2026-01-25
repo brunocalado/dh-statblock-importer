@@ -107,7 +107,8 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
 
         this._droppedActor = actor;
         this._updateDropZoneDisplay();
-        this._generateStatblock();
+        // Added await here because generation is now async
+        await this._generateStatblock();
     }
 
     /**
@@ -141,21 +142,29 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
 
     /**
      * Generate the statblock text from the dropped actor
+     * Now Async to handle Potential Adversaries lookup
      */
-    _generateStatblock() {
+    async _generateStatblock() {
         if (!this._droppedActor) return;
 
         const textarea = this.element.querySelector("textarea[name='statblockOutput']");
         if (!textarea) return;
 
-        let statblock = "";
-        if (this._droppedActor.type === "adversary") {
-            statblock = this._formatAdversary(this._droppedActor);
-        } else if (this._droppedActor.type === "environment") {
-            statblock = this._formatEnvironment(this._droppedActor);
-        }
+        // Show loading state if needed, or just wait
+        textarea.value = "Generating statblock...";
 
-        textarea.value = statblock;
+        let statblock = "";
+        try {
+            if (this._droppedActor.type === "adversary") {
+                statblock = this._formatAdversary(this._droppedActor);
+            } else if (this._droppedActor.type === "environment") {
+                statblock = await this._formatEnvironment(this._droppedActor);
+            }
+            textarea.value = statblock;
+        } catch (error) {
+            console.error(error);
+            textarea.value = "Error generating statblock. Check console.";
+        }
     }
 
     /**
@@ -266,8 +275,6 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
                         if (val.custom?.enabled && val.custom?.formula) {
                             diceStr = val.custom.formula;
                         } else if (val.dice) {
-                            // Extract dice details from valueAlt
-                            // CHANGED: Use mult directly (e.g. 1d4 instead of d4)
                             const mult = val.flatMultiplier ?? 1;
                             const bonus = val.bonus ? (val.bonus > 0 ? `+${val.bonus}` : `${val.bonus}`) : "";
                             diceStr = `${mult}${val.dice}${bonus}`;
@@ -293,9 +300,9 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
     /**
      * Format an environment actor to statblock text
      * @param {Actor} actor
-     * @returns {string}
+     * @returns {Promise<string>}
      */
-    _formatEnvironment(actor) {
+    async _formatEnvironment(actor) {
         const sys = actor.system;
         const lines = [];
         const actorName = actor.name;
@@ -325,14 +332,59 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
             lines.push(`Difficulty: ${sys.difficulty}`);
         }
 
-        // Potential Adversaries
+        // Potential Adversaries - Needs Async Lookup
         const potAdv = sys.potentialAdversaries;
         if (potAdv && Object.keys(potAdv).length > 0) {
-            const advStrs = Object.values(potAdv).map(adv => {
-                return `${adv.name} (${adv.quantity || 1})`;
-            });
-            if (advStrs.length > 0) {
-                lines.push(`Potential Adversaries: ${advStrs.join(", ")}`);
+            const groups = [];
+            
+            // Iterate over each group (e.g. Beasts, Guardians)
+            for (const group of Object.values(potAdv)) {
+                // Determine adversaries list (might be Array or Set in some DataModels)
+                const rawAdversaries = group.adversaries instanceof Set 
+                    ? Array.from(group.adversaries) 
+                    : (Array.isArray(group.adversaries) ? group.adversaries : []);
+
+                if (rawAdversaries.length === 0) continue;
+                
+                const label = group.label || "Group";
+                
+                // Fetch names for all UUIDs in this group
+                const namePromises = rawAdversaries.map(async (entry) => {
+                    // Normalize UUID: entry might be string or object {uuid: "..."}
+                    const uuid = (typeof entry === 'object' && entry?.uuid) ? entry.uuid : entry;
+                    
+                    if (!uuid || typeof uuid !== 'string') return "Invalid UUID";
+
+                    try {
+                        let actorDoc = await fromUuid(uuid);
+                        
+                        // Fallback 1: If fromUuid returns null, try searching World Actors by ID
+                        if (!actorDoc) {
+                            const idParts = uuid.split(".");
+                            const id = idParts[idParts.length - 1]; // Get last part as ID
+                            actorDoc = game.actors.get(id);
+                        }
+
+                        if (actorDoc) return actorDoc.name;
+
+                        // Log failure for debugging
+                        console.warn(`Statblock Exporter | Failed to resolve adversary UUID: ${uuid}`);
+                        return "Unknown Actor";
+
+                    } catch (err) {
+                        console.error(`Statblock Exporter | Error fetching UUID ${uuid}:`, err);
+                        return "Unknown Actor";
+                    }
+                });
+                
+                const names = await Promise.all(namePromises);
+                
+                // Format: Label (Name1, Name2, Name3)
+                groups.push(`${label} (${names.join(", ")})`);
+            }
+
+            if (groups.length > 0) {
+                lines.push(`Potential Adversaries: ${groups.join(", ")}`);
             }
         }
 
@@ -352,7 +404,8 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
     }
 
     /**
-     * Strip HTML tags from a string and replace @Lookup[@name] with actor name
+     * Strip HTML tags from a string and replace @Lookup[@name] with actor name.
+     * Also replaces @UUID[...] links with just their label/name.
      * @param {string} html
      * @param {string} actorName - The actor's name to replace @Lookup[@name] with
      * @returns {string}
@@ -372,6 +425,9 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
             .replace(/&gt;/g, ">")
             .replace(/\[\[\/r\s+([^\]]+)\]\]/g, "$1") // Remove [[/r ]] wrappers
             .replace(/@Lookup\[@name\]/gi, actorName) // Replace @Lookup[@name] with actor name
+            // Remove @UUID links, keeping only the text inside {}
+            // Example: @UUID[Compendium...]{Sylvan Soldiers} -> Sylvan Soldiers
+            .replace(/@UUID\[[^\]]+\]\{([^}]+)\}/g, "$1") 
             .replace(/\s+/g, " ")
             .trim();
         return text;
