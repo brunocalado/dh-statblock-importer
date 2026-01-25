@@ -254,10 +254,36 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
         if (features.length > 0) {
             lines.push("FEATURES");
             for (const feature of features) {
+                let featureName = feature.name;
+                
+                // Logic to append Horde damage if actor is horde and feature is named "Horde"
+                if (sys.type === "horde" && featureName.trim().toLowerCase() === "horde") {
+                    const dmgPart = sys.attack?.damage?.parts?.[0];
+                    if (dmgPart?.valueAlt) {
+                        const val = dmgPart.valueAlt;
+                        let diceStr = "";
+                        
+                        if (val.custom?.enabled && val.custom?.formula) {
+                            diceStr = val.custom.formula;
+                        } else if (val.dice) {
+                            // Extract dice details from valueAlt
+                            // CHANGED: Use mult directly (e.g. 1d4 instead of d4)
+                            const mult = val.flatMultiplier ?? 1;
+                            const bonus = val.bonus ? (val.bonus > 0 ? `+${val.bonus}` : `${val.bonus}`) : "";
+                            diceStr = `${mult}${val.dice}${bonus}`;
+                        }
+                        
+                        // Append dice to feature name
+                        if (diceStr) {
+                            featureName = `Horde (${diceStr})`;
+                        }
+                    }
+                }
+
                 const featureForm = feature.system.featureForm || "passive";
                 const formLabel = featureForm.charAt(0).toUpperCase() + featureForm.slice(1);
                 const desc = this._stripHtml(feature.system.description || "", actorName);
-                lines.push(`${feature.name} - ${formLabel}: ${desc}`);
+                lines.push(`${featureName} - ${formLabel}: ${desc}`);
             }
         }
 
@@ -369,6 +395,7 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
 
     /**
      * Format damage from a damage part
+     * Checks the 'type' array to properly format 'phy', 'mag', or 'phy/mag'
      * @param {object} dmgPart
      * @returns {string}
      */
@@ -386,10 +413,37 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
             diceStr = `${mult}${val.dice}${bonus}`;
         }
 
-        const types = dmgPart.type?.length > 0 ? dmgPart.type.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join("/") : "";
+        // Logic to format damage type (physical/magical)
+        // Defensively ensure typeList is an Array to prevent crashes
+        let typeList = dmgPart.type || [];
 
-        if (diceStr && types) {
-            return `${diceStr} ${types}`;
+        if (typeof typeList === "string") {
+            typeList = [typeList];
+        } else if (typeList instanceof Set) {
+            typeList = Array.from(typeList);
+        } else if (!Array.isArray(typeList)) {
+            // Fallback for unexpected objects to avoid "includes is not a function" error
+            typeList = [];
+        }
+
+        let typeStr = "";
+
+        const hasPhy = typeList.includes("physical");
+        const hasMag = typeList.includes("magical");
+
+        if (hasPhy && hasMag) {
+            typeStr = "phy/mag";
+        } else if (hasPhy) {
+            typeStr = "phy";
+        } else if (hasMag) {
+            typeStr = "mag";
+        } else {
+            // Fallback for other potential types, capitalizing them
+            typeStr = typeList.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join("/");
+        }
+
+        if (diceStr && typeStr) {
+            return `${diceStr} ${typeStr}`;
         } else if (diceStr) {
             return diceStr;
         }

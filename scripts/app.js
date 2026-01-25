@@ -998,8 +998,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
    * Parses Armor items
    * Format: [Tier X] Name X / Y Z [FeatureName: FeatureDescription]
    * Examples:
-   *   Improved Gambeson Armor 7 / 16 4 Flexible: +1 to Evasion
-   *   Tier 2 Improved Chainmail Armor 11 / 24 5 Heavy: −1 to Evasion
+   * Improved Gambeson Armor 7 / 16 4 Flexible: +1 to Evasion
+   * Tier 2 Improved Chainmail Armor 11 / 24 5 Heavy: −1 to Evasion
    */
   static parseArmorData(text) {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
@@ -1274,7 +1274,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               }
           }
 
-          const damageDiceRegex = /^(\d+)d(\d+)(?:\s*([+\-]\s*\d+))?\s+(.+)$/i;
+          const damageDiceRegex = /^(\d*)d(\d+)(?:\s*([+\-]\s*\d+))?\s+(.+)$/i;
           const damageStaticRegex = /^(\d+)\s+(.+)$/i;
           let dmgMatch = segment.match(damageDiceRegex);
           let isStatic = false;
@@ -1300,7 +1300,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   damagePart.value.custom.enabled = true;
                   damagePart.value.custom.formula = dmgMatch[1];
               } else {
-                  damagePart.value.flatMultiplier = parseInt(dmgMatch[1], 10);
+                  damagePart.value.flatMultiplier = dmgMatch[1] ? parseInt(dmgMatch[1], 10) : 1;
                   damagePart.value.dice = `d${dmgMatch[2]}`;
                   if (dmgMatch[3]) {
                       const cleanBonus = dmgMatch[3].replace(/\s/g, "");
