@@ -104,6 +104,7 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         const weaponFolderName = game.settings.get("dh-statblock-importer", "weaponFolderName");
         const armorFolderName = game.settings.get("dh-statblock-importer", "armorFolderName");
         const featureFolderName = game.settings.get("dh-statblock-importer", "featureFolderName");
+        const domainCardFolderName = game.settings.get("dh-statblock-importer", "domainCardFolderName");
         const separatorMode = game.settings.get("dh-statblock-importer", "separatorMode") || "blankLine";
         const debugMode = game.settings.get("dh-statblock-importer", "debugMode");
 
@@ -117,6 +118,7 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             weaponFolderName,
             armorFolderName,
             featureFolderName,
+            domainCardFolderName,
             separatorMode,
             debugMode
         };
@@ -143,6 +145,7 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         const weaponFolderInput = form.querySelector("input[name='weaponFolderName']");
         const armorFolderInput = form.querySelector("input[name='armorFolderName']");
         const featureFolderInput = form.querySelector("input[name='featureFolderName']");
+        const domainCardFolderInput = form.querySelector("input[name='domainCardFolderName']");
         const separatorModeInput = form.querySelector("select[name='separatorMode']");
         const debugModeInput = form.querySelector("input[name='debugMode']");
 
@@ -153,6 +156,7 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         if (weaponFolderInput?.value) await game.settings.set("dh-statblock-importer", "weaponFolderName", weaponFolderInput.value);
         if (armorFolderInput?.value) await game.settings.set("dh-statblock-importer", "armorFolderName", armorFolderInput.value);
         if (featureFolderInput?.value) await game.settings.set("dh-statblock-importer", "featureFolderName", featureFolderInput.value);
+        if (domainCardFolderInput?.value) await game.settings.set("dh-statblock-importer", "domainCardFolderName", domainCardFolderInput.value);
         if (separatorModeInput?.value) await game.settings.set("dh-statblock-importer", "separatorMode", separatorModeInput.value);
 
         await game.settings.set("dh-statblock-importer", "debugMode", debugModeInput?.checked || false);

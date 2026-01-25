@@ -173,6 +173,16 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           });
       }
 
+      if (!game.settings.settings.has("dh-statblock-importer.domainCardFolderName")) {
+          game.settings.register("dh-statblock-importer", "domainCardFolderName", {
+              name: "Domain Card Folder Name",
+              scope: "world",
+              config: false,
+              type: String,
+              default: "📜 Imported Domain Cards"
+          });
+      }
+
       // Separator Mode (blankLine or separator)
       if (!game.settings.settings.has("dh-statblock-importer.separatorMode")) {
           game.settings.register("dh-statblock-importer", "separatorMode", {
@@ -248,15 +258,23 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   }
 
   /**
-   * Helper to determine the default image based on mode and actor type
+   * Helper to determine the default image based on mode and subtype (actorType or item subType)
    */
-  static _getDefaultImage(mode, actorType = null) {
+  static _getDefaultImage(mode, subtype = null) {
       if (mode === "loot") return "icons/containers/chest/chest-reinforced-steel-green.webp";
       if (mode === "consumable") return "icons/consumables/potions/potion-flask-corled-pink-red.webp";
       if (mode === "weapon") return "icons/weapons/swords/sword-guard-flanged-purple.webp";
       if (mode === "armor") return "icons/equipment/chest/breastplate-banded-leather-purple.webp";
       if (mode === "feature") return "icons/magic/symbols/star-solid-gold.webp";
-      if (actorType === "environment") return "icons/environment/wilderness/cave-entrance.webp";
+      
+      if (mode === "domainCard") {
+          if (subtype === "grimoire") return "icons/sundries/books/book-embossed-spiral-purple-white.webp";
+          if (subtype === "ability") return "icons/magic/control/silhouette-hold-change-blue.webp";
+          if (subtype === "spell") return "icons/sundries/documents/document-symbol-triangle-pink.webp";
+          return "icons/sundries/scrolls/scroll-runed-blue.webp";
+      }
+
+      if (subtype === "environment") return "icons/environment/wilderness/cave-entrance.webp";
       return "modules/dh-statblock-importer/assets/images/skull.webp";
   }
 
@@ -276,7 +294,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     
     // Determine parsing strategy
     let blocks = [];
-    let isItemMode = (mode === "loot" || mode === "consumable" || mode === "weapon" || mode === "armor" || mode === "feature");
+    let isItemMode = (mode === "loot" || mode === "consumable" || mode === "weapon" || mode === "armor" || mode === "feature" || mode === "domainCard");
 
     if (isItemMode) {
         blocks = StatblockImporter.splitSimpleItems(text);
@@ -302,6 +320,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
             result = StatblockImporter.parseArmorData(block);
         } else if (mode === "feature") {
             result = StatblockImporter.parseFeatureData(block);
+        } else if (mode === "domainCard") {
+            result = StatblockImporter.parseDomainCardData(block);
         } else if (mode === "loot" || mode === "consumable") {
             result = StatblockImporter.parseSimpleItemData(block, mode);
         } else {
@@ -377,6 +397,19 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               fullHtml += `<div class="dh-preview-item success"><strong>Description:</strong><br><em style="font-size:0.9em">${descPreview}</em></div>`;
           }
 
+      } else if (mode === "domainCard") {
+          // DOMAIN CARD PREVIEW
+          fullHtml += show("Type", "Domain Card");
+          fullHtml += show("Domain", result.system.domain);
+          fullHtml += show("Card Type", result.system.type);
+          fullHtml += show("Level", result.system.level);
+          fullHtml += show("Recall Cost", result.system.recallCost);
+
+          if (result.system.description) {
+              const descPreview = result.system.description.length > 100 ? result.system.description.substring(0, 100) + "..." : result.system.description;
+              fullHtml += `<div class="dh-preview-item success"><strong>Description:</strong><br><em style="font-size:0.9em">${descPreview}</em></div>`;
+          }
+      
       } else if (isItemMode) {
           // SIMPLE ITEM PREVIEW
           fullHtml += show("Type", result.type);
@@ -516,7 +549,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
     const text = textarea.value.trim();
     const mode = modeSelect?.value || "adversary";
-    const isItemMode = (mode === "loot" || mode === "consumable" || mode === "weapon" || mode === "armor" || mode === "feature");
+    const isItemMode = (mode === "loot" || mode === "consumable" || mode === "weapon" || mode === "armor" || mode === "feature" || mode === "domainCard");
 
     let blocks = [];
     if (isItemMode) {
@@ -570,6 +603,10 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                 settingKey = "featureFolderName";
                 defaultName = "✨ Imported Features";
                 color = "#4a3d00"; // Gold/Yellow
+            } else if (mode === "domainCard") {
+                settingKey = "domainCardFolderName";
+                defaultName = "📜 Imported Domain Cards";
+                color = "#1e0047"; // Indigo/Purple
             }
 
             const subFolderName = game.settings.get("dh-statblock-importer", settingKey) || defaultName;
@@ -631,6 +668,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                     result = StatblockImporter.parseArmorData(block);
                 } else if (mode === "feature") {
                     result = StatblockImporter.parseFeatureData(block);
+                } else if (mode === "domainCard") {
+                    result = StatblockImporter.parseDomainCardData(block);
                 } else {
                     result = StatblockImporter.parseSimpleItemData(block, mode);
                 }
@@ -855,6 +894,60 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           }
       };
   }
+
+  /**
+   * Parses Domain Card format:
+   * Line 1: TITLE
+   * Line 2: Level X DOMAIN TYPE
+   * Line 3: Recall Cost: Y
+   * Line 4+: DESCRIPTION
+   */
+  static parseDomainCardData(text) {
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length < 3) throw new Error("Invalid Domain Card format. Needs Title, Level/Domain/Type, and Cost.");
+
+      const name = lines[0];
+      const secondLine = lines[1];
+      const thirdLine = lines[2];
+
+      // Parse Line 2: Level X DOMAIN TYPE
+      // Example: Level 1 Codex Spell
+      // Using greedy match for domain to allow spaces if needed, but assuming type is last word
+      const typeMatch = secondLine.match(/^Level\s+(\d+)\s+(.+?)\s+(Spell|Ability|Grimoire)$/i);
+      if (!typeMatch) {
+          throw new Error("Invalid Line 2 format. Expected: 'Level X DOMAIN TYPE'");
+      }
+
+      const level = parseInt(typeMatch[1], 10);
+      const domain = typeMatch[2].trim(); // Keeping as string as Daggerheart domains are usually strings (e.g. Bone, Codex)
+      const cardType = typeMatch[3].toLowerCase(); // spell, ability, grimoire
+
+      // Parse Line 3: Recall Cost: Y
+      const costMatch = thirdLine.match(/^Recall\s*Cost:\s*(\d+)$/i);
+      if (!costMatch) {
+          throw new Error("Invalid Line 3 format. Expected: 'Recall Cost: Y'");
+      }
+      const recallCost = parseInt(costMatch[1], 10);
+
+      // Description is rest
+      const description = lines.length > 3 ? lines.slice(3).join(" ") : "";
+
+      const img = StatblockImporter._getDefaultImage("domainCard", cardType);
+
+      return {
+          name,
+          type: "domainCard",
+          img,
+          system: {
+              description: description,
+              domain: domain,
+              recallCost: recallCost,
+              level: level,
+              type: cardType
+          }
+      };
+  }
+
 
   /**
    * Parses Weapon format:
