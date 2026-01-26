@@ -488,12 +488,28 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                  : null;
              fullHtml += show("Impulses", impulsesPreview);
 
-             // Potential Adversaries
-             const potAdvEntries = Object.values(data.potentialAdversaries || {});
-             const potAdvStr = potAdvEntries.length > 0
-                 ? potAdvEntries.map(p => `${p.name} (${p.quantity})`).join(", ")
-                 : null;
-             fullHtml += show("Potential Adversaries", potAdvStr);
+             // Potential Adversaries - show each actor with (Compendium) or (New), same style as features
+             const potAdvPreview = data._potentialAdvPreview || [];
+             if (potAdvPreview.length > 0) {
+                 // Group by label for display
+                 const byLabel = {};
+                 for (const item of potAdvPreview) {
+                     if (!byLabel[item.label]) byLabel[item.label] = [];
+                     byLabel[item.label].push(item);
+                 }
+                 fullHtml += `<div class="dh-preview-item success"><strong>Potential Adversaries (${potAdvPreview.length}):</strong></div>`;
+                 for (const [label, actors] of Object.entries(byLabel)) {
+                     fullHtml += `<div class="dh-preview-subitem" style="font-weight:bold; margin-top:4px;">— ${label}:</div>`;
+                     for (const actor of actors) {
+                         const sourceTag = actor.found
+                             ? '<span style="color:#48bb48">(Compendium)</span>'
+                             : '<span style="color:#ffaa00">(New)</span>';
+                         fullHtml += `<div class="dh-preview-subitem">• ${actor.name} ${sourceTag}</div>`;
+                     }
+                 }
+             } else if (data.notes) {
+                 fullHtml += show("Potential Adversaries", data.notes);
+             }
           }
 
           // Description (both types)
@@ -709,15 +725,19 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                     ? "icons/environment/wilderness/cave-entrance.webp"
                     : "modules/dh-statblock-importer/assets/images/skull.webp";
 
+                // Remove preview-only properties before creating actor
+                const cleanSystemData = { ...result.systemData };
+                delete cleanSystemData._potentialAdvPreview;
+
                 const actorData = {
                     name: result.name,
                     type: result.actorType,
-                    system: result.systemData,
+                    system: cleanSystemData,
                     items: result.items,
                     folder: actorFolder?.id,
                     img: finalImg || defaultActorImg
                 };
-                
+
                 const newActor = await Actor.create(actorData);
                 if (newActor) createdObjects.push(newActor);
             }
@@ -1580,26 +1600,96 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           if (potentialAdvBuffer.length > 0) {
               const advText = potentialAdvBuffer.join(" ");
               systemData.notes = advText;
-              systemData.potentialAdversaries = {};
-              
-              const groupRegex = /([^(,]+)\s*\(([^)]+)\)/g;
+
+              // Parse the potential adversaries text
+              // Supports:
+              // Pattern 1: Group1 (Actor1, Actor2), Group2 (Actor3, Actor4)
+              // Pattern 2: Actor1, Actor2, Group1 (Actor3, Actor4)
+              const groupedActors = {}; // { groupLabel: [actorNames] }
+              let ungroupedActors = [];
+
+              // First, extract all groups with parentheses: "GroupName (Actor1, Actor2)"
+              const groupRegex = /([^,(]+?)\s*\(([^)]+)\)/g;
+              let processedText = advText;
               let match;
+
               while ((match = groupRegex.exec(advText)) !== null) {
                   const groupLabel = match[1].trim();
                   const actorsList = match[2];
-                  const actorNames = actorsList.split(",").map(a => a.trim());
-                  const foundUuids = [];
+                  const actorNames = actorsList.split(",").map(a => a.trim()).filter(a => a.length > 0);
 
+                  if (!groupedActors[groupLabel]) {
+                      groupedActors[groupLabel] = [];
+                  }
+                  groupedActors[groupLabel].push(...actorNames);
+
+                  // Remove this match from processedText to find ungrouped actors
+                  processedText = processedText.replace(match[0], '');
+              }
+
+              // Parse remaining text for ungrouped actors (comma-separated)
+              processedText = processedText.replace(/,\s*,/g, ',').replace(/^\s*,|,\s*$/g, '').trim();
+              if (processedText.length > 0) {
+                  ungroupedActors = processedText.split(",").map(a => a.trim()).filter(a => a.length > 0);
+              }
+
+              // Look up actors in compendiums and build potentialAdversaries
+              const potentialAdversaries = {};
+              const previewDetails = []; // For preview: [{name, label, found}]
+              let hasFoundActors = false;
+
+              // Process grouped actors
+              for (const [groupLabel, actorNames] of Object.entries(groupedActors)) {
+                  const foundUuids = [];
                   for (const actorName of actorNames) {
                       const found = adversaryIndex.find(a => a.name.toLowerCase() === actorName.toLowerCase() && a.type === "adversary");
-                      if (found) foundUuids.push(found.uuid);
+                      if (found) {
+                          foundUuids.push(found.uuid);
+                          previewDetails.push({ name: actorName, label: groupLabel, found: true });
+                      } else {
+                          previewDetails.push({ name: actorName, label: groupLabel, found: false });
+                      }
                   }
 
-                  const groupId = foundry.utils.randomID();
-                  systemData.potentialAdversaries[groupId] = {
-                      label: groupLabel,
-                      adversaries: foundUuids
-                  };
+                  if (foundUuids.length > 0) {
+                      hasFoundActors = true;
+                      const groupId = foundry.utils.randomID();
+                      potentialAdversaries[groupId] = {
+                          label: groupLabel,
+                          adversaries: foundUuids
+                      };
+                  }
+              }
+
+              // Process ungrouped actors under "Adversaries" label
+              if (ungroupedActors.length > 0) {
+                  const foundUuids = [];
+                  for (const actorName of ungroupedActors) {
+                      const found = adversaryIndex.find(a => a.name.toLowerCase() === actorName.toLowerCase() && a.type === "adversary");
+                      if (found) {
+                          foundUuids.push(found.uuid);
+                          previewDetails.push({ name: actorName, label: "Adversaries", found: true });
+                      } else {
+                          previewDetails.push({ name: actorName, label: "Adversaries", found: false });
+                      }
+                  }
+
+                  if (foundUuids.length > 0) {
+                      hasFoundActors = true;
+                      const groupId = foundry.utils.randomID();
+                      potentialAdversaries[groupId] = {
+                          label: "Adversaries",
+                          adversaries: foundUuids
+                      };
+                  }
+              }
+
+              // Store preview details for display (not saved to actor)
+              systemData._potentialAdvPreview = previewDetails;
+
+              // Only add potentialAdversaries if any actors were found
+              if (hasFoundActors) {
+                  systemData.potentialAdversaries = potentialAdversaries;
               }
           }
       } else {
