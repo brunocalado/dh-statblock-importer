@@ -103,7 +103,8 @@ You can read the full history of changes in the [CHANGELOG](CHANGELOG.md).
 | 🤖 [**Fear Macros**](https://github.com/brunocalado/daggerheart-fear-macros) | Automatically executes macros when the Fear resource is changed. |
 | 😱 [**Fear Tracker**](https://github.com/brunocalado/daggerheart-fear-tracker) | Adds an animated slider bar with configurable fear tokens to the UI. |
 | 🎲 [**Stats**](https://github.com/brunocalado/daggerheart-stats) | Tracks dice rolls from GM and Players. |
-| 🧠 [**Statblock Importer**](https://github.com/brunocalado/dh-statblock-importer) | Import using a statblock. |
+| 🧠 [**Stats Toolbox
+**](https://github.com/brunocalado/dh-statblock-importer) | Import using a statblock. |
 | 🛒 [**Store**](https://github.com/brunocalado/daggerheart-store) | A dynamic, interactive, and fully configurable store for Foundry VTT. |
 | 📦 [**Extra Content**](https://github.com/brunocalado/daggerheart-extra-content) | Homebrew for Daggerheart. |
 | ⚡ [**Quick Actions**](https://github.com/brunocalado/daggerheart-quickactions) | Quick access to common mechanics like Falling Damage, Downtime, etc. |
