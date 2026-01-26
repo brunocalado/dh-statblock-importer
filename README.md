@@ -1,5 +1,6 @@
-# Statblock Importer
-**for Daggerheart**
+# Stats Toolbox
+
+## for Daggerheart
 
 <p align="center"><img width="600" src="assets/images/logo.webp"></p>
 

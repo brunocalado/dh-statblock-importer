@@ -1469,8 +1469,11 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           // Detect actions in description and add them to system.actions
           const detectedActions = {};
 
-          // Detect "Mark Stress" / "Mark a Stress" / "Mark 1 Stress"
-          if (/mark\s+(a\s+|1\s+)?stress/i.test(finalDesc)) {
+          // Detect "Mark Stress" / "Mark a Stress" / "Mark 1 Stress" / "Mark 2 Stress"
+          const stressMatch = finalDesc.match(/mark\s+(a\s+|(\d+)\s+)?stress/i);
+          if (stressMatch) {
+              const stressValue = stressMatch[2] ? parseInt(stressMatch[2], 10) : 1;
+              const stressName = stressValue === 1 ? "Mark Stress" : `Mark ${stressValue} Stress`;
               const actionId = foundry.utils.randomID(16);
               detectedActions[actionId] = {
                   type: "effect",
@@ -1485,7 +1488,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   cost: [{
                       scalable: false,
                       key: "stress",
-                      value: 1,
+                      value: stressValue,
                       itemId: null,
                       step: null,
                       consumeOnSuccess: false
@@ -1493,13 +1496,16 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
                   effects: [],
                   target: { type: "any", amount: null },
-                  name: "Mark Stress",
+                  name: stressName,
                   range: ""
               };
           }
 
-          // Detect "Spend Fear" / "Spend a Fear" / "Spend 1 Fear"
-          if (/spend\s+(a\s+|1\s+)?fear/i.test(finalDesc)) {
+          // Detect "Spend Fear" / "Spend a Fear" / "Spend 1 Fear" / "Spend 2 Fear"
+          const fearMatch = finalDesc.match(/spend\s+(a\s+|(\d+)\s+)?fear/i);
+          if (fearMatch) {
+              const fearValue = fearMatch[2] ? parseInt(fearMatch[2], 10) : 1;
+              const fearName = fearValue === 1 ? "Spend Fear" : `Spend ${fearValue} Fear`;
               const actionId = foundry.utils.randomID(16);
               detectedActions[actionId] = {
                   type: "effect",
@@ -1514,7 +1520,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   cost: [{
                       scalable: false,
                       key: "fear",
-                      value: 1,
+                      value: fearValue,
                       itemId: null,
                       step: null,
                       consumeOnSuccess: false
@@ -1522,7 +1528,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
                   effects: [],
                   target: { type: "any", amount: null },
-                  name: "Spend Fear",
+                  name: fearName,
                   range: ""
               };
           }
