@@ -834,6 +834,233 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   /* -------------------------------------------- */
 
   /**
+   * Detects actions in a description text and returns an actions object.
+   * This function is used by features, loot, consumables, weapons, armors, and domain cards.
+   * @param {string} description - The description text to analyze
+   * @returns {Object} - An object containing detected actions keyed by random IDs
+   */
+  static detectActionsInDescription(description) {
+      const detectedActions = {};
+
+      // Detect "Mark Stress" / "Mark a Stress" / "Mark 1 Stress" / "Mark 2 Stress"
+      const stressMatch = description.match(/mark\s+(a\s+|(\d+)\s+)?stress/i);
+      if (stressMatch) {
+          const stressValue = stressMatch[2] ? parseInt(stressMatch[2], 10) : 1;
+          const stressName = stressValue === 1 ? "Mark Stress" : `Mark ${stressValue} Stress`;
+          const actionId = foundry.utils.randomID(16);
+          detectedActions[actionId] = {
+              type: "effect",
+              _id: actionId,
+              systemPath: "actions",
+              baseAction: false,
+              description: "",
+              chatDisplay: true,
+              originItem: { type: "itemCollection" },
+              actionType: "action",
+              triggers: [],
+              cost: [{
+                  scalable: false,
+                  key: "stress",
+                  value: stressValue,
+                  itemId: null,
+                  step: null,
+                  consumeOnSuccess: false
+              }],
+              uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
+              effects: [],
+              target: { type: "any", amount: null },
+              name: stressName,
+              range: ""
+          };
+      }
+
+      // Detect "Spend Fear" / "Spend a Fear" / "Spend 1 Fear" / "Spend 2 Fear"
+      const fearMatch = description.match(/spend\s+(a\s+|(\d+)\s+)?fear/i);
+      if (fearMatch) {
+          const fearValue = fearMatch[2] ? parseInt(fearMatch[2], 10) : 1;
+          const fearName = fearValue === 1 ? "Spend Fear" : `Spend ${fearValue} Fear`;
+          const actionId = foundry.utils.randomID(16);
+          detectedActions[actionId] = {
+              type: "effect",
+              _id: actionId,
+              systemPath: "actions",
+              baseAction: false,
+              description: "",
+              chatDisplay: true,
+              originItem: { type: "itemCollection" },
+              actionType: "action",
+              triggers: [],
+              cost: [{
+                  scalable: false,
+                  key: "fear",
+                  value: fearValue,
+                  itemId: null,
+                  step: null,
+                  consumeOnSuccess: false
+              }],
+              uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
+              effects: [],
+              target: { type: "any", amount: null },
+              name: fearName,
+              range: ""
+          };
+      }
+
+      // Detect "TRAIT Reaction Roll" patterns (e.g., "Strength Reaction Roll", "Agility Reaction Roll")
+      const traits = ["Strength", "Instinct", "Knowledge", "Finesse", "Presence", "Agility"];
+      for (const trait of traits) {
+          const reactionRollRegex = new RegExp(`${trait}\\s+Reaction\\s+Roll`, "i");
+          if (reactionRollRegex.test(description)) {
+              const actionId = foundry.utils.randomID(16);
+              detectedActions[actionId] = {
+                  type: "attack",
+                  _id: actionId,
+                  systemPath: "actions",
+                  baseAction: false,
+                  description: "",
+                  chatDisplay: true,
+                  originItem: { type: "itemCollection" },
+                  actionType: "action",
+                  triggers: [],
+                  cost: [],
+                  uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
+                  damage: {
+                      parts: [],
+                      includeBase: false,
+                      direct: false
+                  },
+                  target: { type: "any", amount: null },
+                  effects: [],
+                  roll: {
+                      type: null,
+                      trait: null,
+                      difficulty: null,
+                      bonus: null,
+                      advState: "neutral",
+                      diceRolling: {
+                          multiplier: "prof",
+                          flatMultiplier: 1,
+                          dice: "d6",
+                          compare: null,
+                          treshold: null
+                      },
+                      useDefault: false
+                  },
+                  save: {
+                      trait: trait.toLowerCase(),
+                      difficulty: null,
+                      damageMod: "none"
+                  },
+                  name: `${trait} Reaction Roll`,
+                  range: ""
+              };
+          }
+      }
+
+      // Detect "make an attack" / "make a standard attack" / "make an attack roll"
+      if (/make\s+(a\s+)?(standard\s+)?attack(\s+roll)?/i.test(description)) {
+          const actionId = foundry.utils.randomID(16);
+          detectedActions[actionId] = {
+              type: "attack",
+              _id: actionId,
+              systemPath: "actions",
+              baseAction: false,
+              description: "",
+              chatDisplay: true,
+              originItem: { type: "itemCollection" },
+              actionType: "action",
+              triggers: [],
+              cost: [],
+              uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
+              damage: {
+                  parts: [],
+                  includeBase: false,
+                  direct: false
+              },
+              target: { type: "any", amount: null },
+              effects: [],
+              roll: {
+                  type: "attack",
+                  trait: null,
+                  difficulty: null,
+                  bonus: null,
+                  advState: "neutral",
+                  diceRolling: {
+                      multiplier: "prof",
+                      flatMultiplier: 1,
+                      dice: "d6",
+                      compare: null,
+                      treshold: null
+                  },
+                  useDefault: false
+              },
+              save: {
+                  trait: null,
+                  difficulty: null,
+                  damageMod: "none"
+              },
+              name: "Attack",
+              range: ""
+          };
+      }
+
+      // Detect damage dice patterns (e.g., 1d10+3, 2d6 + 1, 1d12 - 2)
+      // Extract from [[/r ...]] wrapped dice rolls
+      const diceMatches = description.matchAll(/\[\[\/r\s+(\d+d\d+)(?:\s*([+-])\s*(\d+))?\]\]/g);
+      for (const match of diceMatches) {
+          const diceBase = match[1]; // e.g., "1d10"
+          const sign = match[2] || ""; // e.g., "+" or "-"
+          const modifier = match[3] || ""; // e.g., "3"
+          const formula = sign && modifier ? `${diceBase}${sign}${modifier}` : diceBase;
+
+          const actionId = foundry.utils.randomID(16);
+          detectedActions[actionId] = {
+              type: "damage",
+              _id: actionId,
+              systemPath: "actions",
+              baseAction: false,
+              description: "",
+              chatDisplay: true,
+              originItem: { type: "itemCollection" },
+              actionType: "action",
+              triggers: [],
+              cost: [],
+              uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
+              damage: {
+                  parts: [{
+                      value: {
+                          custom: { enabled: true, formula: formula },
+                          multiplier: "prof",
+                          flatMultiplier: 1,
+                          dice: "d6",
+                          bonus: null
+                      },
+                      applyTo: "hitPoints",
+                      type: ["physical"],
+                      base: false,
+                      resultBased: false,
+                      valueAlt: {
+                          multiplier: "prof",
+                          flatMultiplier: 1,
+                          dice: "d6",
+                          bonus: null,
+                          custom: { enabled: false, formula: "" }
+                      }
+                  }],
+                  includeBase: false,
+                  direct: false
+              },
+              target: { type: "any", amount: null },
+              effects: [],
+              name: `Damage (${formula})`,
+              range: ""
+          };
+      }
+
+      return detectedActions;
+  }
+
+  /**
    * Parses feature format:
    * Line 1: Title - ActionType (optional)
    * Line 2+: Description
@@ -860,7 +1087,10 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
       const img = StatblockImporter._getDefaultImage("feature");
 
-      return {
+      // Detect actions in description
+      const detectedActions = StatblockImporter.detectActionsInDescription(description);
+
+      const result = {
           name,
           type: "feature",
           img,
@@ -869,6 +1099,13 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               description: description
           }
       };
+
+      // Add detected actions if any were found
+      if (Object.keys(detectedActions).length > 0) {
+          result.system.actions = detectedActions;
+      }
+
+      return result;
   }
 
   /**
@@ -879,13 +1116,16 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   static parseSimpleItemData(text, type) {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
       if (lines.length === 0) throw new Error("Empty item block");
-      
+
       const name = lines[0];
       const description = lines.length > 1 ? lines.slice(1).join(" ") : "";
-      
+
       const img = StatblockImporter._getDefaultImage(type);
 
-      return {
+      // Detect actions in description
+      const detectedActions = StatblockImporter.detectActionsInDescription(description);
+
+      const result = {
           name,
           type,
           img,
@@ -893,6 +1133,13 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               description: description
           }
       };
+
+      // Add detected actions if any were found
+      if (Object.keys(detectedActions).length > 0) {
+          result.system.actions = detectedActions;
+      }
+
+      return result;
   }
 
   /**
@@ -934,7 +1181,10 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
       const img = StatblockImporter._getDefaultImage("domainCard", cardType);
 
-      return {
+      // Detect actions in description
+      const detectedActions = StatblockImporter.detectActionsInDescription(description);
+
+      const result = {
           name,
           type: "domainCard",
           img,
@@ -946,6 +1196,13 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               type: cardType
           }
       };
+
+      // Add detected actions if any were found
+      if (Object.keys(detectedActions).length > 0) {
+          result.system.actions = detectedActions;
+      }
+
+      return result;
   }
 
 
@@ -1065,8 +1322,11 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           damageParts.push(damagePart);
       }
 
+      // Detect actions in description
+      const detectedActions = StatblockImporter.detectActionsInDescription(fullDescription);
+
       // --- RESULT ---
-      return {
+      const result = {
           name,
           type: "weapon",
           img: StatblockImporter._getDefaultImage("weapon"),
@@ -1085,6 +1345,13 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               }
           }
       };
+
+      // Add detected actions if any were found
+      if (Object.keys(detectedActions).length > 0) {
+          result.system.actions = detectedActions;
+      }
+
+      return result;
   }
 
   /**
@@ -1138,8 +1405,11 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           fullDescription += `<p>${descriptionLines.join(" ")}</p>`;
       }
 
+      // Detect actions in description
+      const detectedActions = StatblockImporter.detectActionsInDescription(fullDescription);
+
       // --- RESULT ---
-      return {
+      const result = {
           name,
           type: "armor",
           img: StatblockImporter._getDefaultImage("armor"),
@@ -1153,6 +1423,13 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               description: fullDescription
           }
       };
+
+      // Add detected actions if any were found
+      if (Object.keys(detectedActions).length > 0) {
+          result.system.actions = detectedActions;
+      }
+
+      return result;
   }
 
   /**
@@ -1467,222 +1744,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           currentFeature.system.description = finalDesc;
 
           // Detect actions in description and add them to system.actions
-          const detectedActions = {};
-
-          // Detect "Mark Stress" / "Mark a Stress" / "Mark 1 Stress" / "Mark 2 Stress"
-          const stressMatch = finalDesc.match(/mark\s+(a\s+|(\d+)\s+)?stress/i);
-          if (stressMatch) {
-              const stressValue = stressMatch[2] ? parseInt(stressMatch[2], 10) : 1;
-              const stressName = stressValue === 1 ? "Mark Stress" : `Mark ${stressValue} Stress`;
-              const actionId = foundry.utils.randomID(16);
-              detectedActions[actionId] = {
-                  type: "effect",
-                  _id: actionId,
-                  systemPath: "actions",
-                  baseAction: false,
-                  description: "",
-                  chatDisplay: true,
-                  originItem: { type: "itemCollection" },
-                  actionType: "action",
-                  triggers: [],
-                  cost: [{
-                      scalable: false,
-                      key: "stress",
-                      value: stressValue,
-                      itemId: null,
-                      step: null,
-                      consumeOnSuccess: false
-                  }],
-                  uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
-                  effects: [],
-                  target: { type: "any", amount: null },
-                  name: stressName,
-                  range: ""
-              };
-          }
-
-          // Detect "Spend Fear" / "Spend a Fear" / "Spend 1 Fear" / "Spend 2 Fear"
-          const fearMatch = finalDesc.match(/spend\s+(a\s+|(\d+)\s+)?fear/i);
-          if (fearMatch) {
-              const fearValue = fearMatch[2] ? parseInt(fearMatch[2], 10) : 1;
-              const fearName = fearValue === 1 ? "Spend Fear" : `Spend ${fearValue} Fear`;
-              const actionId = foundry.utils.randomID(16);
-              detectedActions[actionId] = {
-                  type: "effect",
-                  _id: actionId,
-                  systemPath: "actions",
-                  baseAction: false,
-                  description: "",
-                  chatDisplay: true,
-                  originItem: { type: "itemCollection" },
-                  actionType: "action",
-                  triggers: [],
-                  cost: [{
-                      scalable: false,
-                      key: "fear",
-                      value: fearValue,
-                      itemId: null,
-                      step: null,
-                      consumeOnSuccess: false
-                  }],
-                  uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
-                  effects: [],
-                  target: { type: "any", amount: null },
-                  name: fearName,
-                  range: ""
-              };
-          }
-
-          // Detect "TRAIT Reaction Roll" patterns (e.g., "Strength Reaction Roll", "Agility Reaction Roll")
-          const traits = ["Strength", "Instinct", "Knowledge", "Finesse", "Presence", "Agility"];
-          for (const trait of traits) {
-              const reactionRollRegex = new RegExp(`${trait}\\s+Reaction\\s+Roll`, "i");
-              if (reactionRollRegex.test(finalDesc)) {
-                  const actionId = foundry.utils.randomID(16);
-                  detectedActions[actionId] = {
-                      type: "attack",
-                      _id: actionId,
-                      systemPath: "actions",
-                      baseAction: false,
-                      description: "",
-                      chatDisplay: true,
-                      originItem: { type: "itemCollection" },
-                      actionType: "action",
-                      triggers: [],
-                      cost: [],
-                      uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
-                      damage: {
-                          parts: [],
-                          includeBase: false,
-                          direct: false
-                      },
-                      target: { type: "any", amount: null },
-                      effects: [],
-                      roll: {
-                          type: null,
-                          trait: null,
-                          difficulty: null,
-                          bonus: null,
-                          advState: "neutral",
-                          diceRolling: {
-                              multiplier: "prof",
-                              flatMultiplier: 1,
-                              dice: "d6",
-                              compare: null,
-                              treshold: null
-                          },
-                          useDefault: false
-                      },
-                      save: {
-                          trait: trait.toLowerCase(),
-                          difficulty: null,
-                          damageMod: "none"
-                      },
-                      name: `${trait} Reaction Roll`,
-                      range: ""
-                  };
-              }
-          }
-
-          // Detect "make an attack" / "make a standard attack" / "make an attack roll"
-          if (/make\s+(a\s+)?(standard\s+)?attack(\s+roll)?/i.test(finalDesc)) {
-              const actionId = foundry.utils.randomID(16);
-              detectedActions[actionId] = {
-                  type: "attack",
-                  _id: actionId,
-                  systemPath: "actions",
-                  baseAction: false,
-                  description: "",
-                  chatDisplay: true,
-                  originItem: { type: "itemCollection" },
-                  actionType: "action",
-                  triggers: [],
-                  cost: [],
-                  uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
-                  damage: {
-                      parts: [],
-                      includeBase: false,
-                      direct: false
-                  },
-                  target: { type: "any", amount: null },
-                  effects: [],
-                  roll: {
-                      type: "attack",
-                      trait: null,
-                      difficulty: null,
-                      bonus: null,
-                      advState: "neutral",
-                      diceRolling: {
-                          multiplier: "prof",
-                          flatMultiplier: 1,
-                          dice: "d6",
-                          compare: null,
-                          treshold: null
-                      },
-                      useDefault: false
-                  },
-                  save: {
-                      trait: null,
-                      difficulty: null,
-                      damageMod: "none"
-                  },
-                  name: "Attack",
-                  range: ""
-              };
-          }
-
-          // Detect damage dice patterns (e.g., 1d10+3, 2d6 + 1, 1d12 - 2)
-          // Extract from [[/r ...]] wrapped dice rolls
-          const diceMatches = finalDesc.matchAll(/\[\[\/r\s+(\d+d\d+)(?:\s*([+-])\s*(\d+))?\]\]/g);
-          for (const match of diceMatches) {
-              const diceBase = match[1]; // e.g., "1d10"
-              const sign = match[2] || ""; // e.g., "+" or "-"
-              const modifier = match[3] || ""; // e.g., "3"
-              const formula = sign && modifier ? `${diceBase}${sign}${modifier}` : diceBase;
-
-              const actionId = foundry.utils.randomID(16);
-              detectedActions[actionId] = {
-                  type: "damage",
-                  _id: actionId,
-                  systemPath: "actions",
-                  baseAction: false,
-                  description: "",
-                  chatDisplay: true,
-                  originItem: { type: "itemCollection" },
-                  actionType: "action",
-                  triggers: [],
-                  cost: [],
-                  uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
-                  damage: {
-                      parts: [{
-                          value: {
-                              custom: { enabled: true, formula: formula },
-                              multiplier: "prof",
-                              flatMultiplier: 1,
-                              dice: "d6",
-                              bonus: null
-                          },
-                          applyTo: "hitPoints",
-                          type: ["physical"],
-                          base: false,
-                          resultBased: false,
-                          valueAlt: {
-                              multiplier: "prof",
-                              flatMultiplier: 1,
-                              dice: "d6",
-                              bonus: null,
-                              custom: { enabled: false, formula: "" }
-                          }
-                      }],
-                      includeBase: false,
-                      direct: false
-                  },
-                  target: { type: "any", amount: null },
-                  effects: [],
-                  name: `Damage (${formula})`,
-                  range: ""
-              };
-          }
+          const detectedActions = StatblockImporter.detectActionsInDescription(finalDesc);
 
           // Add detected actions to feature if any were found
           if (Object.keys(detectedActions).length > 0) {
