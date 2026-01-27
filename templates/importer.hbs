@@ -29,6 +29,16 @@
             </button>
         </div>
 
+        {{!-- +Features Toggle (only visible for adversary/environment modes) --}}
+        <div class="dh-plus-features-container" style="display:none;">
+            <button type="button" data-action="plusFeatures" class="dh-plus-features-btn {{#if plusFeaturesEnabled}}active{{/if}}" title="Also create features as separate items">
+                <i class="fas fa-puzzle-piece"></i> +Features
+            </button>
+            <button type="button" data-action="plusFeaturesHelp" class="dh-plus-features-help" title="Help about +Features">
+                <i class="fas fa-question"></i>
+            </button>
+        </div>
+
         <label class="dh-mode-select">
             <span>Mode:</span>
             <select name="importMode">

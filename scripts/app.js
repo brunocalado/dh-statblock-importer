@@ -52,7 +52,9 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       parse: StatblockImporter._onParse,
       validate: StatblockImporter._onValidate,
       config: StatblockImporter._onConfig,
-      instructions: StatblockImporter._onInstructions
+      instructions: StatblockImporter._onInstructions,
+      plusFeatures: StatblockImporter._onPlusFeatures,
+      plusFeaturesHelp: StatblockImporter._onPlusFeaturesHelp
     }
   };
 
@@ -204,6 +206,17 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               default: false
           });
       }
+
+      // +Features Toggle State
+      if (!game.settings.settings.has("dh-statblock-importer.plusFeaturesEnabled")) {
+          game.settings.register("dh-statblock-importer", "plusFeaturesEnabled", {
+              name: "+Features Enabled",
+              scope: "client",
+              config: false,
+              type: Boolean,
+              default: false
+          });
+      }
   }
 
   /**
@@ -235,6 +248,38 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   }
 
   /* -------------------------------------------- */
+  /* Context & Rendering                         */
+  /* -------------------------------------------- */
+
+  async _prepareContext(options) {
+      const context = await super._prepareContext(options);
+      context.plusFeaturesEnabled = game.settings.get("dh-statblock-importer", "plusFeaturesEnabled");
+      return context;
+  }
+
+  _onRender(context, options) {
+      super._onRender(context, options);
+
+      // Add listener to mode select to show/hide +Features button
+      const modeSelect = this.element.querySelector("select[name='importMode']");
+      const plusFeaturesContainer = this.element.querySelector(".dh-plus-features-container");
+
+      if (modeSelect && plusFeaturesContainer) {
+          const updatePlusFeaturesVisibility = () => {
+              const mode = modeSelect.value;
+              const showPlusFeatures = (mode === "adversary" || mode === "environment");
+              plusFeaturesContainer.style.display = showPlusFeatures ? "flex" : "none";
+          };
+
+          // Initial state
+          updatePlusFeaturesVisibility();
+
+          // Listen for changes
+          modeSelect.addEventListener("change", updatePlusFeaturesVisibility);
+      }
+  }
+
+  /* -------------------------------------------- */
   /* Action Handlers                             */
   /* -------------------------------------------- */
 
@@ -242,18 +287,81 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       new StatblockConfig().render(true);
   }
 
+  /** Map of import modes to their corresponding journal page UUIDs */
+  static INSTRUCTION_PAGES = {
+      adversary: "Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp.JournalEntryPage.nlrsgNbZXTGn1nts",
+      environment: "Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp.JournalEntryPage.fAxQ9BhNIrtqrrsp",
+      loot: "Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp.JournalEntryPage.vlcNkeXV3hQTZclx",
+      consumable: "Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp.JournalEntryPage.nuyINYV4GIjtC1lF",
+      armor: "Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp.JournalEntryPage.lvHdUjqE5GMmApWZ",
+      weapon: "Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp.JournalEntryPage.6v8fr6yfNI4a9OUL",
+      feature: "Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp.JournalEntryPage.BcLq3PdLENjijqLI",
+      domainCard: "Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp.JournalEntryPage.VXRK8rb5UBdOOLa2"
+  };
+
   static async _onInstructions(event, target) {
       try {
-          const doc = await fromUuid("Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp");
-          if (doc) {
-              doc.sheet.render(true);
+          // Get current mode from the form
+          const formElement = this.element;
+          const modeSelect = formElement.querySelector("select[name='importMode']");
+          const mode = modeSelect?.value || "adversary";
+
+          // Get the page UUID for this mode
+          const pageUuid = StatblockImporter.INSTRUCTION_PAGES[mode];
+
+          if (pageUuid) {
+              const page = await fromUuid(pageUuid);
+              if (page) {
+                  // Open the parent journal entry and navigate to the specific page
+                  const journal = page.parent;
+                  if (journal) {
+                      journal.sheet.render(true, { pageId: page.id });
+                  }
+              } else {
+                  ui.notifications.warn(`Instructions page for "${mode}" not found in Compendium.`);
+                  console.warn(`DH Importer | Could not find JournalEntryPage with UUID: ${pageUuid}`);
+              }
           } else {
-              ui.notifications.warn("Instructions Journal Entry not found in Compendium.");
-              console.warn("DH Importer | Could not find JournalEntry with UUID: Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp");
+              // Fallback to main journal if mode not found
+              const doc = await fromUuid("Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp");
+              if (doc) {
+                  doc.sheet.render(true);
+              }
           }
       } catch (err) {
           StatblockImporter.errorLog("Error opening instructions", err);
           ui.notifications.error("Failed to open instructions.");
+      }
+  }
+
+  static async _onPlusFeatures(event, target) {
+      const currentState = game.settings.get("dh-statblock-importer", "plusFeaturesEnabled");
+      const newState = !currentState;
+      await game.settings.set("dh-statblock-importer", "plusFeaturesEnabled", newState);
+
+      // Update button visual state
+      const btn = target.closest("button");
+      if (btn) {
+          btn.classList.toggle("active", newState);
+      }
+  }
+
+  static async _onPlusFeaturesHelp(event, target) {
+      try {
+          const doc = await fromUuid("Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp.JournalEntryPage.wvgvxX1ksmUL2Ahj");
+          if (doc) {
+              // Open the parent journal entry and navigate to the page
+              const journal = doc.parent;
+              if (journal) {
+                  journal.sheet.render(true, { pageId: doc.id });
+              }
+          } else {
+              ui.notifications.warn("+Features help page not found in Compendium.");
+              console.warn("DH Importer | Could not find JournalEntryPage with UUID: Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp.JournalEntryPage.wvgvxX1ksmUL2Ahj");
+          }
+      } catch (err) {
+          StatblockImporter.errorLog("Error opening +Features help", err);
+          ui.notifications.error("Failed to open +Features help.");
       }
   }
 
@@ -740,6 +848,45 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
                 const newActor = await Actor.create(actorData);
                 if (newActor) createdObjects.push(newActor);
+
+                // +Features: Also create features as separate items if enabled
+                const plusFeaturesEnabled = game.settings.get("dh-statblock-importer", "plusFeaturesEnabled");
+                if (plusFeaturesEnabled && result.items?.length > 0) {
+                    const isEnvironment = result.actorType === "environment";
+                    const colorMap = isEnvironment ? StatblockImporter.ENVIRONMENT_TYPE_COLORS : StatblockImporter.TYPE_COLORS;
+
+                    for (const featureItem of result.items) {
+                        try {
+                            // Skip compendium features (they already exist)
+                            if (featureItem.flags?.dhImporter?.isCompendium === true) continue;
+
+                            // Determine feature type (action, reaction, passive)
+                            const featureType = featureItem.system?.featureForm || "passive";
+
+                            // Get the target folder for this feature
+                            const featureFolder = await StatblockImporter._ensureFeatureFolderHierarchy(
+                                isEnvironment,
+                                result.systemData.type,
+                                featureType,
+                                colorMap
+                            );
+
+                            // Create the feature item
+                            const featureData = {
+                                name: featureItem.name,
+                                type: featureItem.type,
+                                system: featureItem.system,
+                                img: featureItem.img,
+                                folder: featureFolder?.id
+                            };
+
+                            await Item.create(featureData);
+                            StatblockImporter.debugLog(`+Features: Created feature "${featureItem.name}" in folder "${featureFolder?.name}"`);
+                        } catch (featureError) {
+                            StatblockImporter.errorLog(`+Features: Failed to create feature "${featureItem.name}"`, featureError);
+                        }
+                    }
+                }
             }
 
         } catch (error) {
@@ -795,6 +942,74 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       return tierFolder;
+  }
+
+  /**
+   * Helper to ensure the folder hierarchy for +Features mode exists.
+   * Structure: 📦 Imported Items / ✨ {Adversary|Environment} Features / {ActorType} / {FeatureType}
+   * @param {boolean} isEnvironment - Whether this is an environment or adversary
+   * @param {string} actorType - The type of the actor (e.g., "bruiser", "leader", "event", "traversal")
+   * @param {string} featureType - The type of the feature (e.g., "action", "reaction", "passive")
+   * @param {Object} colorMap - The color map to use for folder colors
+   * @returns {Folder} - The target folder for the feature
+   */
+  static async _ensureFeatureFolderHierarchy(isEnvironment, actorType, featureType, colorMap) {
+      // 1. Find or Create ROOT Item Folder
+      const rootName = "📦 Imported Items";
+      const rootColor = "#052e00";
+
+      let rootFolder = game.folders.find(f => f.name === rootName && f.type === "Item");
+      if (!rootFolder) {
+          rootFolder = await Folder.create({ name: rootName, type: "Item", color: rootColor });
+      }
+
+      // 2. Find or Create Category Folder (Adversary Features or Environment Features)
+      const categoryName = isEnvironment ? "✨ Environment Features" : "✨ Adversary Features";
+      const categoryColor = isEnvironment ? "#0f3d0f" : "#4a3d00";
+
+      let categoryFolder = game.folders.find(f => f.name === categoryName && f.type === "Item" && f.folder?.id === rootFolder.id);
+      if (!categoryFolder) {
+          categoryFolder = await Folder.create({
+              name: categoryName,
+              type: "Item",
+              folder: rootFolder.id,
+              color: categoryColor
+          });
+      }
+
+      // 3. If no actorType provided, return category folder
+      if (!actorType) return categoryFolder;
+
+      // 4. Find or Create Actor Type Folder
+      const typeKey = actorType.charAt(0).toUpperCase() + actorType.slice(1).toLowerCase();
+      const typeColor = colorMap[typeKey] || colorMap["Unknown"] || "#333333";
+
+      let typeFolder = game.folders.find(f => f.name === typeKey && f.type === "Item" && f.folder?.id === categoryFolder.id);
+      if (!typeFolder) {
+          typeFolder = await Folder.create({
+              name: typeKey,
+              type: "Item",
+              folder: categoryFolder.id,
+              color: typeColor
+          });
+      }
+
+      // 5. If no featureType provided, return type folder
+      if (!featureType) return typeFolder;
+
+      // 6. Find or Create Feature Type Folder (Action, Reaction, Passive)
+      const featureTypeKey = featureType.charAt(0).toUpperCase() + featureType.slice(1).toLowerCase();
+
+      let featureTypeFolder = game.folders.find(f => f.name === featureTypeKey && f.type === "Item" && f.folder?.id === typeFolder.id);
+      if (!featureTypeFolder) {
+          featureTypeFolder = await Folder.create({
+              name: featureTypeKey,
+              type: "Item",
+              folder: typeFolder.id
+          });
+      }
+
+      return featureTypeFolder;
   }
 
   /* -------------------------------------------- */
@@ -978,7 +1193,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // Detect "make an attack" / "make a standard attack" / "make an attack roll"
-      if (/make\s+(a\s+)?(standard\s+)?attack(\s+roll)?/i.test(description)) {
+      if (/make\s+(an?\s+)?(standard\s+)?attack(\s+roll)?/i.test(description)) {
           const actionId = foundry.utils.randomID(16);
           detectedActions[actionId] = {
               type: "attack",

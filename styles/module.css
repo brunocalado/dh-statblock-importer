@@ -510,3 +510,58 @@ textarea[name="statblockText"]:focus {
     background: #3a633a;
     box-shadow: 0 0 10px rgba(72,187,72,0.4);
 }
+
+/* ============================================== */
+/* +Features Toggle Button                       */
+/* ============================================== */
+
+.dh-plus-features-container {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.dh-plus-features-btn {
+    background: #333;
+    border: 1px solid var(--color-border-light-2);
+    color: var(--color-text-light-5);
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 4px 0 0 4px;
+    transition: all 0.2s;
+}
+
+.dh-plus-features-btn:hover {
+    background: #444;
+    border-color: var(--color-text-hyperlink);
+}
+
+.dh-plus-features-btn.active {
+    background: #4a3d00;
+    border-color: #ffd700;
+    color: #ffd700;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+}
+
+.dh-plus-features-btn.active:hover {
+    background: #5a4d10;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+}
+
+.dh-plus-features-help {
+    background: #333;
+    border: 1px solid var(--color-border-light-2);
+    border-left: none;
+    color: var(--color-text-light-5);
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 0 4px 4px 0;
+    transition: all 0.2s;
+    min-width: 32px;
+}
+
+.dh-plus-features-help:hover {
+    background: #444;
+    border-color: var(--color-text-hyperlink);
+    color: var(--color-text-hyperlink);
+}
