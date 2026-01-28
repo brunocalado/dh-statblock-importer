@@ -10,6 +10,9 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   /** Valid adversary types (lowercase) */
   static VALID_ADVERSARY_TYPES = ["bruiser", "horde", "leader", "minion", "ranged", "skulk", "social", "solo", "standard", "support"];
 
+  /** Valid environment types (lowercase) */
+  static VALID_ENVIRONMENT_TYPES = ["exploration", "social", "traversal", "event"];
+
   /** Folder Colors based on Adversary Type */
   static TYPE_COLORS = {
       "Bruiser": "#4a0404",      // Deep Blood Red
@@ -1069,6 +1072,21 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   /* -------------------------------------------- */
 
   /**
+   * Wraps dice rolls in [[/r ]] format for Foundry inline rolls.
+   * Handles formats like: 1d6, 2d8+3, 1d4-1, 3d4 + 8, 3d4+ 8, 3d4 +8
+   * @param {string} text - The text to process
+   * @returns {string} - Text with dice rolls wrapped in [[/r ]]
+   */
+  static wrapDiceRolls(text) {
+      if (!text) return text;
+      // First handle dice with modifiers (with optional spaces)
+      let result = text.replace(/\b(\d+d\d+)\s*([+-])\s*(\d+)\b/g, '[[/r $1$2$3]]');
+      // Then handle plain dice (only if not followed by +/- which would have been caught above)
+      result = result.replace(/\b(\d+d\d+)\b(?!\s*[+-])/g, '[[/r $1]]');
+      return result;
+  }
+
+  /**
    * Detects actions in a description text and returns an actions object.
    * This function is used by features, loot, consumables, weapons, armors, and domain cards.
    * @param {string} description - The description text to analyze
@@ -1239,57 +1257,86 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           };
       }
 
-      // Detect damage dice patterns (e.g., 1d10+3, 2d6 + 1, 1d12 - 2)
-      // Extract from [[/r ...]] wrapped dice rolls
-      const diceMatches = description.matchAll(/\[\[\/r\s+(\d+d\d+)(?:\s*([+-])\s*(\d+))?\]\]/g);
-      for (const match of diceMatches) {
-          const diceBase = match[1]; // e.g., "1d10"
-          const sign = match[2] || ""; // e.g., "+" or "-"
-          const modifier = match[3] || ""; // e.g., "3"
-          const formula = sign && modifier ? `${diceBase}${sign}${modifier}` : diceBase;
+      // Detect damage dice patterns only when in damage context
+      // Check if text mentions "damage" at all (with or without type specifier)
+      const hasDamageContext = /\bdamage\b/i.test(description);
 
-          const actionId = foundry.utils.randomID(16);
-          detectedActions[actionId] = {
-              type: "damage",
-              _id: actionId,
-              systemPath: "actions",
-              baseAction: false,
-              description: "",
-              chatDisplay: true,
-              originItem: { type: "itemCollection" },
-              actionType: "action",
-              triggers: [],
-              cost: [],
-              uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
-              damage: {
-                  parts: [{
-                      value: {
-                          custom: { enabled: true, formula: formula },
-                          multiplier: "prof",
-                          flatMultiplier: 1,
-                          dice: "d6",
-                          bonus: null
-                      },
-                      applyTo: "hitPoints",
-                      type: ["physical"],
-                      base: false,
-                      resultBased: false,
-                      valueAlt: {
-                          multiplier: "prof",
-                          flatMultiplier: 1,
-                          dice: "d6",
-                          bonus: null,
-                          custom: { enabled: false, formula: "" }
-                      }
-                  }],
-                  includeBase: false,
-                  direct: false
-              },
-              target: { type: "any", amount: null },
-              effects: [],
-              name: `Damage (${formula})`,
-              range: ""
-          };
+      if (hasDamageContext) {
+          // Detect damage type and direct flag
+          // Default: physical, direct: false
+          let damageType = ["physical"];
+          let isDirect = false;
+
+          if (/direct\s+(?:magic|magical)\s+damage/i.test(description)) {
+              damageType = ["magical"];
+              isDirect = true;
+          } else if (/direct\s+physical\s+damage/i.test(description)) {
+              damageType = ["physical"];
+              isDirect = true;
+          } else if (/direct\s+damage/i.test(description)) {
+              // "direct damage" without type = physical + direct
+              damageType = ["physical"];
+              isDirect = true;
+          } else if (/(?:magic|magical)\s+damage/i.test(description)) {
+              damageType = ["magical"];
+          } else if (/physical\s+damage/i.test(description)) {
+              damageType = ["physical"];
+          }
+          // If just "damage" without type, defaults remain: physical, direct: false
+
+          // Pattern: XdY or XdY+Z with optional spaces, with or without [[/r ]] wrapper
+          const diceRegex = /(?:\[\[\/r\s+)?(\d+d\d+)(?:\s*([+-])\s*(\d+))?(?:\]\])?/g;
+          const diceMatches = description.matchAll(diceRegex);
+
+          for (const match of diceMatches) {
+              const diceBase = match[1]; // e.g., "1d10"
+              const sign = match[2] || ""; // e.g., "+" or "-"
+              const modifier = match[3] || ""; // e.g., "3"
+              const formula = sign && modifier ? `${diceBase}${sign}${modifier}` : diceBase;
+
+              const actionId = foundry.utils.randomID(16);
+              detectedActions[actionId] = {
+                  type: "damage",
+                  _id: actionId,
+                  systemPath: "actions",
+                  baseAction: false,
+                  description: "",
+                  chatDisplay: true,
+                  originItem: { type: "itemCollection" },
+                  actionType: "action",
+                  triggers: [],
+                  cost: [],
+                  uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
+                  damage: {
+                      parts: [{
+                          value: {
+                              custom: { enabled: true, formula: formula },
+                              multiplier: "prof",
+                              flatMultiplier: 1,
+                              dice: "d6",
+                              bonus: null
+                          },
+                          applyTo: "hitPoints",
+                          type: damageType,
+                          base: false,
+                          resultBased: false,
+                          valueAlt: {
+                              multiplier: "prof",
+                              flatMultiplier: 1,
+                              dice: "d6",
+                              bonus: null,
+                              custom: { enabled: false, formula: "" }
+                          }
+                      }],
+                      includeBase: false,
+                      direct: isDirect
+                  },
+                  target: { type: "any", amount: null },
+                  effects: [],
+                  name: `Damage (${formula})`,
+                  range: ""
+              };
+          }
       }
 
       return detectedActions;
@@ -1318,7 +1365,10 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           featureForm = actionMatch[2].toLowerCase();
       }
 
-      const description = lines.length > 1 ? lines.slice(1).join(" ") : "";
+      let description = lines.length > 1 ? lines.slice(1).join(" ") : "";
+
+      // Wrap dice rolls in [[/r ]] format
+      description = StatblockImporter.wrapDiceRolls(description);
 
       const img = StatblockImporter._getDefaultImage("feature");
 
@@ -1353,7 +1403,10 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       if (lines.length === 0) throw new Error("Empty item block");
 
       const name = lines[0];
-      const description = lines.length > 1 ? lines.slice(1).join(" ") : "";
+      let description = lines.length > 1 ? lines.slice(1).join(" ") : "";
+
+      // Wrap dice rolls in [[/r ]] format
+      description = StatblockImporter.wrapDiceRolls(description);
 
       const img = StatblockImporter._getDefaultImage(type);
 
@@ -1412,7 +1465,10 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       const recallCost = parseInt(costMatch[1], 10);
 
       // Description is rest
-      const description = lines.length > 3 ? lines.slice(3).join(" ") : "";
+      let description = lines.length > 3 ? lines.slice(3).join(" ") : "";
+
+      // Wrap dice rolls in [[/r ]] format
+      description = StatblockImporter.wrapDiceRolls(description);
 
       const img = StatblockImporter._getDefaultImage("domainCard", cardType);
 
@@ -1493,6 +1549,9 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       let fullDescription = "";
       if (featureText) fullDescription += `<p><strong>${featureText}</strong></p>`;
       if (descriptionLines.length > 0) fullDescription += `<p>${descriptionLines.join(" ")}</p>`;
+
+      // Wrap dice rolls in [[/r ]] format
+      fullDescription = StatblockImporter.wrapDiceRolls(fullDescription);
 
       // --- MAPPINGS ---
       
@@ -1640,6 +1699,9 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           fullDescription += `<p>${descriptionLines.join(" ")}</p>`;
       }
 
+      // Wrap dice rolls in [[/r ]] format
+      fullDescription = StatblockImporter.wrapDiceRolls(fullDescription);
+
       // Detect actions in description
       const detectedActions = StatblockImporter.detectActionsInDescription(fullDescription);
 
@@ -1764,6 +1826,10 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
               if (actorType === "adversary" && !StatblockImporter.VALID_ADVERSARY_TYPES.includes(systemData.type)) {
                   throw new Error(`Invalid adversary type: "${rawType}". Valid types are: ${StatblockImporter.VALID_ADVERSARY_TYPES.join(", ")}`);
+              }
+
+              if (actorType === "environment" && !StatblockImporter.VALID_ENVIRONMENT_TYPES.includes(systemData.type)) {
+                  throw new Error(`Invalid environment type: "${rawType}". Valid types are: ${StatblockImporter.VALID_ENVIRONMENT_TYPES.join(", ")}`);
               }
 
               captureState = "description";
@@ -2043,8 +2109,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               finalDesc = htmlParts.join("");
           }
 
-          // Wrap dice rolls in [[/r ]] format (e.g., 1d6, 2d8+3, 1d4-1)
-          finalDesc = finalDesc.replace(/\b(\d+d\d+(?:[+-]\d+)?)\b/g, '[[/r $1]]');
+          // Wrap dice rolls in [[/r ]] format
+          finalDesc = StatblockImporter.wrapDiceRolls(finalDesc);
 
           currentFeature.system.description = finalDesc;
 
@@ -2060,15 +2126,18 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       };
 
       for (const line of featureBlockLines) {
-          const featureMatch = line.match(/^(.+?)\s*[-–—]\s*(Passive|Action|Reaction):\s*(.*)$/i);
+          // Support both formats:
+          // "Name - Type: Description" (with colon, description on same line)
+          // "Name - Type" (without colon, description on following lines)
+          const featureMatch = line.match(/^(.+?)\s*[-–—]\s*(Passive|Action|Reaction)(?::\s*(.*))?$/i);
           if (featureMatch) {
               if (currentFeature) {
                   await pushCurrentFeature();
                   currentFeature = null;
               }
-              
+
               const featureName = featureMatch[1].trim();
-              let featureDesc = featureMatch[3].trim();
+              let featureDesc = (featureMatch[3] || "").trim();
               featureDesc = replaceNameInText(featureDesc);
 
               currentFeature = {
@@ -2077,18 +2146,25 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   img: actorType === "environment" ? "icons/environment/wilderness/cave-entrance.webp" : "icons/magic/symbols/star-solid-gold.webp",
                   system: {
                       featureForm: featureMatch[2].toLowerCase(),
-                      description: `<p>${featureDesc}</p>`
+                      description: featureDesc ? `<p>${featureDesc}</p>` : ""
                   },
                   flags: { dhImporter: { isCompendium: false } }
               };
           } else {
               if (currentFeature) {
                   let cleanedLine = replaceNameInText(line);
-                  let desc = currentFeature.system.description.replace("</p>", "");
-                  if (line.trim().startsWith("•") || line.trim().startsWith("- ")) {
-                      desc += `</p><p>${cleanedLine}</p>`;
+                  let desc = currentFeature.system.description;
+
+                  if (desc === "") {
+                      // First line of description (when format is "Name - Type" without colon)
+                      desc = `<p>${cleanedLine}</p>`;
                   } else {
-                      desc += " " + cleanedLine + "</p>";
+                      desc = desc.replace("</p>", "");
+                      if (line.trim().startsWith("•") || line.trim().startsWith("- ")) {
+                          desc += `</p><p>${cleanedLine}</p>`;
+                      } else {
+                          desc += " " + cleanedLine + "</p>";
+                      }
                   }
                   currentFeature.system.description = desc;
               }
