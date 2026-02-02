@@ -1159,6 +1159,38 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           };
       }
 
+      // Detect "Spend Hope" / "Spend a Hope" / "Spend 1 Hope" / "Spend 2 Hope"
+      const hopeMatch = description.match(/spend\s+(a\s+|(\d+)\s+)?hope/i);
+      if (hopeMatch) {
+          const hopeValue = hopeMatch[2] ? parseInt(hopeMatch[2], 10) : 1;
+          const hopeName = hopeValue === 1 ? "Spend a Hope" : `Spend ${hopeValue} Hope`;
+          const actionId = foundry.utils.randomID(16);
+          detectedActions[actionId] = {
+              type: "effect",
+              _id: actionId,
+              systemPath: "actions",
+              baseAction: false,
+              description: "",
+              chatDisplay: true,
+              originItem: { type: "itemCollection" },
+              actionType: "action",
+              triggers: [],
+              cost: [{
+                  scalable: false,
+                  key: "hope",
+                  value: hopeValue,
+                  itemId: null,
+                  step: null,
+                  consumeOnSuccess: false
+              }],
+              uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
+              effects: [],
+              target: { type: "any", amount: null },
+              name: hopeName,
+              range: ""
+          };
+      }
+
       // Detect "TRAIT Reaction Roll" patterns (e.g., "Strength Reaction Roll", "Agility Reaction Roll")
       const traits = ["Strength", "Instinct", "Knowledge", "Finesse", "Presence", "Agility"];
       for (const trait of traits) {
