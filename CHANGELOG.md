@@ -1,6 +1,7 @@
 # 0.1.8
 - Bug fix: imported weapons work well now
 - Uses default templates to prevent errors and make it easier to update in the future
+- performance update for mass import
 
 # 0.1.6
 - enviroment only accept correct types

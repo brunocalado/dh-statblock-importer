@@ -770,9 +770,12 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
         return;
     }
 
-    const progressNotification = (blocks.length > 1) 
-        ? ui.notifications.info(`Importing... (0/${totalBlocks})`, { progress: true }) 
+    const progressNotification = (blocks.length > 1)
+        ? ui.notifications.info(`Importing... (0/${totalBlocks})`, { progress: true })
         : null;
+
+    // Accumulate features for batch creation (performance optimization)
+    const pendingFeatures = [];
 
     for (let i = 0; i < blocks.length; i++) {
         const block = blocks[i];
@@ -853,42 +856,27 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                 const newActor = await Actor.create(actorData);
                 if (newActor) createdObjects.push(newActor);
 
-                // +Features: Also create features as separate items if enabled
+                // +Features: Accumulate features for batch creation
                 const plusFeaturesEnabled = game.settings.get("dh-statblock-importer", "plusFeaturesEnabled");
                 if (plusFeaturesEnabled && result.items?.length > 0) {
                     const isEnvironment = result.actorType === "environment";
                     const colorMap = isEnvironment ? StatblockImporter.ENVIRONMENT_TYPE_COLORS : StatblockImporter.TYPE_COLORS;
 
                     for (const featureItem of result.items) {
-                        try {
-                            // Skip compendium features (they already exist)
-                            if (featureItem.flags?.dhImporter?.isCompendium === true) continue;
+                        // Skip compendium features (they already exist)
+                        if (featureItem.flags?.dhImporter?.isCompendium === true) continue;
 
-                            // Determine feature type (action, reaction, passive)
-                            const featureType = featureItem.system?.featureForm || "passive";
+                        // Determine feature type (action, reaction, passive)
+                        const featureType = featureItem.system?.featureForm || "passive";
 
-                            // Get the target folder for this feature
-                            const featureFolder = await StatblockImporter._ensureFeatureFolderHierarchy(
-                                isEnvironment,
-                                result.systemData.type,
-                                featureType,
-                                colorMap
-                            );
-
-                            // Create the feature item
-                            const featureData = {
-                                name: featureItem.name,
-                                type: featureItem.type,
-                                system: featureItem.system,
-                                img: featureItem.img,
-                                folder: featureFolder?.id
-                            };
-
-                            await Item.create(featureData);
-                            StatblockImporter.debugLog(`+Features: Created feature "${featureItem.name}" in folder "${featureFolder?.name}"`);
-                        } catch (featureError) {
-                            StatblockImporter.errorLog(`+Features: Failed to create feature "${featureItem.name}"`, featureError);
-                        }
+                        // Queue feature for batch creation
+                        pendingFeatures.push({
+                            featureItem,
+                            isEnvironment,
+                            actorType: result.systemData.type,
+                            featureType,
+                            colorMap
+                        });
                     }
                 }
             }
@@ -897,6 +885,54 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
             const firstLine = block.split(/\r?\n/)[0] || "Unknown";
             failedBlocks.push({ index: i + 1, name: firstLine, error: error.message });
             StatblockImporter.errorLog(`Failed to import block ${i + 1}`, error);
+        }
+    }
+
+    // Batch create all accumulated features
+    if (pendingFeatures.length > 0) {
+        if (progressNotification) {
+            progressNotification.update({ pct: 0.95, message: `Creating ${pendingFeatures.length} features...` });
+        }
+
+        try {
+            // Cache folders to avoid repeated lookups
+            const folderCache = new Map();
+
+            // Prepare all feature data with folder IDs
+            const featureDataArray = [];
+            for (const pending of pendingFeatures) {
+                const { featureItem, isEnvironment, actorType, featureType, colorMap } = pending;
+
+                // Create cache key for folder lookup
+                const cacheKey = `${isEnvironment}-${actorType}-${featureType}`;
+
+                // Get or create folder
+                let featureFolder = folderCache.get(cacheKey);
+                if (!featureFolder) {
+                    featureFolder = await StatblockImporter._ensureFeatureFolderHierarchy(
+                        isEnvironment,
+                        actorType,
+                        featureType,
+                        colorMap
+                    );
+                    folderCache.set(cacheKey, featureFolder);
+                }
+
+                featureDataArray.push({
+                    name: featureItem.name,
+                    type: featureItem.type,
+                    system: featureItem.system,
+                    img: featureItem.img,
+                    folder: featureFolder?.id
+                });
+            }
+
+            // Batch create all features at once
+            const createdFeatures = await Item.createDocuments(featureDataArray);
+            StatblockImporter.debugLog(`+Features: Batch created ${createdFeatures.length} features`);
+        } catch (batchError) {
+            StatblockImporter.errorLog(`+Features: Batch creation failed`, batchError);
+            ui.notifications.error(`Failed to create features in batch. Check console.`);
         }
     }
 
