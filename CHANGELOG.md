@@ -1,3 +1,6 @@
+# 0.1.9
+- +docs
+
 # 0.1.8
 - Bug fix: imported weapons work well now
 - Uses default templates to prevent errors and make it easier to update in the future
