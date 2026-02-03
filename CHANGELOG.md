@@ -2,6 +2,8 @@
 - Bug fix: imported weapons work well now
 - Uses default templates to prevent errors and make it easier to update in the future
 - performance update for mass import
+- generate code for weapon/armor features
+- module template for you homebrew features
 
 # 0.1.6
 - enviroment only accept correct types

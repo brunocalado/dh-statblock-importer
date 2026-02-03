@@ -565,3 +565,123 @@ textarea[name="statblockText"]:focus {
     border-color: var(--color-text-hyperlink);
     color: var(--color-text-hyperlink);
 }
+
+/* ============================================== */
+/* +Code Generator Toggle Button                  */
+/* ============================================== */
+
+.dh-code-generator-container {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.dh-code-generator-btn {
+    background: #333;
+    border: 1px solid var(--color-border-light-2);
+    color: var(--color-text-light-5);
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 4px 0 0 4px;
+    transition: all 0.2s;
+}
+
+.dh-code-generator-btn:hover {
+    background: #444;
+    border-color: var(--color-text-hyperlink);
+}
+
+.dh-code-generator-btn.active {
+    background: #4a3d00;
+    border-color: #ffd700;
+    color: #ffd700;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+}
+
+.dh-code-generator-btn.active:hover {
+    background: #5a4d10;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+}
+
+.dh-code-generator-help {
+    background: #333;
+    border: 1px solid var(--color-border-light-2);
+    border-left: none;
+    color: var(--color-text-light-5);
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 0 4px 4px 0;
+    transition: all 0.2s;
+    min-width: 32px;
+}
+
+.dh-code-generator-help:hover {
+    background: #444;
+    border-color: var(--color-text-hyperlink);
+    color: var(--color-text-hyperlink);
+}
+
+/* ============================================== */
+/* Feature Code Dialog                            */
+/* ============================================== */
+
+#dh-feature-code-dialog .window-content {
+    padding: 0;
+}
+
+#dh-feature-code-dialog .dh-code-dialog {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    height: 100%;
+}
+
+#dh-feature-code-dialog .instructions {
+    background: #1a1a1a;
+    border-left: 3px solid #ffd700;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+#dh-feature-code-dialog .instructions p {
+    margin: 0;
+}
+
+#dh-feature-code-dialog textarea {
+    flex: 1;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    background: #1a1a1a;
+    color: #e0e0e0;
+    border: 1px solid #444;
+    padding: 12px;
+    resize: vertical;
+    min-height: 250px;
+}
+
+#dh-feature-code-dialog .dialog-buttons {
+    display: flex;
+    justify-content: flex-end;
+}
+
+#dh-feature-code-dialog .copy-button {
+    background: #4a3d00;
+    border: 1px solid #ffd700;
+    color: #ffd700;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#dh-feature-code-dialog .copy-button:hover {
+    background: #5a4d10;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+}
+
+#dh-feature-code-dialog .copy-button.success {
+    background: #0a4d00;
+    border-color: #00ff00;
+    color: #00ff00;
+}

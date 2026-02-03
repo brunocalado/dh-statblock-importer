@@ -39,6 +39,16 @@
             </button>
         </div>
 
+        {{!-- +Code Generator Toggle (only visible for weapon/armor modes) --}}
+        <div class="dh-code-generator-container" style="display:none;">
+            <button type="button" data-action="codeGenerator" class="dh-code-generator-btn {{#if codeGeneratorEnabled}}active{{/if}}" title="Generate feature code after import">
+                <i class="fas fa-code"></i> +Code
+            </button>
+            <button type="button" data-action="codeGeneratorHelp" class="dh-code-generator-help" title="Help about Code Generator">
+                <i class="fas fa-question"></i>
+            </button>
+        </div>
+
         <label class="dh-mode-select">
             <span>Mode:</span>
             <select name="importMode">

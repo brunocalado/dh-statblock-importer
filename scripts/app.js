@@ -1,5 +1,6 @@
 import { StatblockConfig } from "./config.js";
 import { TEMPLATES } from "./templates.js";
+import { FeatureCodeDialog } from "./code-dialog.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -58,7 +59,9 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       config: StatblockImporter._onConfig,
       instructions: StatblockImporter._onInstructions,
       plusFeatures: StatblockImporter._onPlusFeatures,
-      plusFeaturesHelp: StatblockImporter._onPlusFeaturesHelp
+      plusFeaturesHelp: StatblockImporter._onPlusFeaturesHelp,
+      codeGenerator: StatblockImporter._onCodeGenerator,
+      codeGeneratorHelp: StatblockImporter._onCodeGeneratorHelp
     }
   };
 
@@ -221,6 +224,17 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               default: false
           });
       }
+
+      // +Code Generator Toggle State
+      if (!game.settings.settings.has("dh-statblock-importer.codeGeneratorEnabled")) {
+          game.settings.register("dh-statblock-importer", "codeGeneratorEnabled", {
+              name: "+Code Generator Enabled",
+              scope: "client",
+              config: false,
+              type: Boolean,
+              default: false
+          });
+      }
   }
 
   /**
@@ -258,28 +272,40 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   async _prepareContext(options) {
       const context = await super._prepareContext(options);
       context.plusFeaturesEnabled = game.settings.get("dh-statblock-importer", "plusFeaturesEnabled");
+      context.codeGeneratorEnabled = game.settings.get("dh-statblock-importer", "codeGeneratorEnabled");
       return context;
   }
 
   _onRender(context, options) {
       super._onRender(context, options);
 
-      // Add listener to mode select to show/hide +Features button
+      // Add listener to mode select to show/hide +Features and +Code buttons
       const modeSelect = this.element.querySelector("select[name='importMode']");
       const plusFeaturesContainer = this.element.querySelector(".dh-plus-features-container");
+      const codeGeneratorContainer = this.element.querySelector(".dh-code-generator-container");
 
-      if (modeSelect && plusFeaturesContainer) {
-          const updatePlusFeaturesVisibility = () => {
+      if (modeSelect) {
+          const updateButtonsVisibility = () => {
               const mode = modeSelect.value;
-              const showPlusFeatures = (mode === "adversary" || mode === "environment");
-              plusFeaturesContainer.style.display = showPlusFeatures ? "flex" : "none";
+
+              // +Features visible for adversary/environment
+              if (plusFeaturesContainer) {
+                  const showPlusFeatures = (mode === "adversary" || mode === "environment");
+                  plusFeaturesContainer.style.display = showPlusFeatures ? "flex" : "none";
+              }
+
+              // +Code visible for weapon/armor
+              if (codeGeneratorContainer) {
+                  const showCodeGenerator = (mode === "weapon" || mode === "armor");
+                  codeGeneratorContainer.style.display = showCodeGenerator ? "flex" : "none";
+              }
           };
 
           // Initial state
-          updatePlusFeaturesVisibility();
+          updateButtonsVisibility();
 
           // Listen for changes
-          modeSelect.addEventListener("change", updatePlusFeaturesVisibility);
+          modeSelect.addEventListener("change", updateButtonsVisibility);
       }
   }
 
@@ -366,6 +392,36 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       } catch (err) {
           StatblockImporter.errorLog("Error opening +Features help", err);
           ui.notifications.error("Failed to open +Features help.");
+      }
+  }
+
+  static async _onCodeGenerator(event, target) {
+      const currentState = game.settings.get("dh-statblock-importer", "codeGeneratorEnabled");
+      const newState = !currentState;
+      await game.settings.set("dh-statblock-importer", "codeGeneratorEnabled", newState);
+
+      // Update button visual state
+      const btn = target.closest("button");
+      if (btn) {
+          btn.classList.toggle("active", newState);
+      }
+  }
+
+  static async _onCodeGeneratorHelp(event, target) {
+      try {
+          const doc = await fromUuid("Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp.JournalEntryPage.LiVwLebJ7Ih66gBw");
+          if (doc) {
+              const journal = doc.parent;
+              if (journal) {
+                  journal.sheet.render(true, { pageId: doc.id });
+              }
+          } else {
+              ui.notifications.warn("+Code help page not found in Compendium.");
+              console.warn("DH Importer | Could not find JournalEntryPage with UUID: Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp.JournalEntryPage.LiVwLebJ7Ih66gBw");
+          }
+      } catch (err) {
+          StatblockImporter.errorLog("Error opening +Code help", err);
+          ui.notifications.error("Failed to open +Code help.");
       }
   }
 
@@ -777,6 +833,10 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     // Accumulate features for batch creation (performance optimization)
     const pendingFeatures = [];
 
+    // Accumulate features for +Code generator
+    const collectedCodeFeatures = [];
+    const codeGeneratorEnabled = game.settings.get("dh-statblock-importer", "codeGeneratorEnabled");
+
     for (let i = 0; i < blocks.length; i++) {
         const block = blocks[i];
         if (progressNotification) {
@@ -804,6 +864,21 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                 } else {
                     result = StatblockImporter.parseSimpleItemData(block, mode);
                 }
+
+                // +Code: Extract and collect feature if enabled
+                if (codeGeneratorEnabled && (mode === "weapon" || mode === "armor") && result._featureText) {
+                    const extracted = StatblockImporter.extractFeatureFromText(result._featureText);
+                    if (extracted) {
+                        collectedCodeFeatures.push({
+                            mode: mode,
+                            label: extracted.label,
+                            description: extracted.description
+                        });
+                    }
+                }
+
+                // Remove internal property before creating item
+                delete result._featureText;
 
                 const itemData = {
                     name: result.name,
@@ -943,9 +1018,37 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
         if (createdObjects.length === 1 && !blocks.length > 1) createdObjects[0].sheet.render(true);
     }
 
+    // +Code: Show feature code dialog if features were collected
+    if (collectedCodeFeatures.length > 0 && codeGeneratorEnabled) {
+        new FeatureCodeDialog({ features: collectedCodeFeatures }).render(true);
+    }
+
     if (failedBlocks.length > 0) {
         ui.notifications.warn(`Failed to import ${failedBlocks.length} items. Check console.`);
     }
+  }
+
+  /**
+   * Extracts feature label and description from text if it matches "FeatureName: Description" pattern
+   * @param {string} featureText - The text to analyze
+   * @returns {Object|null} - {label: string, description: string} or null if no match
+   */
+  static extractFeatureFromText(featureText) {
+      if (!featureText || !featureText.trim()) return null;
+
+      // Regex to detect "Name: Description" pattern
+      const featurePattern = /^([^:]+):\s*(.+)$/;
+      const match = featureText.match(featurePattern);
+
+      if (!match) return null;
+
+      const label = match[1].trim();
+      const description = match[2].trim();
+
+      // Basic validation: label should have at least 2 characters
+      if (label.length < 2) return null;
+
+      return { label, description };
   }
 
   /**
@@ -1726,6 +1829,9 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           result.system.actions = detectedActions;
       }
 
+      // Store featureText for +Code generator (will be removed before Item.create)
+      result._featureText = featureText;
+
       return result;
   }
 
@@ -1806,6 +1912,9 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       if (Object.keys(detectedActions).length > 0) {
           result.system.actions = detectedActions;
       }
+
+      // Store featureText for +Code generator (will be removed before Item.create)
+      result._featureText = featureText;
 
       return result;
   }
