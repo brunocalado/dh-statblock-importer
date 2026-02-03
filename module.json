@@ -1,7 +1,7 @@
 {
   "id": "dh-statblock-importer",
   "title": "Daggerheart: Stats Toolbox",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "compatibility": {
     "minimum": "13",
     "verified": "13"
@@ -33,7 +33,7 @@
         "id": "daggerheart",
         "type": "system",
         "compatibility": {
-          "minimum": "1.6.0"
+          "minimum": "1.6.3"
         }
       }
     ]

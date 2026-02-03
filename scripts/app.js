@@ -1,4 +1,5 @@
 import { StatblockConfig } from "./config.js";
+import { TEMPLATES } from "./templates.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -1577,10 +1578,10 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       // Feature is everything after the match
       const featureText = firstLine.substring(match.index + match[0].length).trim();
 
-      // Combine Feature + Description
+      // Combine Description + Feature (description first, feature last)
       let fullDescription = "";
-      if (featureText) fullDescription += `<p><strong>${featureText}</strong></p>`;
       if (descriptionLines.length > 0) fullDescription += `<p>${descriptionLines.join(" ")}</p>`;
+      if (featureText) fullDescription += `<p><strong>${featureText}</strong></p>`;
 
       // Wrap dice rolls in [[/r ]] format
       fullDescription = StatblockImporter.wrapDiceRolls(fullDescription);
@@ -1651,26 +1652,38 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       // Detect actions in description
       const detectedActions = StatblockImporter.detectActionsInDescription(fullDescription);
 
-      // --- RESULT ---
-      const result = {
-          name,
-          type: "weapon",
-          img: StatblockImporter._getDefaultImage("weapon"),
-          system: {
-              tier: tier,
-              burden: burden,
-              description: fullDescription,
-              attack: {
-                  range: range,
-                  roll: { trait: trait },
-                  damage: {
-                      parts: damageParts,
-                      includeBase: false,
-                      direct: false
-                  }
-              }
+      // For weapons, remove "Attack" and "Damage" actions (they are redundant with the weapon's base attack)
+      for (const [id, action] of Object.entries(detectedActions)) {
+          if (action.name === "Attack" || action.name?.startsWith("Damage")) {
+              delete detectedActions[id];
           }
-      };
+      }
+
+      // --- RESULT ---
+      // Clone do template base para garantir todos campos obrigatórios
+      const result = foundry.utils.deepClone(TEMPLATES.weapon);
+
+      // Override campos parseados
+      result.name = name;
+      result.img = StatblockImporter._getDefaultImage("weapon");
+      result.system.tier = tier;
+      result.system.burden = burden;
+      result.system.description = fullDescription;
+
+      // Attack overrides
+      result.system.attack._id = foundry.utils.randomID();
+      result.system.attack.range = range;
+      result.system.attack.roll.trait = trait;
+
+      // Damage overrides (se parsing foi bem sucedido)
+      if (damageParts.length > 0) {
+          const parsed = damageParts[0];
+          const dmgPart = result.system.attack.damage.parts[0];
+          dmgPart.type = parsed.type;
+          dmgPart.value.dice = parsed.value.dice;
+          dmgPart.value.flatMultiplier = parsed.value.flatMultiplier;
+          dmgPart.value.bonus = parsed.value.bonus;
+      }
 
       // Add detected actions if any were found
       if (Object.keys(detectedActions).length > 0) {

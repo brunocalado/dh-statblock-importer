@@ -1,3 +1,7 @@
+# 0.1.8
+- Bug fix: imported weapons work well now
+- Uses default templates to prevent errors and make it easier to update in the future
+
 # 0.1.6
 - enviroment only accept correct types
 - can detect physical/magical damage type to create the damage action
