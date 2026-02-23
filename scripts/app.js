@@ -1585,6 +1585,27 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       // Detect actions in description
       const detectedActions = StatblockImporter.detectActionsInDescription(description);
 
+      // For consumables, use the template base and always add a "Spend Use" action
+      if (type === "consumable") {
+          const result = foundry.utils.deepClone(TEMPLATES.consumable);
+          result.name = name;
+          result.img = img;
+          result.system.description = description;
+
+          // Add detected actions
+          if (Object.keys(detectedActions).length > 0) {
+              result.system.actions = detectedActions;
+          }
+
+          // Always add a "Spend Use" action for consumables
+          const spendUseId = foundry.utils.randomID(16);
+          const spendUseAction = foundry.utils.deepClone(TEMPLATES.consumableActionSpendUse);
+          spendUseAction._id = spendUseId;
+          result.system.actions[spendUseId] = spendUseAction;
+
+          return result;
+      }
+
       const result = {
           name,
           type,

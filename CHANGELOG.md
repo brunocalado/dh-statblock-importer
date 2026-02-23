@@ -1,3 +1,6 @@
+# 0.2.2
+- Bug Fix for Consumable
+
 # 0.1.9
 - +docs
 

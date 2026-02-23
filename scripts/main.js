@@ -63,6 +63,15 @@ Hooks.on("renderDaggerheartMenu", (app, html) => {
     SI.Open();
   };
 
+  const btn2 = document.createElement("button");
+  btn2.type = "button";
+  btn2.style.width = "100%";
+  btn2.innerHTML = `<i class="fas fa-plus-square"></i> Create Statblock`;
+  btn2.onclick = (e) => {
+    e.preventDefault();
+    SI.CreateStatblock();
+  };
+
   const fieldset = element.querySelector("fieldset");
   if (fieldset) {
     const newFieldset = document.createElement("fieldset");
@@ -70,8 +79,10 @@ Hooks.on("renderDaggerheartMenu", (app, html) => {
     legend.innerText = "Statblock Importer";
     newFieldset.appendChild(legend);
     newFieldset.appendChild(btn);
+    newFieldset.appendChild(btn2);
     fieldset.after(newFieldset);
   } else {
     element.appendChild(btn);
+    element.appendChild(btn2);
   }
 });

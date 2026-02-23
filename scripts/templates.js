@@ -207,6 +207,182 @@ export const TEMPLATES = {
   },
 
   // ============================================
+  // CONSUMABLE ACTION TEMPLATES
+  // ============================================
+
+  // Action: Attack (clean, no damage)
+  consumableActionAttack: {
+    type: "attack",
+    systemPath: "actions",
+    baseAction: false,
+    description: "",
+    chatDisplay: true,
+    originItem: { type: "itemCollection" },
+    actionType: "action",
+    triggers: [],
+    cost: [],
+    uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
+    damage: {
+      parts: [],
+      includeBase: false,
+      direct: false
+    },
+    target: { type: "any", amount: null },
+    effects: [],
+    roll: {
+      type: "attack",
+      trait: null,
+      difficulty: null,
+      bonus: null,
+      advState: "neutral",
+      diceRolling: {
+        multiplier: "prof",
+        flatMultiplier: 1,
+        dice: "d6",
+        compare: null,
+        treshold: null
+      },
+      useDefault: false
+    },
+    save: {
+      trait: null,
+      difficulty: null,
+      damageMod: "none"
+    },
+    name: "Attack",
+    range: ""
+  },
+
+  // Action: Attack with damage
+  consumableActionAttackDamage: {
+    type: "attack",
+    systemPath: "actions",
+    baseAction: false,
+    description: "",
+    chatDisplay: true,
+    originItem: { type: "itemCollection" },
+    actionType: "action",
+    triggers: [],
+    cost: [],
+    uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
+    damage: {
+      parts: [{
+        resultBased: false,
+        value: {
+          custom: { enabled: true, formula: "" },
+          multiplier: "prof",
+          flatMultiplier: 1,
+          dice: "d6",
+          bonus: null
+        },
+        applyTo: "hitPoints",
+        type: ["physical"],
+        base: false,
+        valueAlt: {
+          multiplier: "prof",
+          flatMultiplier: 1,
+          dice: "d6",
+          bonus: null,
+          custom: { enabled: false, formula: "" }
+        }
+      }],
+      includeBase: false,
+      direct: false
+    },
+    target: { type: "any", amount: null },
+    effects: [],
+    roll: {
+      type: "attack",
+      trait: null,
+      difficulty: null,
+      bonus: null,
+      advState: "neutral",
+      diceRolling: {
+        multiplier: "prof",
+        flatMultiplier: 1,
+        dice: "d6",
+        compare: null,
+        treshold: null
+      },
+      useDefault: false
+    },
+    save: {
+      trait: null,
+      difficulty: null,
+      damageMod: "none"
+    },
+    name: "Attack",
+    range: ""
+  },
+
+  // Action: Direct damage (no roll)
+  consumableActionDirectDamage: {
+    type: "damage",
+    systemPath: "actions",
+    baseAction: false,
+    description: "",
+    chatDisplay: true,
+    originItem: { type: "itemCollection" },
+    actionType: "action",
+    triggers: [],
+    cost: [],
+    uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
+    damage: {
+      parts: [{
+        value: {
+          custom: { enabled: true, formula: "" },
+          multiplier: "prof",
+          flatMultiplier: 1,
+          dice: "d6",
+          bonus: null
+        },
+        applyTo: "hitPoints",
+        type: ["physical"],
+        base: false,
+        resultBased: false,
+        valueAlt: {
+          multiplier: "prof",
+          flatMultiplier: 1,
+          dice: "d6",
+          bonus: null,
+          custom: { enabled: false, formula: "" }
+        }
+      }],
+      includeBase: false,
+      direct: true
+    },
+    target: { type: "any", amount: null },
+    effects: [],
+    name: "Damage",
+    range: ""
+  },
+
+  // Action: Spend Use (consumes 1 quantity)
+  consumableActionSpendUse: {
+    type: "effect",
+    systemPath: "actions",
+    baseAction: false,
+    description: "",
+    chatDisplay: true,
+    originItem: { type: "itemCollection" },
+    actionType: "action",
+    triggers: [],
+    cost: [{
+      scalable: false,
+      key: "quantity",
+      value: 1,
+      itemId: null,
+      step: null,
+      consumeOnSuccess: false
+    }],
+    uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
+    effects: [],
+    target: { type: "any", amount: null },
+    name: "Spend Use",
+    range: ""
+  },
+
+  // ============================================
   // LOOT
   // ============================================
   loot: {
