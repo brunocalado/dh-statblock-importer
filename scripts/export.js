@@ -119,8 +119,9 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
                 return;
             }
 
-            if (item.type !== "class") {
-                ui.notifications.warn("Only Class items are supported.");
+            const supportedItemTypes = ["class", "ancestry", "community"];
+            if (!supportedItemTypes.includes(item.type)) {
+                ui.notifications.warn("Only Class, Ancestry, or Community items are supported.");
                 return;
             }
 
@@ -128,7 +129,7 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
             this._droppedActor = null;
 
         } else {
-            ui.notifications.warn("Please drop an Actor or a Class item.");
+            ui.notifications.warn("Please drop an Actor or an Item.");
             return;
         }
 
@@ -188,6 +189,10 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
         try {
             if (this._droppedItem?.type === "class") {
                 statblock = await this._formatClass(this._droppedItem);
+            } else if (this._droppedItem?.type === "ancestry") {
+                statblock = await this._formatAncestry(this._droppedItem);
+            } else if (this._droppedItem?.type === "community") {
+                statblock = await this._formatCommunity(this._droppedItem);
             } else if (this._droppedActor?.type === "adversary") {
                 statblock = this._formatAdversary(this._droppedActor);
             } else if (this._droppedActor?.type === "environment") {
@@ -679,6 +684,72 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
                 const cleanC = this._stripHtml(c, className);
                 if (cleanC) lines.push(`${i + 1}. ${cleanC}`);
             });
+        }
+
+        return lines.join("\n");
+    }
+
+    /**
+     * Format an ancestry item to plain-text statblock.
+     * Resolves feature UUIDs for name and description.
+     * @param {Item} item - A Daggerheart ancestry item document
+     * @returns {Promise<string>}
+     */
+    async _formatAncestry(item) {
+        const sys = item.system;
+        const lines = [];
+
+        lines.push(item.name);
+
+        if (sys.description) {
+            const desc = this._stripHtml(sys.description, item.name);
+            if (desc) lines.push(desc);
+        }
+
+        // Ancestry features: array of {type, item} where item is a getter returning index entry
+        const featuresList = this._toArray(sys.features);
+        for (const entry of featuresList) {
+            const featureRef = entry.item || entry;
+            const featureUuid = (typeof featureRef === "object") ? featureRef?.uuid : featureRef;
+            const featureDoc = featureUuid ? await this._resolveItem(featureUuid) : null;
+            if (!featureDoc) continue;
+
+            const fName = featureDoc.name;
+            const fDesc = this._stripHtml(featureDoc.system?.description || "", item.name);
+            lines.push(`${fName}: ${fDesc}`);
+        }
+
+        return lines.join("\n");
+    }
+
+    /**
+     * Format a community item to plain-text statblock.
+     * Resolves feature UUIDs for name and description.
+     * @param {Item} item - A Daggerheart community item document
+     * @returns {Promise<string>}
+     */
+    async _formatCommunity(item) {
+        const sys = item.system;
+        const lines = [];
+
+        lines.push(item.name);
+
+        if (sys.description) {
+            const desc = this._stripHtml(sys.description, item.name);
+            if (desc) lines.push(desc);
+        }
+
+        // Community features: can be plain UUID strings or {item} objects
+        const featuresList = this._toArray(sys.features);
+        for (const entry of featuresList) {
+            const featureRef = entry.item || entry;
+            const featureUuid = (typeof featureRef === "object") ? featureRef?.uuid : featureRef;
+            const featureDoc = featureUuid ? await this._resolveItem(featureUuid) : null;
+            if (!featureDoc) continue;
+
+            const fName = featureDoc.name;
+            const fDesc = this._stripHtml(featureDoc.system?.description || "", item.name);
+            lines.push(`${fName}: ${fDesc}`);
         }
 
         return lines.join("\n");
