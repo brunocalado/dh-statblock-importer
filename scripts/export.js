@@ -35,6 +35,9 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
     /** Currently dropped actor */
     _droppedActor = null;
 
+    /** Currently dropped item (for class export) */
+    _droppedItem = null;
+
     /* -------------------------------------------- */
     /* Rendering                                    */
     /* -------------------------------------------- */
@@ -70,7 +73,7 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
     }
 
     /**
-     * Handle the drop event
+     * Handle the drop event, supporting both Actor and Item document types.
      * @param {DragEvent} ev
      */
     async _handleDrop(ev) {
@@ -82,43 +85,66 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
             return;
         }
 
-        if (data.type !== "Actor") {
-            ui.notifications.warn("Please drop an Actor.");
+        if (data.type === "Actor") {
+            let actor;
+            if (data.uuid) {
+                actor = await fromUuid(data.uuid);
+            } else if (data.id) {
+                actor = game.actors.get(data.id);
+            }
+
+            if (!actor) {
+                ui.notifications.warn("Could not find the actor.");
+                return;
+            }
+
+            if (actor.type !== "adversary" && actor.type !== "environment") {
+                ui.notifications.warn("Only Adversary or Environment actors are supported.");
+                return;
+            }
+
+            this._droppedActor = actor;
+            this._droppedItem = null;
+
+        } else if (data.type === "Item") {
+            let item;
+            if (data.uuid) {
+                item = await fromUuid(data.uuid);
+            } else if (data.id) {
+                item = game.items.get(data.id);
+            }
+
+            if (!item) {
+                ui.notifications.warn("Could not find the item.");
+                return;
+            }
+
+            if (item.type !== "class") {
+                ui.notifications.warn("Only Class items are supported.");
+                return;
+            }
+
+            this._droppedItem = item;
+            this._droppedActor = null;
+
+        } else {
+            ui.notifications.warn("Please drop an Actor or a Class item.");
             return;
         }
 
-        let actor;
-        if (data.uuid) {
-            actor = await fromUuid(data.uuid);
-        } else if (data.id) {
-            actor = game.actors.get(data.id);
-        }
-
-        if (!actor) {
-            ui.notifications.warn("Could not find the actor.");
-            return;
-        }
-
-        // Check if it's an adversary or environment
-        if (actor.type !== "adversary" && actor.type !== "environment") {
-            ui.notifications.warn("Only Adversary or Environment actors are supported.");
-            return;
-        }
-
-        this._droppedActor = actor;
         this._updateDropZoneDisplay();
-        // Added await here because generation is now async
         await this._generateStatblock();
     }
 
     /**
-     * Update the drop zone to show the dropped actor
+     * Update the drop zone to show the dropped actor or item.
      */
     _updateDropZoneDisplay() {
         const placeholder = this.element.querySelector(".dh-drop-placeholder");
         const droppedDisplay = this.element.querySelector(".dh-dropped-actor");
+        const doc = this._droppedActor || this._droppedItem;
 
-        if (this._droppedActor) {
+        if (doc) {
             placeholder.style.display = "none";
             droppedDisplay.style.display = "flex";
 
@@ -126,14 +152,19 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
             const name = droppedDisplay.querySelector(".dh-dropped-name");
             const type = droppedDisplay.querySelector(".dh-dropped-type");
 
-            img.src = this._droppedActor.img;
-            name.textContent = this._droppedActor.name;
+            img.src = doc.img;
+            name.textContent = doc.name;
 
-            const actorType = this._droppedActor.type.charAt(0).toUpperCase() + this._droppedActor.type.slice(1);
-            const subType = this._droppedActor.system.type
-                ? (this._droppedActor.system.type.charAt(0).toUpperCase() + this._droppedActor.system.type.slice(1))
-                : "";
-            type.textContent = subType ? `${actorType} - ${subType}` : actorType;
+            if (this._droppedItem) {
+                // Item drops show their document type directly
+                type.textContent = doc.type.charAt(0).toUpperCase() + doc.type.slice(1);
+            } else {
+                const actorType = doc.type.charAt(0).toUpperCase() + doc.type.slice(1);
+                const subType = doc.system.type
+                    ? (doc.system.type.charAt(0).toUpperCase() + doc.system.type.slice(1))
+                    : "";
+                type.textContent = subType ? `${actorType} - ${subType}` : actorType;
+            }
         } else {
             placeholder.style.display = "flex";
             droppedDisplay.style.display = "none";
@@ -141,23 +172,25 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
     }
 
     /**
-     * Generate the statblock text from the dropped actor
-     * Now Async to handle Potential Adversaries lookup
+     * Generate the statblock text from the dropped actor or item.
+     * Async to handle UUID resolution for environments and classes.
      */
     async _generateStatblock() {
-        if (!this._droppedActor) return;
+        const doc = this._droppedActor || this._droppedItem;
+        if (!doc) return;
 
         const textarea = this.element.querySelector("textarea[name='statblockOutput']");
         if (!textarea) return;
 
-        // Show loading state if needed, or just wait
         textarea.value = "Generating statblock...";
 
         let statblock = "";
         try {
-            if (this._droppedActor.type === "adversary") {
+            if (this._droppedItem?.type === "class") {
+                statblock = await this._formatClass(this._droppedItem);
+            } else if (this._droppedActor?.type === "adversary") {
                 statblock = this._formatAdversary(this._droppedActor);
-            } else if (this._droppedActor.type === "environment") {
+            } else if (this._droppedActor?.type === "environment") {
                 statblock = await this._formatEnvironment(this._droppedActor);
             }
             textarea.value = statblock;
@@ -404,6 +437,254 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
     }
 
     /**
+     * Resolve an item document from a UUID string, with fallback to the world items collection.
+     * @param {string} uuid - Compendium or world UUID
+     * @returns {Promise<Item|null>}
+     */
+    async _resolveItem(uuid) {
+        if (!uuid || typeof uuid !== "string") return null;
+        try {
+            let doc = await fromUuid(uuid);
+            if (!doc) {
+                const idParts = uuid.split(".");
+                const id = idParts[idParts.length - 1];
+                doc = game.items.get(id);
+            }
+            if (!doc) {
+                console.warn(`Statblock Exporter | Failed to resolve item UUID: ${uuid}`);
+            }
+            return doc;
+        } catch (err) {
+            console.error(`Statblock Exporter | Error fetching item UUID ${uuid}:`, err);
+            return null;
+        }
+    }
+
+    /**
+     * Normalize a Foundry DataModel collection (Array, Set, or other iterable) into a plain Array.
+     * Foundry's DataModel can convert arrays into Sets, which lack .length and .map().
+     * @param {Array|Set|*} collection
+     * @returns {Array}
+     */
+    _toArray(collection) {
+        if (Array.isArray(collection)) return collection;
+        if (collection instanceof Set) return Array.from(collection);
+        if (collection && typeof collection[Symbol.iterator] === "function") return Array.from(collection);
+        return [];
+    }
+
+    /**
+     * Format a class item to a structured plain-text statblock.
+     * Resolves nested UUIDs for features, subclasses, and inventory items.
+     * @param {Item} item - A Daggerheart class item document
+     * @returns {Promise<string>}
+     */
+    async _formatClass(item) {
+        const sys = item.system;
+        const lines = [];
+        const className = item.name;
+
+        // Header: Class Name (Domain1, Domain2)
+        const domains = this._toArray(sys.domains)
+            .map(d => d.charAt(0).toUpperCase() + d.slice(1));
+        lines.push(`${className} (${domains.join(", ")})`);
+
+        // HP and Evasion
+        const statParts = [];
+        if (sys.hitPoints !== undefined) statParts.push(`HP: ${sys.hitPoints}`);
+        if (sys.evasion !== undefined) statParts.push(`Evasion: ${sys.evasion}`);
+        if (statParts.length > 0) lines.push(statParts.join(" | "));
+
+        // Suggested Traits from characterGuide
+        const traits = sys.characterGuide?.suggestedTraits;
+        if (traits && typeof traits === "object") {
+            const traitLine = Object.entries(traits)
+                .map(([key, val]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${val}`)
+                .join(" ");
+            if (traitLine) lines.push(traitLine);
+        }
+
+        // Description
+        if (sys.description) {
+            const desc = this._stripHtml(sys.description, className);
+            if (desc) lines.push(desc);
+        }
+
+        // Inventory section header
+        lines.push("");
+        lines.push("INVENTORY");
+
+        // Suggested Equipment from characterGuide (weapon/armor references)
+        const guide = sys.characterGuide;
+        if (guide) {
+            const equipNames = [];
+            const refs = [guide.suggestedPrimaryWeapon, guide.suggestedSecondaryWeapon, guide.suggestedArmor];
+            for (const ref of refs) {
+                if (!ref) continue;
+                const name = (typeof ref === "object") ? ref.name : null;
+                if (name) {
+                    equipNames.push(name);
+                } else if (typeof ref === "string") {
+                    const doc = await this._resolveItem(ref);
+                    if (doc) equipNames.push(doc.name);
+                }
+            }
+            if (equipNames.length > 0) {
+                lines.push(`Suggested Equipment: ${equipNames.join(", ")}`);
+            }
+        }
+
+        // Starting Items (inventory.take - items the class always grants)
+        // DataModel resolves these into index entry objects with .name and .uuid
+        const takeList = this._toArray(sys.inventory?.take);
+        if (takeList.length > 0) {
+            const takeNames = takeList.map(e => (typeof e === "object" ? e.name : e)).filter(Boolean);
+            if (takeNames.length > 0) {
+                lines.push(`Starting Items: ${takeNames.join(", ")}`);
+            }
+        }
+
+        // Common Items Choice (inventory.choiceA - pick one consumable)
+        const choiceAList = this._toArray(sys.inventory?.choiceA);
+        if (choiceAList.length > 0) {
+            const choiceANames = choiceAList.map(e => (typeof e === "object" ? e.name : e)).filter(Boolean);
+            if (choiceANames.length > 0) {
+                lines.push(`Common Items Choice: ${choiceANames.join(" or ")}`);
+            }
+        }
+
+        // Class Items Choice (inventory.choiceB - pick one class-specific item)
+        const choiceBList = this._toArray(sys.inventory?.choiceB);
+        if (choiceBList.length > 0) {
+            const choiceBNames = choiceBList.map(e => (typeof e === "object" ? e.name : e)).filter(Boolean);
+            if (choiceBNames.length > 0) {
+                lines.push(`Class Items Choice: ${choiceBNames.join(" or ")}`);
+            }
+        }
+
+        // Features - separated by type (hope vs class)
+        // entry.item is a non-enumerable getter returning an index entry object with .uuid
+        const featuresList = this._toArray(sys.features);
+        if (featuresList.length > 0) {
+            let hopeFeature = null;
+            const classFeatures = [];
+
+            for (const entry of featuresList) {
+                const featureRef = entry.item;
+                const featureUuid = (typeof featureRef === "object") ? featureRef?.uuid : featureRef;
+                const featureDoc = featureUuid ? await this._resolveItem(featureUuid) : null;
+                if (!featureDoc) continue;
+
+                const fName = featureDoc.name;
+                const fDesc = this._stripHtml(featureDoc.system?.description || "", className);
+
+                if (entry.type === "hope") {
+                    hopeFeature = { name: fName, desc: fDesc };
+                } else {
+                    classFeatures.push({ name: fName, desc: fDesc });
+                }
+            }
+
+            lines.push("");
+
+            if (hopeFeature) {
+                lines.push(`Hope Feature: ${hopeFeature.name}: ${hopeFeature.desc}`);
+            }
+
+            if (classFeatures.length > 0) {
+                lines.push("CLASS FEATURES");
+                for (const f of classFeatures) {
+                    lines.push(`${f.name}: ${f.desc}`);
+                }
+            }
+        }
+
+        // Subclasses - resolve each and their nested features
+        // DataModel resolves these into index entry objects; use .uuid for full document lookup
+        const subclassList = this._toArray(sys.subclasses);
+        if (subclassList.length > 0) {
+            lines.push("");
+            lines.push("SUBCLASSES");
+
+            for (const subclassEntry of subclassList) {
+                const subclassUuid = (typeof subclassEntry === "object") ? subclassEntry.uuid : subclassEntry;
+                const subclass = await this._resolveItem(subclassUuid);
+                if (!subclass) continue;
+
+                lines.push("");
+                lines.push(subclass.name);
+
+                if (subclass.system?.spellcastingTrait) {
+                    const trait = subclass.system.spellcastingTrait;
+                    lines.push(`Spellcasting Trait: ${trait.charAt(0).toUpperCase() + trait.slice(1)}`);
+                }
+
+                if (subclass.system?.description) {
+                    const scDesc = this._stripHtml(subclass.system.description, className);
+                    if (scDesc) lines.push(scDesc);
+                }
+
+                // Subclass features grouped by tier (foundation/specialization/mastery)
+                const scFeatures = this._toArray(subclass.system?.features);
+                if (scFeatures.length > 0) {
+                    const grouped = { foundation: [], specialization: [], mastery: [] };
+
+                    for (const entry of scFeatures) {
+                        const featureRef = entry.item;
+                        const featureUuid = (typeof featureRef === "object") ? featureRef?.uuid : featureRef;
+                        const featureDoc = featureUuid ? await this._resolveItem(featureUuid) : null;
+                        if (!featureDoc) continue;
+
+                        const fName = featureDoc.name;
+                        const fDesc = this._stripHtml(featureDoc.system?.description || "", className);
+                        const tier = entry.type || "foundation";
+
+                        if (grouped[tier]) {
+                            grouped[tier].push({ name: fName, desc: fDesc });
+                        }
+                    }
+
+                    const hasAnyFeatures = Object.values(grouped).some(arr => arr.length > 0);
+                    if (hasAnyFeatures) {
+                        lines.push("Features:");
+                        for (const [tier, features] of Object.entries(grouped)) {
+                            if (features.length === 0) continue;
+                            lines.push(`${tier.charAt(0).toUpperCase() + tier.slice(1)}:`);
+                            for (const f of features) {
+                                lines.push(`${f.name}: ${f.desc}`);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Background Questions
+        const bgQuestions = this._toArray(sys.backgroundQuestions);
+        if (bgQuestions.length > 0) {
+            lines.push("");
+            lines.push("Background Questions:");
+            bgQuestions.forEach((q, i) => {
+                const cleanQ = this._stripHtml(q, className);
+                if (cleanQ) lines.push(`${i + 1}. ${cleanQ}`);
+            });
+        }
+
+        // Connections
+        const connections = this._toArray(sys.connections);
+        if (connections.length > 0) {
+            lines.push("");
+            lines.push("Connections:");
+            connections.forEach((c, i) => {
+                const cleanC = this._stripHtml(c, className);
+                if (cleanC) lines.push(`${i + 1}. ${cleanC}`);
+            });
+        }
+
+        return lines.join("\n");
+    }
+
+    /**
      * Strip HTML tags from a string and replace @Lookup[@name] with actor name.
      * Also replaces @UUID[...] links with just their label/name.
      * @param {string} html
@@ -515,6 +796,7 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
      */
     static _onClearActor(event, target) {
         this._droppedActor = null;
+        this._droppedItem = null;
         this._updateDropZoneDisplay();
 
         const textarea = this.element.querySelector("textarea[name='statblockOutput']");
@@ -527,7 +809,7 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
     static async _onCopyStatblock(event, target) {
         const textarea = this.element.querySelector("textarea[name='statblockOutput']");
         if (!textarea || !textarea.value.trim()) {
-            ui.notifications.warn("No statblock to copy. Drop an actor first.");
+            ui.notifications.warn("No statblock to copy. Drop an actor or class item first.");
             return;
         }
 

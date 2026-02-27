@@ -1,6 +1,7 @@
 # 0.2.3
 - The pasted text will undergo additional cleaning.
 - CSS refactor to make maintenance easier.
+- [Added] Class item export support in Statblock Exporter (domains, features, subclasses, inventory, background questions, connections)
 
 # 0.2.2
 - Bug Fix for Consumable
