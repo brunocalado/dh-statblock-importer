@@ -3,14 +3,14 @@
 
         {{!-- Left Column: Drop Zone --}}
         <div class="dh-column dh-exporter-drop-col">
-            <p class="notes" style="margin-bottom: 5px; color: #ccc;">Drag an Adversary or Environment here</p>
+            <p class="notes dh-notes">Drag an Adversary or Environment here</p>
             <div class="dh-drop-zone" id="dh-exporter-dropzone">
                 <div class="dh-drop-placeholder">
-                    <i class="fas fa-hand-pointer fa-3x" style="margin-bottom: 10px; opacity: 0.5;"></i>
+                    <i class="fas fa-hand-pointer fa-3x"></i>
                     <p>Drop Actor Here</p>
-                    <p style="font-size: 0.85em; opacity: 0.7;">Adversary or Environment only</p>
+                    <p class="dh-drop-subtitle">Adversary or Environment only</p>
                 </div>
-                <div class="dh-dropped-actor" style="display: none;">
+                <div class="dh-dropped-actor">
                     <img class="dh-dropped-img" src="">
                     <div class="dh-dropped-info">
                         <div class="dh-dropped-name"></div>
@@ -25,7 +25,7 @@
 
         {{!-- Right Column: Output --}}
         <div class="dh-column dh-exporter-output-col">
-            <p class="notes" style="margin-bottom: 5px; color: #ccc;">Generated Statblock</p>
+            <p class="notes dh-notes">Generated Statblock</p>
             <textarea name="statblockOutput" readonly placeholder="The formatted statblock will appear here..."></textarea>
         </div>
 

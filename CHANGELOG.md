@@ -1,5 +1,6 @@
 # 0.2.3
-- The pasted text will receive extra cleaning
+- The pasted text will undergo additional cleaning.
+- CSS refactor to make maintenance easier.
 
 # 0.2.2
 - Bug Fix for Consumable

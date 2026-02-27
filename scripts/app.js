@@ -292,13 +292,13 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               // +Features visible for adversary/environment
               if (plusFeaturesContainer) {
                   const showPlusFeatures = (mode === "adversary" || mode === "environment");
-                  plusFeaturesContainer.style.display = showPlusFeatures ? "flex" : "none";
+                  plusFeaturesContainer.style.display = showPlusFeatures ? "flex" : "";
               }
 
               // +Code visible for weapon/armor
               if (codeGeneratorContainer) {
                   const showCodeGenerator = (mode === "weapon" || mode === "armor");
-                  codeGeneratorContainer.style.display = showCodeGenerator ? "flex" : "none";
+                  codeGeneratorContainer.style.display = showCodeGenerator ? "flex" : "";
               }
           };
 

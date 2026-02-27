@@ -11,17 +11,17 @@
             <i class="fas fa-sliders-h"></i> General
         </button>
     </nav>
-    
+
     {{!-- Aba: Features --}}
     <div class="dh-config-tab-content active" data-tab="features">
-        <p class="notes" style="font-size: 0.9em; margin-bottom: 5px;"><strong>Item Compendiums:</strong> Searched for matching Features/Abilities.</p>
+        <p class="notes dh-config-notes"><strong>Item Compendiums:</strong> Searched for matching Features/Abilities.</p>
         <div class="form-group-stacked dh-config-list">
             {{#each featureCompendiums}}
             <label class="checkbox dh-config-item">
-                <input type="checkbox" name="featureCompendiums" value="{{this.id}}" {{checked this.selected}} style="margin-right: 8px;">
-                <span style="flex: 1;">
-                    {{this.title}} 
-                    <span style="color:var(--color-text-light-5); font-size: 0.85em; display: block;">{{this.id}}</span>
+                <input type="checkbox" name="featureCompendiums" value="{{this.id}}" {{checked this.selected}}>
+                <span>
+                    {{this.title}}
+                    <span class="dh-config-item-id">{{this.id}}</span>
                 </span>
             </label>
             {{/each}}
@@ -30,14 +30,14 @@
 
     {{!-- Aba: Actors --}}
     <div class="dh-config-tab-content" data-tab="actors">
-        <p class="notes" style="font-size: 0.9em; margin-bottom: 5px;"><strong>Actor Compendiums:</strong> Searched for Potential Adversaries in Environments.</p>
+        <p class="notes dh-config-notes"><strong>Actor Compendiums:</strong> Searched for Potential Adversaries in Environments.</p>
         <div class="form-group-stacked dh-config-list">
             {{#each actorCompendiums}}
             <label class="checkbox dh-config-item">
-                <input type="checkbox" name="actorCompendiums" value="{{this.id}}" {{checked this.selected}} style="margin-right: 8px;">
-                <span style="flex: 1;">
+                <input type="checkbox" name="actorCompendiums" value="{{this.id}}" {{checked this.selected}}>
+                <span>
                     {{this.title}}
-                    <span style="color:var(--color-text-light-5); font-size: 0.85em; display: block;">{{this.id}}</span>
+                    <span class="dh-config-item-id">{{this.id}}</span>
                 </span>
             </label>
             {{/each}}
@@ -46,7 +46,7 @@
 
     {{!-- Aba: General --}}
     <div class="dh-config-tab-content" data-tab="general">
-        <p class="notes" style="font-size: 0.9em; margin-bottom: 10px;"><strong>General Settings:</strong> Configure import behavior.</p>
+        <p class="notes dh-config-notes dh-config-notes--general"><strong>General Settings:</strong> Configure import behavior.</p>
 
         <div class="form-group">
             <label for="adversaryFolderName">Adversary Folder Name</label>
@@ -88,15 +88,15 @@
             <input type="text" name="domainCardFolderName" value="{{domainCardFolderName}}" placeholder="📜 Imported Domain Cards">
         </div>
 
-        <hr style="margin: 10px 0; border-color: var(--color-border-light-2);">
+        <hr class="dh-config-separator">
 
         <div class="form-group">
             <label for="separatorMode">Bulk Import Separator</label>
-            <select name="separatorMode" style="width: 100%;">
+            <select name="separatorMode">
                 <option value="blankLine" {{#if (eq separatorMode "blankLine")}}selected{{/if}}>Blank Line (default)</option>
                 <option value="separator" {{#if (eq separatorMode "separator")}}selected{{/if}}>=== Separator</option>
             </select>
-            <p class="hint" style="margin-top: 4px; font-size: 0.85em;">How to separate multiple entries when importing in bulk.</p>
+            <p class="hint dh-config-hint">How to separate multiple entries when importing in bulk.</p>
         </div>
 
         <div class="form-group dh-debug-row">
@@ -104,7 +104,7 @@
                 <input type="checkbox" name="debugMode" {{checked debugMode}}>
                 <span>Debug Mode</span>
             </label>
-            <span class="hint" style="margin: 0; flex: 1;">When enabled, logs details to console (F12).</span>
+            <span class="hint dh-debug-hint">When enabled, logs details to console (F12).</span>
         </div>
     </div>
 

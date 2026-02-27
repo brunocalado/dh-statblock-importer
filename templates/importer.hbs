@@ -1,17 +1,17 @@
 <div class="dh-importer-layout">
     <div class="dh-importer-wrapper standard-form">
-        
+
         {{!-- Coluna da Esquerda: Input --}}
         <div class="dh-column dh-importer-input-col">
-            <p class="notes" style="margin-bottom: 5px; color: #ccc;">Paste the statblock text below.</p>
+            <p class="notes dh-notes">Paste the statblock text below.</p>
             <textarea name="statblockText" placeholder="MASTER ASSASSIN&#10;Tier 2 Leader&#10;A seasoned killer...&#10;Motives & Tactics: Ambush...&#10;Difficulty: 14 | HP: 5&#10;FEATURES&#10;Horde (1d6) - Passive: ..."></textarea>
         </div>
 
         {{!-- Coluna da Direita: Validação --}}
         <div class="dh-column dh-importer-preview-col">
-            <p class="notes" style="margin-bottom: 5px; color: #ccc;">Validation Preview</p>
+            <p class="notes dh-notes">Validation Preview</p>
             <div class="dh-preview-box" id="dh-importer-preview">
-                <p style="color: grey; font-style: italic;">Click "Validate" to see identified fields here...</p>
+                <p class="dh-preview-placeholder">Click "Validate" to see identified fields here...</p>
             </div>
         </div>
 
@@ -20,8 +20,8 @@
     {{!-- Rodapé com Ações --}}
     <div class="dh-importer-actions">
         {{!-- Botões de Config e Instruções --}}
-        <div style="display:flex; gap:5px; margin-right:auto;">
-            <button type="button" data-action="config" title="Configure Compendiums" style="margin-right: 0;">
+        <div class="dh-actions-left">
+            <button type="button" data-action="config" title="Configure Compendiums">
                 <i class="fas fa-cog"></i> Config
             </button>
             <button type="button" data-action="instructions" title="Open Instructions">
@@ -30,7 +30,7 @@
         </div>
 
         {{!-- +Features Toggle (only visible for adversary/environment modes) --}}
-        <div class="dh-plus-features-container" style="display:none;">
+        <div class="dh-plus-features-container">
             <button type="button" data-action="plusFeatures" class="dh-plus-features-btn {{#if plusFeaturesEnabled}}active{{/if}}" title="Also create features as separate items">
                 <i class="fas fa-puzzle-piece"></i> +Features
             </button>
@@ -40,7 +40,7 @@
         </div>
 
         {{!-- +Code Generator Toggle (only visible for weapon/armor modes) --}}
-        <div class="dh-code-generator-container" style="display:none;">
+        <div class="dh-code-generator-container">
             <button type="button" data-action="codeGenerator" class="dh-code-generator-btn {{#if codeGeneratorEnabled}}active{{/if}}" title="Generate feature code after import">
                 <i class="fas fa-code"></i> +Code
             </button>
