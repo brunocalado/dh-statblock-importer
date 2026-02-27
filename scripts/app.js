@@ -1,6 +1,7 @@
 import { StatblockConfig } from "./config.js";
 import { TEMPLATES } from "./templates.js";
 import { FeatureCodeDialog } from "./code-dialog.js";
+import { TextNormalizer } from "./utils/text-normalizer.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -1163,6 +1164,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
    * Detects and splits multiple statblocks (Actors) based on "Tier X".
    */
   static splitStatblocks(text) {
+    text = TextNormalizer.clean(text);
     const separatorMode = game.settings.get("dh-statblock-importer", "separatorMode") || "blankLine";
 
     // If using === separator, split by that first
@@ -1196,6 +1198,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
    * Detects and splits multiple Items based on separator mode.
    */
   static splitSimpleItems(text) {
+      text = TextNormalizer.clean(text);
       const separatorMode = game.settings.get("dh-statblock-importer", "separatorMode") || "blankLine";
 
       if (separatorMode === "separator") {

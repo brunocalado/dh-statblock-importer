@@ -1,3 +1,6 @@
+# 0.2.3
+- The pasted text will receive extra cleaning
+
 # 0.2.2
 - Bug Fix for Consumable
 
