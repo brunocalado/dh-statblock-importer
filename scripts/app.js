@@ -2191,7 +2191,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           if (motivesBuffer.length > 0) systemData.motivesAndTactics = motivesBuffer.join(" ");
           systemData.resources = { hitPoints: { value: 0 }, stress: { value: 0 } };
           // CHANGE: Added type: "attack" inside roll object
-          systemData.attack = { roll: { type: "attack" }, img: "icons/magic/death/skull-humanoid-white-blue.webp", damage: { parts: [], includeBase: false, direct: false } };
+          //systemData.attack = { roll: { type: "attack" }, img: "icons/magic/death/skull-humanoid-white-blue.webp", damage: { parts: [], includeBase: false, direct: false } };
+          systemData.attack = { chatDisplay: false, roll: { type: "attack" }, img: "icons/magic/death/skull-humanoid-white-blue.webp", damage: { parts: [], includeBase: false, direct: false } };
           systemData.experiences = {};
       }
 

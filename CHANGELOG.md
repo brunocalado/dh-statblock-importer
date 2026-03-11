@@ -1,3 +1,6 @@
+# 0.2.4
+- removed duplicated chat message. chatDisplay was being added, and the system set it to true.
+
 # 0.2.3
 - The pasted text will undergo additional cleaning.
 - CSS refactor to make maintenance easier.
