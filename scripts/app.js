@@ -447,6 +447,30 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       return "modules/dh-statblock-importer/assets/images/skull.webp";
   }
 
+  /**
+   * Builds a case-insensitive lookup map of valid domain identifiers from
+   * native system choices and homebrew world settings.
+   * @returns {Object<string, string>} Map of lowercased domain keys/labels to their canonical enum values
+   */
+  static _buildDomainMap() {
+      const domainMap = {};
+
+      // The domain field's choices getter already merges native + homebrew domains
+      try {
+          const domainField = CONFIG.Item?.dataModels?.domainCard?.schema?.fields?.domain;
+          const choices = typeof domainField?.choices === "function"
+              ? domainField.choices()
+              : domainField?.choices ?? {};
+          for (const key of Object.keys(choices)) {
+              domainMap[key.toLowerCase()] = key;
+          }
+      } catch (e) {
+          console.warn("dh-statblock-importer | Failed to read domain choices — domain validation may fail.", e);
+      }
+
+      return domainMap;
+  }
+
   static async _onValidate(event, target) {
     const formElement = this.element;
     const textarea = formElement.querySelector("textarea[name='statblockText']");
@@ -1650,8 +1674,19 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       const level = parseInt(typeMatch[1], 10);
-      const domain = typeMatch[2].trim(); // Keeping as string as Daggerheart domains are usually strings (e.g. Bone, Codex)
+      const domainRaw = typeMatch[2].trim();
       const cardType = typeMatch[3].toLowerCase(); // spell, ability, grimoire
+
+      // Resolve domain against native + homebrew choices to satisfy DHItem enum validation
+      const domainMap = StatblockImporter._buildDomainMap();
+      const domain = domainMap[domainRaw.toLowerCase()];
+
+      if (!domain) {
+          throw new Error(
+              `Domain "${domainRaw}" is not a valid choice. ` +
+              `Check available domains in the system or homebrew settings.`
+          );
+      }
 
       // Parse Line 3: Recall Cost: Y
       const costMatch = thirdLine.match(/^Recall\s*Cost:\s*(\d+)$/i);

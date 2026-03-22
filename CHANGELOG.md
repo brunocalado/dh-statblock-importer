@@ -1,3 +1,6 @@
+# 0.2.5
+- [Fixed] Domain Card import failing with `DataModelValidationError` when domain casing didn't match system enum values. Domains are now resolved case-insensitively against native and homebrew choices.
+
 # 0.2.4
 - removed duplicated chat message. chatDisplay was being added, and the system set it to true.
 
