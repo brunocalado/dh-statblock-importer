@@ -66,6 +66,7 @@ Hooks.on("renderDaggerheartMenu", (app, html) => {
   const btn2 = document.createElement("button");
   btn2.type = "button";
   btn2.style.width = "100%";
+  btn2.style.marginTop = "5px";
   btn2.innerHTML = `<i class="fas fa-plus-square"></i> Create Statblock`;
   btn2.onclick = (e) => {
     e.preventDefault();

@@ -1,5 +1,6 @@
 # 0.2.6
 
+- You can pick default icons
 - [Changed] Debug Mode setting moved from the custom Importer Configuration window to Foundry's native Module Settings panel. Requires a full Foundry reload (F5) after module update for the change to take effect.
 
 
