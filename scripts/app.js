@@ -1003,6 +1003,23 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                 const cleanSystemData = { ...result.systemData };
                 delete cleanSystemData._potentialAdvPreview;
 
+                // Determine portrait override for feature icon, if the matching option is active
+                const isEnvironment = result.actorType === "environment";
+                const matchAdversary = game.settings.get("dh-statblock-importer", "featureIconMatchAdversary");
+                const matchEnvironment = game.settings.get("dh-statblock-importer", "featureIconMatchEnvironment");
+                const usePortrait = isEnvironment ? matchEnvironment : matchAdversary;
+                // Use the actor's actual portrait as the feature icon
+                const portraitImg = usePortrait ? (finalImg || defaultActorImg) : null;
+
+                // Apply portrait override to embedded items before actor creation
+                if (portraitImg && result.items?.length > 0) {
+                    for (const item of result.items) {
+                        if (item.flags?.dhImporter?.isCompendium !== true) {
+                            item.img = portraitImg;
+                        }
+                    }
+                }
+
                 const actorData = {
                     name: result.name,
                     type: result.actorType,
@@ -1018,18 +1035,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                 // +Features: Accumulate features for batch creation
                 const plusFeaturesEnabled = game.settings.get("dh-statblock-importer", "plusFeaturesEnabled");
                 if (plusFeaturesEnabled && result.items?.length > 0) {
-                    const isEnvironment = result.actorType === "environment";
                     const colorMap = isEnvironment ? StatblockImporter.ENVIRONMENT_TYPE_COLORS : StatblockImporter.TYPE_COLORS;
-
-                    // Determine portrait override for feature icon, if the matching option is active
-                    const matchAdversary = game.settings.get("dh-statblock-importer", "featureIconMatchAdversary");
-                    const matchEnvironment = game.settings.get("dh-statblock-importer", "featureIconMatchEnvironment");
-                    const usePortrait = isEnvironment ? matchEnvironment : matchAdversary;
-                    const portraitImg = usePortrait
-                        ? (finalImg || (isEnvironment
-                            ? (game.settings.get("dh-statblock-importer", "featureIconEnvironment") || "icons/environment/wilderness/cave-entrance.webp")
-                            : (game.settings.get("dh-statblock-importer", "featureIconAdversary") || "modules/dh-statblock-importer/assets/images/skull.webp")))
-                        : null;
 
                     for (const featureItem of result.items) {
                         // Skip compendium features (they already exist)
