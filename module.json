@@ -33,7 +33,7 @@
         "id": "daggerheart",
         "type": "system",
         "compatibility": {
-          "minimum": "1.6.3"
+          "minimum": "1.9.6"
         }
       }
     ]

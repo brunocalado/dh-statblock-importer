@@ -615,6 +615,44 @@
     white-space: nowrap;
 }
 
+/* Icon Picker Row */
+.dh-icon-picker-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    & input[type="text"] {
+        flex: 1;
+    }
+
+    & .dh-icon-picker-btn {
+        background: #333;
+        border: 1px solid var(--color-border-light-2);
+        color: var(--color-text-light-5);
+        padding: 6px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: all 0.2s;
+
+        &:hover {
+            background: #444;
+            border-color: var(--color-text-hyperlink);
+            color: var(--color-text-hyperlink);
+        }
+    }
+}
+
+.dh-icon-preview {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    border: 1px solid var(--color-border-light-2);
+    border-radius: 4px;
+    background: #000;
+    flex-shrink: 0;
+}
+
 .form-footer {
     margin-top: 5px;
     display: flex;

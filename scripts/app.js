@@ -237,6 +237,61 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               default: false
           });
       }
+
+      // Feature Icon: Adversary
+      if (!game.settings.settings.has("dh-statblock-importer.featureIconAdversary")) {
+          game.settings.register("dh-statblock-importer", "featureIconAdversary", {
+              name: "Feature Icon (Adversary)",
+              scope: "world",
+              config: false,
+              type: String,
+              default: "icons/magic/symbols/star-solid-gold.webp"
+          });
+      }
+
+      // Feature Icon: Environment
+      if (!game.settings.settings.has("dh-statblock-importer.featureIconEnvironment")) {
+          game.settings.register("dh-statblock-importer", "featureIconEnvironment", {
+              name: "Feature Icon (Environment)",
+              scope: "world",
+              config: false,
+              type: String,
+              default: "icons/environment/wilderness/cave-entrance.webp"
+          });
+      }
+
+      // Feature Icon: Feature (standalone Item mode)
+      if (!game.settings.settings.has("dh-statblock-importer.featureIconFeature")) {
+          game.settings.register("dh-statblock-importer", "featureIconFeature", {
+              name: "Feature Icon (Feature Item)",
+              scope: "world",
+              config: false,
+              type: String,
+              default: "icons/magic/symbols/star-solid-gold.webp"
+          });
+      }
+
+      // Use actor portrait for adversary features
+      if (!game.settings.settings.has("dh-statblock-importer.featureIconMatchAdversary")) {
+          game.settings.register("dh-statblock-importer", "featureIconMatchAdversary", {
+              name: "Feature Icon matches Adversary portrait",
+              scope: "world",
+              config: false,
+              type: Boolean,
+              default: false
+          });
+      }
+
+      // Use actor portrait for environment features
+      if (!game.settings.settings.has("dh-statblock-importer.featureIconMatchEnvironment")) {
+          game.settings.register("dh-statblock-importer", "featureIconMatchEnvironment", {
+              name: "Feature Icon matches Environment portrait",
+              scope: "world",
+              config: false,
+              type: Boolean,
+              default: false
+          });
+      }
   }
 
   /**
@@ -435,7 +490,10 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       if (mode === "consumable") return "icons/consumables/potions/potion-flask-corled-pink-red.webp";
       if (mode === "weapon") return "icons/weapons/swords/sword-guard-flanged-purple.webp";
       if (mode === "armor") return "icons/equipment/chest/breastplate-banded-leather-purple.webp";
-      if (mode === "feature") return "icons/magic/symbols/star-solid-gold.webp";
+      if (mode === "feature") {
+          return game.settings.get("dh-statblock-importer", "featureIconFeature")
+              || "icons/magic/symbols/star-solid-gold.webp";
+      }
       
       if (mode === "domainCard") {
           if (subtype === "grimoire") return "icons/sundries/books/book-embossed-spiral-purple-white.webp";
@@ -963,6 +1021,16 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                     const isEnvironment = result.actorType === "environment";
                     const colorMap = isEnvironment ? StatblockImporter.ENVIRONMENT_TYPE_COLORS : StatblockImporter.TYPE_COLORS;
 
+                    // Determine portrait override for feature icon, if the matching option is active
+                    const matchAdversary = game.settings.get("dh-statblock-importer", "featureIconMatchAdversary");
+                    const matchEnvironment = game.settings.get("dh-statblock-importer", "featureIconMatchEnvironment");
+                    const usePortrait = isEnvironment ? matchEnvironment : matchAdversary;
+                    const portraitImg = usePortrait
+                        ? (finalImg || (isEnvironment
+                            ? (game.settings.get("dh-statblock-importer", "featureIconEnvironment") || "icons/environment/wilderness/cave-entrance.webp")
+                            : (game.settings.get("dh-statblock-importer", "featureIconAdversary") || "modules/dh-statblock-importer/assets/images/skull.webp")))
+                        : null;
+
                     for (const featureItem of result.items) {
                         // Skip compendium features (they already exist)
                         if (featureItem.flags?.dhImporter?.isCompendium === true) continue;
@@ -976,7 +1044,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                             isEnvironment,
                             actorType: result.systemData.type,
                             featureType,
-                            colorMap
+                            colorMap,
+                            portraitImg
                         });
                     }
                 }
@@ -1002,7 +1071,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
             // Prepare all feature data with folder IDs
             const featureDataArray = [];
             for (const pending of pendingFeatures) {
-                const { featureItem, isEnvironment, actorType, featureType, colorMap } = pending;
+                const { featureItem, isEnvironment, actorType, featureType, colorMap, portraitImg } = pending;
 
                 // Create cache key for folder lookup
                 const cacheKey = `${isEnvironment}-${actorType}-${featureType}`;
@@ -1023,7 +1092,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                     name: featureItem.name,
                     type: featureItem.type,
                     system: featureItem.system,
-                    img: featureItem.img,
+                    // Portrait override takes priority; featureItem.img already reflects the icon settings
+                    img: portraitImg || featureItem.img,
                     folder: featureFolder?.id
                 });
             }
@@ -2394,7 +2464,9 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               currentFeature = {
                   name: featureName,
                   type: "feature",
-                  img: actorType === "environment" ? "icons/environment/wilderness/cave-entrance.webp" : "icons/magic/symbols/star-solid-gold.webp",
+                  img: actorType === "environment"
+                      ? (game.settings.get("dh-statblock-importer", "featureIconEnvironment") || "icons/environment/wilderness/cave-entrance.webp")
+                      : (game.settings.get("dh-statblock-importer", "featureIconAdversary") || "icons/magic/symbols/star-solid-gold.webp"),
                   system: {
                       featureForm: featureMatch[2].toLowerCase(),
                       description: featureDesc ? `<p>${featureDesc}</p>` : ""

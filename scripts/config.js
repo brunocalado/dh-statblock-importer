@@ -35,6 +35,25 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         tabButtons.forEach(btn => {
             btn.addEventListener("click", (event) => this._onTabClick(event));
         });
+
+        // FilePicker buttons for icon settings
+        const iconPickerButtons = this.element.querySelectorAll(".dh-icon-picker-btn");
+        iconPickerButtons.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const targetName = btn.dataset.target;
+                const input = this.element.querySelector(`input[name="${targetName}"]`);
+                const preview = this.element.querySelector(`.dh-icon-preview[data-target="${targetName}"]`);
+
+                new foundry.applications.apps.FilePicker({
+                    type: "image",
+                    current: input?.value || "",
+                    callback: (path) => {
+                        if (input) input.value = path;
+                        if (preview) preview.src = path;
+                    }
+                }).render(true);
+            });
+        });
     }
 
     /**
@@ -107,6 +126,12 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         const domainCardFolderName = game.settings.get("dh-statblock-importer", "domainCardFolderName");
         const separatorMode = game.settings.get("dh-statblock-importer", "separatorMode") || "blankLine";
 
+        const featureIconAdversary = game.settings.get("dh-statblock-importer", "featureIconAdversary");
+        const featureIconEnvironment = game.settings.get("dh-statblock-importer", "featureIconEnvironment");
+        const featureIconFeature = game.settings.get("dh-statblock-importer", "featureIconFeature");
+        const featureIconMatchAdversary = game.settings.get("dh-statblock-importer", "featureIconMatchAdversary");
+        const featureIconMatchEnvironment = game.settings.get("dh-statblock-importer", "featureIconMatchEnvironment");
+
         return {
             featureCompendiums,
             actorCompendiums,
@@ -118,7 +143,12 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             armorFolderName,
             featureFolderName,
             domainCardFolderName,
-            separatorMode
+            separatorMode,
+            featureIconAdversary,
+            featureIconEnvironment,
+            featureIconFeature,
+            featureIconMatchAdversary,
+            featureIconMatchEnvironment
         };
     }
 
@@ -155,6 +185,22 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         if (featureFolderInput?.value) await game.settings.set("dh-statblock-importer", "featureFolderName", featureFolderInput.value);
         if (domainCardFolderInput?.value) await game.settings.set("dh-statblock-importer", "domainCardFolderName", domainCardFolderInput.value);
         if (separatorModeInput?.value) await game.settings.set("dh-statblock-importer", "separatorMode", separatorModeInput.value);
+
+        const featureIconAdversaryInput = form.querySelector("input[name='featureIconAdversary']");
+        const featureIconEnvironmentInput = form.querySelector("input[name='featureIconEnvironment']");
+        const featureIconFeatureInput = form.querySelector("input[name='featureIconFeature']");
+        const featureIconMatchAdversaryInput = form.querySelector("input[name='featureIconMatchAdversary']");
+        const featureIconMatchEnvironmentInput = form.querySelector("input[name='featureIconMatchEnvironment']");
+
+        const adversaryIconVal = featureIconAdversaryInput?.value?.trim();
+        if (adversaryIconVal) await game.settings.set("dh-statblock-importer", "featureIconAdversary", adversaryIconVal);
+        const environmentIconVal = featureIconEnvironmentInput?.value?.trim();
+        if (environmentIconVal) await game.settings.set("dh-statblock-importer", "featureIconEnvironment", environmentIconVal);
+        const featureIconVal = featureIconFeatureInput?.value?.trim();
+        if (featureIconVal) await game.settings.set("dh-statblock-importer", "featureIconFeature", featureIconVal);
+
+        await game.settings.set("dh-statblock-importer", "featureIconMatchAdversary", featureIconMatchAdversaryInput?.checked || false);
+        await game.settings.set("dh-statblock-importer", "featureIconMatchEnvironment", featureIconMatchEnvironmentInput?.checked || false);
 
         await game.settings.set("dh-statblock-importer", "configInitialized", true);
     }
