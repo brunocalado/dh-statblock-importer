@@ -204,12 +204,13 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           });
       }
 
-      // Debug Mode
+      // Debug Mode — config: true so Foundry renders it natively in Module Settings
       if (!game.settings.settings.has("dh-statblock-importer.debugMode")) {
           game.settings.register("dh-statblock-importer", "debugMode", {
               name: "Debug Mode",
+              hint: "When enabled, logs import details to the browser console (F12).",
               scope: "client",
-              config: false,
+              config: true,
               type: Boolean,
               default: false
           });

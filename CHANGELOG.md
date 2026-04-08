@@ -1,3 +1,8 @@
+# 0.2.6
+
+- [Changed] Debug Mode setting moved from the custom Importer Configuration window to Foundry's native Module Settings panel. Requires a full Foundry reload (F5) after module update for the change to take effect.
+
+
 # 0.2.5
 - [Fixed] Domain Card import failing with `DataModelValidationError` when domain casing didn't match system enum values. Domains are now resolved case-insensitively against native and homebrew choices.
 
