@@ -26,6 +26,8 @@ Effortlessly import **Adversaries** and **Environments** and **more** into Found
 
 * **Potential Adversaries:** Identifies actor groups in Environments and links them to actors in your compendiums.
 
+* **Void Playtest Content:** This fork integrates with [The Void (Unofficial)](https://github.com/brunocalado/the-void-unofficial) and automatically searches its Void Features and Adversaries / Environments packs when installed. That adds lookup support for newer playtest material such as Blood Hunter, Assassin, Witch, Warlock, and related Void content.
+
 ### ✅ Validation & Organization
 
 * **Real-time Preview:** Verify parsed data before creating the entity.

@@ -10,6 +10,18 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
  */
 export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2) {
 
+  /** Built-in feature compendiums searched by default. */
+  static DEFAULT_FEATURE_PACKS = [
+      "dh-statblock-importer.all-features",
+      "the-void-unofficial.void-adv-features"
+  ];
+
+  /** Built-in actor compendiums searched by default. */
+  static DEFAULT_ACTOR_PACKS = [
+      "daggerheart.adversaries",
+      "the-void-unofficial.adversaries--environments"
+  ];
+
   /** Valid adversary types (lowercase) */
   static VALID_ADVERSARY_TYPES = ["bruiser", "horde", "leader", "minion", "ranged", "skulk", "social", "solo", "standard", "support"];
 
@@ -85,7 +97,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               scope: "client",
               config: false,
               type: Array,
-              default: ["dh-statblock-importer.all-features"]
+              default: StatblockImporter.DEFAULT_FEATURE_PACKS
           });
       }
 
@@ -96,7 +108,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               scope: "client",
               config: false,
               type: Array,
-              default: ["daggerheart.adversaries"]
+              default: StatblockImporter.DEFAULT_ACTOR_PACKS
           });
       }
 
@@ -319,6 +331,39 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       if (debugMode && context) {
           console.log("DH Importer [DEBUG] | Error Context:");
           console.log(context);
+      }
+  }
+
+  /**
+   * Adds Void playtest packs to existing client settings when the companion
+   * content module is installed. This keeps older users from missing the new
+   * Blood Hunter, Assassin, Witch, and related Void material after updating.
+   */
+  static async includeVoidDefaults() {
+      const updates = [
+          {
+              setting: "selectedCompendiums",
+              defaults: StatblockImporter.DEFAULT_FEATURE_PACKS
+          },
+          {
+              setting: "selectedActorCompendiums",
+              defaults: StatblockImporter.DEFAULT_ACTOR_PACKS
+          }
+      ];
+
+      for (const update of updates) {
+          const current = game.settings.get("dh-statblock-importer", update.setting) || [];
+          const next = [...current];
+
+          for (const packId of update.defaults) {
+              if (game.packs.get(packId) && !next.includes(packId)) {
+                  next.push(packId);
+              }
+          }
+
+          if (next.length !== current.length) {
+              await game.settings.set("dh-statblock-importer", update.setting, next);
+          }
       }
   }
 
@@ -2068,7 +2113,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       if (rawLines.length === 0) throw new Error("Text content is empty.");
 
       // --- FEATURE COMPENDIUM SETUP ---
-      const selectedFeaturePacks = game.settings.get("dh-statblock-importer", "selectedCompendiums") || ["dh-statblock-importer.all-features"];
+      const selectedFeaturePacks = game.settings.get("dh-statblock-importer", "selectedCompendiums") || StatblockImporter.DEFAULT_FEATURE_PACKS;
       const featureIndexMap = new Map();
 
       for (const packId of selectedFeaturePacks) {
@@ -2084,7 +2129,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // --- ADVERSARY COMPENDIUM SETUP ---
-      const selectedActorPacks = game.settings.get("dh-statblock-importer", "selectedActorCompendiums") || ["daggerheart.adversaries"];
+      const selectedActorPacks = game.settings.get("dh-statblock-importer", "selectedActorCompendiums") || StatblockImporter.DEFAULT_ACTOR_PACKS;
       let adversaryIndex = [];
 
       for (const packId of selectedActorPacks) {

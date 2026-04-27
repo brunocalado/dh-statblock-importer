@@ -1,7 +1,7 @@
 {
   "id": "dh-statblock-importer",
   "title": "Daggerheart: Stats Toolbox",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "compatibility": {
     "minimum": 13,
     "verified": 13
@@ -34,6 +34,16 @@
         "type": "system",
         "compatibility": {
           "minimum": "1.9.6"
+        }
+      }
+    ],
+    "requires": [
+      {
+        "id": "the-void-unofficial",
+        "type": "module",
+        "manifest": "https://raw.githubusercontent.com/brunocalado/the-void-unofficial/main/module.json",
+        "compatibility": {
+          "minimum": "1.1.6"
         }
       }
     ]

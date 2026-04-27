@@ -84,9 +84,11 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         // --- Features (Items) ---
         const selectedFeatureIds = game.settings.get("dh-statblock-importer", "selectedCompendiums") || [];
 
-        const defaultFeaturePack = "dh-statblock-importer.all-features";
+        const defaultFeaturePacks = ["dh-statblock-importer.all-features", "the-void-unofficial.void-adv-features"];
         if (selectedFeatureIds.length === 0 && !game.settings.get("dh-statblock-importer", "configInitialized")) {
-            selectedFeatureIds.push(defaultFeaturePack);
+            for (const packId of defaultFeaturePacks) {
+                if (game.packs.get(packId)) selectedFeatureIds.push(packId);
+            }
         }
 
         const featureCompendiums = game.packs
@@ -101,9 +103,11 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         // --- Actors ---
         const selectedActorIds = game.settings.get("dh-statblock-importer", "selectedActorCompendiums") || [];
 
-        const defaultActorPack = "daggerheart.adversaries";
+        const defaultActorPacks = ["daggerheart.adversaries", "the-void-unofficial.adversaries--environments"];
         if (selectedActorIds.length === 0 && !game.settings.get("dh-statblock-importer", "configInitialized")) {
-            if (game.packs.get(defaultActorPack)) selectedActorIds.push(defaultActorPack);
+            for (const packId of defaultActorPacks) {
+                if (game.packs.get(packId)) selectedActorIds.push(packId);
+            }
         }
 
         const actorCompendiums = game.packs

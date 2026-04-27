@@ -1,3 +1,8 @@
+# 0.2.8
+
+- [Added] The Void (Unofficial) content module integration. When installed, the importer now searches Void adversary features and adversaries/environments by default, covering playtest material such as Blood Hunter, Assassin, Witch, Warlock, and related Void content.
+- [Changed] Added The Void (Unofficial) as a module relationship so Foundry can install the missing content pack alongside this fork.
+
 # 0.2.7
 
 - [Fixed] "Use actor portrait as feature icon" now correctly applies the actor's portrait to both embedded and standalone (+Features) non-compendium features instead of using the generic feature icon.

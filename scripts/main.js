@@ -29,6 +29,10 @@ Hooks.once("init", () => {
   window.SI = SI;
 });
 
+Hooks.once("ready", () => {
+  StatblockImporter.includeVoidDefaults();
+});
+
 Hooks.on("renderActorDirectory", (app, html) => {
   const element = (html instanceof HTMLElement) ? html : html[0];
   const actionButtons = element.querySelector(".header-actions");
