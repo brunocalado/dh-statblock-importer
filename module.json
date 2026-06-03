@@ -1,48 +1,52 @@
 {
   "id": "dh-statblock-importer",
   "title": "Daggerheart: Stats Toolbox",
-  "version": "0.2.7",
+  "version": "0.3.0",
+  "description": "Import using a statblock.",
   "compatibility": {
-    "minimum": 13,
-    "verified": 13
+    "minimum": "14",
+    "verified": "14"
   },
-  
+
   "authors": [
     {
       "name": "Mestre Digital",
+      "url": "http://youtube.com/@mestredigital",
       "flags": {}
     }
-  ],  
-  
+  ],
+
   "esmodules": [
     "scripts/main.js"
   ],
   "styles": [
-    "styles/module.css"
+    {
+      "src": "styles/module.css"
+    }
   ],
-
-	"media": [{
-		"type": "setup",
-		"url": "modules/dh-statblock-importer/assets/images/thumbnail.webp",
-		"thumbnail": "modules/dh-statblock-importer/assets/images/thumbnail.webp"
-	}], 
-  
+  "media": [
+    {
+      "type": "setup",
+      "url": "modules/dh-statblock-importer/assets/images/thumbnail.webp",
+      "thumbnail": "modules/dh-statblock-importer/assets/images/thumbnail.webp",
+      "loop": false,
+      "flags": {}
+    }
+  ],
   "relationships": {
     "systems": [
       {
         "id": "daggerheart",
         "type": "system",
         "compatibility": {
-          "minimum": "1.9.6"
+          "minimum": "2.3.1"
         }
       }
     ]
-  },  
-
+  },
   "url": "https://github.com/brunocalado/dh-statblock-importer",
   "manifest": "https://raw.githubusercontent.com/brunocalado/dh-statblock-importer/main/module.json",
   "download": "https://codeload.github.com/brunocalado/dh-statblock-importer/zip/main",
-
   "packs": [
     {
       "label": "All Features",
@@ -55,7 +59,7 @@
         "ASSISTANT": "OWNER"
       },
       "flags": {},
-      "banner": "modules/dh-statblock-importer/assets/images/banner.webp" 
+      "banner": "modules/dh-statblock-importer/assets/images/banner.webp"
     },
     {
       "label": "Macros",
@@ -68,7 +72,7 @@
         "ASSISTANT": "OWNER"
       },
       "flags": {},
-      "banner": "modules/dh-statblock-importer/assets/images/banner.webp" 
+      "banner": "modules/dh-statblock-importer/assets/images/banner.webp"
     },
     {
       "label": "Instructions",
@@ -81,22 +85,21 @@
         "ASSISTANT": "OWNER"
       },
       "flags": {},
-      "banner": "modules/dh-statblock-importer/assets/images/banner.webp" 
-    }     
+      "banner": "modules/dh-statblock-importer/assets/images/banner.webp"
+    }
   ],
-
   "packFolders": [
     {
       "name": "Statblock Importer",
       "sorting": "a",
       "color": "#5c0547",
-      "packs": [        
+      "packs": [
         "all-features",
         "macros",
         "journal"
       ],
       "folders": []
     }
-  ]    
-  
+  ]
+
 }
