@@ -1,3 +1,8 @@
+# 0.3.0
+
+- v14 only
+- Compendiums updated to v14
+
 # 0.2.7
 
 - [Fixed] "Use actor portrait as feature icon" now correctly applies the actor's portrait to both embedded and standalone (+Features) non-compendium features instead of using the generic feature icon.
