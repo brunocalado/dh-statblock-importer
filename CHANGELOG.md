@@ -1,5 +1,6 @@
 # 0.3.1
 
+- Compendiums updated to Daggerheart 2.3.2
 ## Schema update for Daggerheart 2.3.2
 
 - [Fixed] `damage.parts` migrated from array to object (keyed by `"hitPoints"`) — affects weapon attack, adversary attack, and all inline action damage across the importer.

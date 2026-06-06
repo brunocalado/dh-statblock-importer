@@ -2521,7 +2521,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               if (diceMatch) {
                   const flatMultiplier = parseInt(diceMatch[1], 10);
                   const dice = `d${diceMatch[2]}`;
-                  const bonus = diceMatch[3] ? parseInt(diceMatch[3], 10) : 0;
+                  const bonus = diceMatch[3] ? parseInt(diceMatch[3], 10) : null;
                   systemData.attack.damage.parts.hitPoints.valueAlt = {
                       multiplier: "flat", flatMultiplier, dice, bonus, custom: { enabled: false, formula: "" }
                   };
