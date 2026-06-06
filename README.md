@@ -8,6 +8,8 @@ Effortlessly import **Adversaries** and **Environments** and **more** into Found
 
 <p align="center"><img width="800" src="docs/preview.webp"></p>
 
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Donate-red?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/mestredigital)
+
 ## 🌟 Overview & Features
 
 ### 🛠️ Smart Parsing

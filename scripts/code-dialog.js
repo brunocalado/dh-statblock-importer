@@ -1,3 +1,5 @@
+import { MODULE_ID } from "./constants.js";
+
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 /**
@@ -24,7 +26,7 @@ export class FeatureCodeDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     static PARTS = {
         form: {
-            template: "modules/dh-statblock-importer/templates/code-dialog.hbs"
+            template: `modules/${MODULE_ID}/templates/code-dialog.hbs`
         }
     };
 

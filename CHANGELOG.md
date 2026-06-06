@@ -1,5 +1,6 @@
 # 0.3.1
 
+- The Forge filepicker support
 - Compendiums updated to Daggerheart 2.3.2
 ## Schema update for Daggerheart 2.3.2
 

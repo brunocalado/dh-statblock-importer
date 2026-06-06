@@ -1,3 +1,4 @@
+import { MODULE_ID } from "./constants.js";
 import { StatblockConfig } from "./config.js";
 import { TEMPLATES } from "./templates.js";
 import { FeatureCodeDialog } from "./code-dialog.js";
@@ -6,7 +7,7 @@ import { TextNormalizer } from "./utils/text-normalizer.js";
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 /**
- * Main Importer Application using V13 ApplicationV2 standards.
+ * Main Importer Application.
  */
 export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2) {
 
@@ -42,7 +43,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
   /** @override */
   static DEFAULT_OPTIONS = {
-    id: "dh-statblock-importer",
+    id: MODULE_ID,
     tag: "form",
     window: {
       title: "Daggerheart: Statblock Importer",
@@ -69,7 +70,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   /** @override */
   static PARTS = {
     form: {
-      template: "modules/dh-statblock-importer/templates/importer.hbs"
+      template: `modules/${MODULE_ID}/templates/importer.hbs`
     }
   };
 
@@ -79,19 +80,19 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
   static registerSettings() {
       // Feature Packs
-      if (!game.settings.settings.has("dh-statblock-importer.selectedCompendiums")) {
-          game.settings.register("dh-statblock-importer", "selectedCompendiums", {
+      if (!game.settings.settings.has(`${MODULE_ID}.selectedCompendiums`)) {
+          game.settings.register(MODULE_ID, "selectedCompendiums", {
               name: "Selected Feature Compendiums",
               scope: "client",
               config: false,
               type: Array,
-              default: ["dh-statblock-importer.all-features"]
+              default: [`${MODULE_ID}.all-features`]
           });
       }
 
       // Actor Packs
-      if (!game.settings.settings.has("dh-statblock-importer.selectedActorCompendiums")) {
-          game.settings.register("dh-statblock-importer", "selectedActorCompendiums", {
+      if (!game.settings.settings.has(`${MODULE_ID}.selectedActorCompendiums`)) {
+          game.settings.register(MODULE_ID, "selectedActorCompendiums", {
               name: "Selected Actor Compendiums",
               scope: "client",
               config: false,
@@ -101,8 +102,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // Initialization Flag
-      if (!game.settings.settings.has("dh-statblock-importer.configInitialized")) {
-          game.settings.register("dh-statblock-importer", "configInitialized", {
+      if (!game.settings.settings.has(`${MODULE_ID}.configInitialized`)) {
+          game.settings.register(MODULE_ID, "configInitialized", {
               name: "Config Initialized",
               scope: "client",
               config: false,
@@ -112,8 +113,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // Folder Names (Actors)
-      if (!game.settings.settings.has("dh-statblock-importer.adversaryFolderName")) {
-          game.settings.register("dh-statblock-importer", "adversaryFolderName", {
+      if (!game.settings.settings.has(`${MODULE_ID}.adversaryFolderName`)) {
+          game.settings.register(MODULE_ID, "adversaryFolderName", {
               name: "Adversary Folder Name",
               scope: "world",
               config: false,
@@ -122,8 +123,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           });
       }
 
-      if (!game.settings.settings.has("dh-statblock-importer.environmentFolderName")) {
-          game.settings.register("dh-statblock-importer", "environmentFolderName", {
+      if (!game.settings.settings.has(`${MODULE_ID}.environmentFolderName`)) {
+          game.settings.register(MODULE_ID, "environmentFolderName", {
               name: "Environment Folder Name",
               scope: "world",
               config: false,
@@ -133,8 +134,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // Folder Names (Items)
-      if (!game.settings.settings.has("dh-statblock-importer.lootFolderName")) {
-          game.settings.register("dh-statblock-importer", "lootFolderName", {
+      if (!game.settings.settings.has(`${MODULE_ID}.lootFolderName`)) {
+          game.settings.register(MODULE_ID, "lootFolderName", {
               name: "Loot Folder Name",
               scope: "world",
               config: false,
@@ -143,8 +144,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           });
       }
 
-      if (!game.settings.settings.has("dh-statblock-importer.consumableFolderName")) {
-          game.settings.register("dh-statblock-importer", "consumableFolderName", {
+      if (!game.settings.settings.has(`${MODULE_ID}.consumableFolderName`)) {
+          game.settings.register(MODULE_ID, "consumableFolderName", {
               name: "Consumable Folder Name",
               scope: "world",
               config: false,
@@ -153,8 +154,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           });
       }
 
-      if (!game.settings.settings.has("dh-statblock-importer.weaponFolderName")) {
-          game.settings.register("dh-statblock-importer", "weaponFolderName", {
+      if (!game.settings.settings.has(`${MODULE_ID}.weaponFolderName`)) {
+          game.settings.register(MODULE_ID, "weaponFolderName", {
               name: "Weapon Folder Name",
               scope: "world",
               config: false,
@@ -163,8 +164,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           });
       }
 
-      if (!game.settings.settings.has("dh-statblock-importer.armorFolderName")) {
-          game.settings.register("dh-statblock-importer", "armorFolderName", {
+      if (!game.settings.settings.has(`${MODULE_ID}.armorFolderName`)) {
+          game.settings.register(MODULE_ID, "armorFolderName", {
               name: "Armor Folder Name",
               scope: "world",
               config: false,
@@ -173,8 +174,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           });
       }
 
-      if (!game.settings.settings.has("dh-statblock-importer.featureFolderName")) {
-          game.settings.register("dh-statblock-importer", "featureFolderName", {
+      if (!game.settings.settings.has(`${MODULE_ID}.featureFolderName`)) {
+          game.settings.register(MODULE_ID, "featureFolderName", {
               name: "Feature Folder Name",
               scope: "world",
               config: false,
@@ -183,8 +184,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           });
       }
 
-      if (!game.settings.settings.has("dh-statblock-importer.domainCardFolderName")) {
-          game.settings.register("dh-statblock-importer", "domainCardFolderName", {
+      if (!game.settings.settings.has(`${MODULE_ID}.domainCardFolderName`)) {
+          game.settings.register(MODULE_ID, "domainCardFolderName", {
               name: "Domain Card Folder Name",
               scope: "world",
               config: false,
@@ -194,8 +195,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // Separator Mode (blankLine or separator)
-      if (!game.settings.settings.has("dh-statblock-importer.separatorMode")) {
-          game.settings.register("dh-statblock-importer", "separatorMode", {
+      if (!game.settings.settings.has(`${MODULE_ID}.separatorMode`)) {
+          game.settings.register(MODULE_ID, "separatorMode", {
               name: "Separator Mode",
               scope: "world",
               config: false,
@@ -205,8 +206,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // Debug Mode — config: true so Foundry renders it natively in Module Settings
-      if (!game.settings.settings.has("dh-statblock-importer.debugMode")) {
-          game.settings.register("dh-statblock-importer", "debugMode", {
+      if (!game.settings.settings.has(`${MODULE_ID}.debugMode`)) {
+          game.settings.register(MODULE_ID, "debugMode", {
               name: "Debug Mode",
               hint: "When enabled, logs import details to the browser console (F12).",
               scope: "client",
@@ -217,8 +218,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // +Features Toggle State
-      if (!game.settings.settings.has("dh-statblock-importer.plusFeaturesEnabled")) {
-          game.settings.register("dh-statblock-importer", "plusFeaturesEnabled", {
+      if (!game.settings.settings.has(`${MODULE_ID}.plusFeaturesEnabled`)) {
+          game.settings.register(MODULE_ID, "plusFeaturesEnabled", {
               name: "+Features Enabled",
               scope: "client",
               config: false,
@@ -228,8 +229,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // +Code Generator Toggle State
-      if (!game.settings.settings.has("dh-statblock-importer.codeGeneratorEnabled")) {
-          game.settings.register("dh-statblock-importer", "codeGeneratorEnabled", {
+      if (!game.settings.settings.has(`${MODULE_ID}.codeGeneratorEnabled`)) {
+          game.settings.register(MODULE_ID, "codeGeneratorEnabled", {
               name: "+Code Generator Enabled",
               scope: "client",
               config: false,
@@ -239,8 +240,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // Feature Icon: Adversary
-      if (!game.settings.settings.has("dh-statblock-importer.featureIconAdversary")) {
-          game.settings.register("dh-statblock-importer", "featureIconAdversary", {
+      if (!game.settings.settings.has(`${MODULE_ID}.featureIconAdversary`)) {
+          game.settings.register(MODULE_ID, "featureIconAdversary", {
               name: "Feature Icon (Adversary)",
               scope: "world",
               config: false,
@@ -250,8 +251,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // Feature Icon: Environment
-      if (!game.settings.settings.has("dh-statblock-importer.featureIconEnvironment")) {
-          game.settings.register("dh-statblock-importer", "featureIconEnvironment", {
+      if (!game.settings.settings.has(`${MODULE_ID}.featureIconEnvironment`)) {
+          game.settings.register(MODULE_ID, "featureIconEnvironment", {
               name: "Feature Icon (Environment)",
               scope: "world",
               config: false,
@@ -261,8 +262,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // Feature Icon: Feature (standalone Item mode)
-      if (!game.settings.settings.has("dh-statblock-importer.featureIconFeature")) {
-          game.settings.register("dh-statblock-importer", "featureIconFeature", {
+      if (!game.settings.settings.has(`${MODULE_ID}.featureIconFeature`)) {
+          game.settings.register(MODULE_ID, "featureIconFeature", {
               name: "Feature Icon (Feature Item)",
               scope: "world",
               config: false,
@@ -272,8 +273,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // Use actor portrait for adversary features
-      if (!game.settings.settings.has("dh-statblock-importer.featureIconMatchAdversary")) {
-          game.settings.register("dh-statblock-importer", "featureIconMatchAdversary", {
+      if (!game.settings.settings.has(`${MODULE_ID}.featureIconMatchAdversary`)) {
+          game.settings.register(MODULE_ID, "featureIconMatchAdversary", {
               name: "Feature Icon matches Adversary portrait",
               scope: "world",
               config: false,
@@ -283,8 +284,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // Use actor portrait for environment features
-      if (!game.settings.settings.has("dh-statblock-importer.featureIconMatchEnvironment")) {
-          game.settings.register("dh-statblock-importer", "featureIconMatchEnvironment", {
+      if (!game.settings.settings.has(`${MODULE_ID}.featureIconMatchEnvironment`)) {
+          game.settings.register(MODULE_ID, "featureIconMatchEnvironment", {
               name: "Feature Icon matches Environment portrait",
               scope: "world",
               config: false,
@@ -298,7 +299,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
    * Log debug messages if debug mode is enabled
    */
   static debugLog(message, data = null) {
-      const debugMode = game.settings.get("dh-statblock-importer", "debugMode");
+      const debugMode = game.settings.get(MODULE_ID, "debugMode");
       if (debugMode) {
           console.log(`DH Importer [DEBUG] | ${message}`);
           if (data !== null) {
@@ -311,7 +312,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
    * Log error messages (always logs, but with more detail in debug mode)
    */
   static errorLog(message, error = null, context = null) {
-      const debugMode = game.settings.get("dh-statblock-importer", "debugMode");
+      const debugMode = game.settings.get(MODULE_ID, "debugMode");
       console.error(`DH Importer [ERROR] | ${message}`);
       if (error) {
           console.error(error);
@@ -328,8 +329,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
   async _prepareContext(options) {
       const context = await super._prepareContext(options);
-      context.plusFeaturesEnabled = game.settings.get("dh-statblock-importer", "plusFeaturesEnabled");
-      context.codeGeneratorEnabled = game.settings.get("dh-statblock-importer", "codeGeneratorEnabled");
+      context.plusFeaturesEnabled = game.settings.get(MODULE_ID, "plusFeaturesEnabled");
+      context.codeGeneratorEnabled = game.settings.get(MODULE_ID, "codeGeneratorEnabled");
       return context;
   }
 
@@ -422,9 +423,9 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   }
 
   static async _onPlusFeatures(event, target) {
-      const currentState = game.settings.get("dh-statblock-importer", "plusFeaturesEnabled");
+      const currentState = game.settings.get(MODULE_ID, "plusFeaturesEnabled");
       const newState = !currentState;
-      await game.settings.set("dh-statblock-importer", "plusFeaturesEnabled", newState);
+      await game.settings.set(MODULE_ID, "plusFeaturesEnabled", newState);
 
       // Update button visual state
       const btn = target.closest("button");
@@ -453,9 +454,9 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   }
 
   static async _onCodeGenerator(event, target) {
-      const currentState = game.settings.get("dh-statblock-importer", "codeGeneratorEnabled");
+      const currentState = game.settings.get(MODULE_ID, "codeGeneratorEnabled");
       const newState = !currentState;
-      await game.settings.set("dh-statblock-importer", "codeGeneratorEnabled", newState);
+      await game.settings.set(MODULE_ID, "codeGeneratorEnabled", newState);
 
       // Update button visual state
       const btn = target.closest("button");
@@ -491,7 +492,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       if (mode === "weapon") return "icons/weapons/swords/sword-guard-flanged-purple.webp";
       if (mode === "armor") return "icons/equipment/chest/breastplate-banded-leather-purple.webp";
       if (mode === "feature") {
-          return game.settings.get("dh-statblock-importer", "featureIconFeature")
+          return game.settings.get(MODULE_ID, "featureIconFeature")
               || "icons/magic/symbols/star-solid-gold.webp";
       }
       
@@ -793,7 +794,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     const images = previewBox.querySelectorAll(".dh-preview-img");
     images.forEach(img => {
         img.addEventListener("click", ev => {
-            const fp = new foundry.applications.apps.FilePicker({
+            const FilePickerClass = foundry.applications.apps.FilePicker.implementation ?? foundry.applications.apps.FilePicker;
+            const fp = new FilePickerClass({
                 type: "image",
                 current: img.getAttribute("src"),
                 callback: (path) => {
@@ -879,7 +881,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                 color = "#1e0047"; // Indigo/Purple
             }
 
-            const subFolderName = game.settings.get("dh-statblock-importer", settingKey) || defaultName;
+            const subFolderName = game.settings.get(MODULE_ID,settingKey) || defaultName;
             
             // 3. Find or Create Subfolder (Parent = Root)
             targetFolder = game.folders.find(f => f.name === subFolderName && f.type === "Item" && f.folder?.id === rootFolder.id);
@@ -894,8 +896,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
         } else {
             // Actor Folder Logic (Existing)
-            const advName = game.settings.get("dh-statblock-importer", "adversaryFolderName");
-            const envName = game.settings.get("dh-statblock-importer", "environmentFolderName");
+            const advName = game.settings.get(MODULE_ID, "adversaryFolderName");
+            const envName = game.settings.get(MODULE_ID, "environmentFolderName");
             
             if (mode === "environment") {
                  let f = game.folders.find(f => f.name === envName && f.type === "Actor");
@@ -921,7 +923,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
     // Accumulate features for +Code generator
     const collectedCodeFeatures = [];
-    const codeGeneratorEnabled = game.settings.get("dh-statblock-importer", "codeGeneratorEnabled");
+    const codeGeneratorEnabled = game.settings.get(MODULE_ID, "codeGeneratorEnabled");
 
     for (let i = 0; i < blocks.length; i++) {
         const block = blocks[i];
@@ -999,7 +1001,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                 // Default if not custom
                 const defaultActorImg = result.actorType === "environment"
                     ? "icons/environment/wilderness/cave-entrance.webp"
-                    : "modules/dh-statblock-importer/assets/images/skull.webp";
+                    : `modules/${MODULE_ID}/assets/images/skull.webp`;
 
                 // Remove preview-only properties before creating actor
                 const cleanSystemData = { ...result.systemData };
@@ -1007,8 +1009,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
                 // Determine portrait override for feature icon, if the matching option is active
                 const isEnvironment = result.actorType === "environment";
-                const matchAdversary = game.settings.get("dh-statblock-importer", "featureIconMatchAdversary");
-                const matchEnvironment = game.settings.get("dh-statblock-importer", "featureIconMatchEnvironment");
+                const matchAdversary = game.settings.get(MODULE_ID, "featureIconMatchAdversary");
+                const matchEnvironment = game.settings.get(MODULE_ID, "featureIconMatchEnvironment");
                 const usePortrait = isEnvironment ? matchEnvironment : matchAdversary;
                 // Use the actor's actual portrait as the feature icon
                 const portraitImg = usePortrait ? (finalImg || defaultActorImg) : null;
@@ -1035,7 +1037,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                 if (newActor) createdObjects.push(newActor);
 
                 // +Features: Accumulate features for batch creation
-                const plusFeaturesEnabled = game.settings.get("dh-statblock-importer", "plusFeaturesEnabled");
+                const plusFeaturesEnabled = game.settings.get(MODULE_ID, "plusFeaturesEnabled");
                 if (plusFeaturesEnabled && result.items?.length > 0) {
                     const colorMap = isEnvironment ? StatblockImporter.ENVIRONMENT_TYPE_COLORS : StatblockImporter.TYPE_COLORS;
 
@@ -1268,7 +1270,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
    */
   static splitStatblocks(text) {
     text = TextNormalizer.clean(text);
-    const separatorMode = game.settings.get("dh-statblock-importer", "separatorMode") || "blankLine";
+    const separatorMode = game.settings.get(MODULE_ID, "separatorMode") || "blankLine";
 
     // If using === separator, split by that first
     if (separatorMode === "separator") {
@@ -1302,7 +1304,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
    */
   static splitSimpleItems(text) {
       text = TextNormalizer.clean(text);
-      const separatorMode = game.settings.get("dh-statblock-importer", "separatorMode") || "blankLine";
+      const separatorMode = game.settings.get(MODULE_ID, "separatorMode") || "blankLine";
 
       if (separatorMode === "separator") {
           // Split by === separator
@@ -2081,7 +2083,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       if (rawLines.length === 0) throw new Error("Text content is empty.");
 
       // --- FEATURE COMPENDIUM SETUP ---
-      const selectedFeaturePacks = game.settings.get("dh-statblock-importer", "selectedCompendiums") || ["dh-statblock-importer.all-features"];
+      const selectedFeaturePacks = game.settings.get(MODULE_ID, "selectedCompendiums") || ["dh-statblock-importer.all-features"];
       const featureIndexMap = new Map();
 
       for (const packId of selectedFeaturePacks) {
@@ -2097,7 +2099,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // --- ADVERSARY COMPENDIUM SETUP ---
-      const selectedActorPacks = game.settings.get("dh-statblock-importer", "selectedActorCompendiums") || ["daggerheart.adversaries"];
+      const selectedActorPacks = game.settings.get(MODULE_ID, "selectedActorCompendiums") || ["daggerheart.adversaries"];
       let adversaryIndex = [];
 
       for (const packId of selectedActorPacks) {
@@ -2484,8 +2486,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   name: featureName,
                   type: "feature",
                   img: actorType === "environment"
-                      ? (game.settings.get("dh-statblock-importer", "featureIconEnvironment") || "icons/environment/wilderness/cave-entrance.webp")
-                      : (game.settings.get("dh-statblock-importer", "featureIconAdversary") || "icons/magic/symbols/star-solid-gold.webp"),
+                      ? (game.settings.get(MODULE_ID, "featureIconEnvironment") || "icons/environment/wilderness/cave-entrance.webp")
+                      : (game.settings.get(MODULE_ID, "featureIconAdversary") || "icons/magic/symbols/star-solid-gold.webp"),
                   system: {
                       featureForm: featureMatch[2].toLowerCase(),
                       description: featureDesc ? `<p>${featureDesc}</p>` : ""

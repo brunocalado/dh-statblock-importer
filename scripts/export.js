@@ -1,3 +1,5 @@
+import { MODULE_ID } from "./constants.js";
+
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 /**
@@ -28,7 +30,7 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
     /** @override */
     static PARTS = {
         form: {
-            template: "modules/dh-statblock-importer/templates/exporter.hbs"
+            template: `modules/${MODULE_ID}/templates/exporter.hbs`
         }
     };
 

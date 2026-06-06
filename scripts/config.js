@@ -1,3 +1,5 @@
+import { MODULE_ID } from "./constants.js";
+
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
@@ -21,12 +23,14 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 
     static PARTS = {
         form: {
-            template: "modules/dh-statblock-importer/templates/config.hbs"
+            template: `modules/${MODULE_ID}/templates/config.hbs`
         }
     };
 
     /**
-     * Registra event listeners após o render
+     * Attach event listeners after render.
+     * @param {object} context
+     * @param {object} options
      */
     _onRender(context, options) {
         super._onRender(context, options);
@@ -44,7 +48,8 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
                 const input = this.element.querySelector(`input[name="${targetName}"]`);
                 const preview = this.element.querySelector(`.dh-icon-preview[data-target="${targetName}"]`);
 
-                new foundry.applications.apps.FilePicker({
+                const FilePickerClass = foundry.applications.apps.FilePicker.implementation ?? foundry.applications.apps.FilePicker;
+                new FilePickerClass({
                     type: "image",
                     current: input?.value || "",
                     callback: (path) => {
@@ -57,21 +62,20 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     /**
-     * Handle Tab Switching
+     * Handle tab switching in the config dialog.
+     * @param {MouseEvent} event
      */
     _onTabClick(event) {
         event.preventDefault();
         const target = event.currentTarget;
         const targetTab = target.dataset.target;
 
-        // Remove active de todos
         const buttons = this.element.querySelectorAll(".dh-config-tab-btn");
         const contents = this.element.querySelectorAll(".dh-config-tab-content");
 
         buttons.forEach(el => el.classList.remove("active"));
         contents.forEach(el => el.classList.remove("active"));
 
-        // Ativa o alvo
         target.classList.add("active");
         const content = this.element.querySelector(`.dh-config-tab-content[data-tab="${targetTab}"]`);
 
@@ -82,10 +86,10 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 
     async _prepareContext(options) {
         // --- Features (Items) ---
-        const selectedFeatureIds = game.settings.get("dh-statblock-importer", "selectedCompendiums") || [];
+        const selectedFeatureIds = game.settings.get(MODULE_ID, "selectedCompendiums") || [];
 
-        const defaultFeaturePack = "dh-statblock-importer.all-features";
-        if (selectedFeatureIds.length === 0 && !game.settings.get("dh-statblock-importer", "configInitialized")) {
+        const defaultFeaturePack = `${MODULE_ID}.all-features`;
+        if (selectedFeatureIds.length === 0 && !game.settings.get(MODULE_ID, "configInitialized")) {
             selectedFeatureIds.push(defaultFeaturePack);
         }
 
@@ -99,10 +103,10 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             .sort((a, b) => a.title.localeCompare(b.title));
 
         // --- Actors ---
-        const selectedActorIds = game.settings.get("dh-statblock-importer", "selectedActorCompendiums") || [];
+        const selectedActorIds = game.settings.get(MODULE_ID, "selectedActorCompendiums") || [];
 
         const defaultActorPack = "daggerheart.adversaries";
-        if (selectedActorIds.length === 0 && !game.settings.get("dh-statblock-importer", "configInitialized")) {
+        if (selectedActorIds.length === 0 && !game.settings.get(MODULE_ID, "configInitialized")) {
             if (game.packs.get(defaultActorPack)) selectedActorIds.push(defaultActorPack);
         }
 
@@ -116,21 +120,21 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             .sort((a, b) => a.title.localeCompare(b.title));
 
         // --- General Settings ---
-        const adversaryFolderName = game.settings.get("dh-statblock-importer", "adversaryFolderName");
-        const environmentFolderName = game.settings.get("dh-statblock-importer", "environmentFolderName");
-        const lootFolderName = game.settings.get("dh-statblock-importer", "lootFolderName");
-        const consumableFolderName = game.settings.get("dh-statblock-importer", "consumableFolderName");
-        const weaponFolderName = game.settings.get("dh-statblock-importer", "weaponFolderName");
-        const armorFolderName = game.settings.get("dh-statblock-importer", "armorFolderName");
-        const featureFolderName = game.settings.get("dh-statblock-importer", "featureFolderName");
-        const domainCardFolderName = game.settings.get("dh-statblock-importer", "domainCardFolderName");
-        const separatorMode = game.settings.get("dh-statblock-importer", "separatorMode") || "blankLine";
+        const adversaryFolderName = game.settings.get(MODULE_ID, "adversaryFolderName");
+        const environmentFolderName = game.settings.get(MODULE_ID, "environmentFolderName");
+        const lootFolderName = game.settings.get(MODULE_ID, "lootFolderName");
+        const consumableFolderName = game.settings.get(MODULE_ID, "consumableFolderName");
+        const weaponFolderName = game.settings.get(MODULE_ID, "weaponFolderName");
+        const armorFolderName = game.settings.get(MODULE_ID, "armorFolderName");
+        const featureFolderName = game.settings.get(MODULE_ID, "featureFolderName");
+        const domainCardFolderName = game.settings.get(MODULE_ID, "domainCardFolderName");
+        const separatorMode = game.settings.get(MODULE_ID, "separatorMode") || "blankLine";
 
-        const featureIconAdversary = game.settings.get("dh-statblock-importer", "featureIconAdversary");
-        const featureIconEnvironment = game.settings.get("dh-statblock-importer", "featureIconEnvironment");
-        const featureIconFeature = game.settings.get("dh-statblock-importer", "featureIconFeature");
-        const featureIconMatchAdversary = game.settings.get("dh-statblock-importer", "featureIconMatchAdversary");
-        const featureIconMatchEnvironment = game.settings.get("dh-statblock-importer", "featureIconMatchEnvironment");
+        const featureIconAdversary = game.settings.get(MODULE_ID, "featureIconAdversary");
+        const featureIconEnvironment = game.settings.get(MODULE_ID, "featureIconEnvironment");
+        const featureIconFeature = game.settings.get(MODULE_ID, "featureIconFeature");
+        const featureIconMatchAdversary = game.settings.get(MODULE_ID, "featureIconMatchAdversary");
+        const featureIconMatchEnvironment = game.settings.get(MODULE_ID, "featureIconMatchEnvironment");
 
         return {
             featureCompendiums,
@@ -153,19 +157,19 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     static async formHandler(event, form, formData) {
-        // Salvar Features
+        // Save selected Feature compendiums
         const selectedFeatures = [];
         const featureChecks = form.querySelectorAll("input[name='featureCompendiums']:checked");
         featureChecks.forEach(cb => selectedFeatures.push(cb.value));
-        await game.settings.set("dh-statblock-importer", "selectedCompendiums", selectedFeatures);
+        await game.settings.set(MODULE_ID, "selectedCompendiums", selectedFeatures);
 
-        // Salvar Actors
+        // Save selected Actor compendiums
         const selectedActors = [];
         const actorChecks = form.querySelectorAll("input[name='actorCompendiums']:checked");
         actorChecks.forEach(cb => selectedActors.push(cb.value));
-        await game.settings.set("dh-statblock-importer", "selectedActorCompendiums", selectedActors);
+        await game.settings.set(MODULE_ID, "selectedActorCompendiums", selectedActors);
 
-        // Salvar General Settings (Folder Names)
+        // Save folder name settings
         const adversaryFolderInput = form.querySelector("input[name='adversaryFolderName']");
         const environmentFolderInput = form.querySelector("input[name='environmentFolderName']");
         const lootFolderInput = form.querySelector("input[name='lootFolderName']");
@@ -176,15 +180,15 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         const domainCardFolderInput = form.querySelector("input[name='domainCardFolderName']");
         const separatorModeInput = form.querySelector("select[name='separatorMode']");
 
-        if (adversaryFolderInput?.value) await game.settings.set("dh-statblock-importer", "adversaryFolderName", adversaryFolderInput.value);
-        if (environmentFolderInput?.value) await game.settings.set("dh-statblock-importer", "environmentFolderName", environmentFolderInput.value);
-        if (lootFolderInput?.value) await game.settings.set("dh-statblock-importer", "lootFolderName", lootFolderInput.value);
-        if (consumableFolderInput?.value) await game.settings.set("dh-statblock-importer", "consumableFolderName", consumableFolderInput.value);
-        if (weaponFolderInput?.value) await game.settings.set("dh-statblock-importer", "weaponFolderName", weaponFolderInput.value);
-        if (armorFolderInput?.value) await game.settings.set("dh-statblock-importer", "armorFolderName", armorFolderInput.value);
-        if (featureFolderInput?.value) await game.settings.set("dh-statblock-importer", "featureFolderName", featureFolderInput.value);
-        if (domainCardFolderInput?.value) await game.settings.set("dh-statblock-importer", "domainCardFolderName", domainCardFolderInput.value);
-        if (separatorModeInput?.value) await game.settings.set("dh-statblock-importer", "separatorMode", separatorModeInput.value);
+        if (adversaryFolderInput?.value) await game.settings.set(MODULE_ID, "adversaryFolderName", adversaryFolderInput.value);
+        if (environmentFolderInput?.value) await game.settings.set(MODULE_ID, "environmentFolderName", environmentFolderInput.value);
+        if (lootFolderInput?.value) await game.settings.set(MODULE_ID, "lootFolderName", lootFolderInput.value);
+        if (consumableFolderInput?.value) await game.settings.set(MODULE_ID, "consumableFolderName", consumableFolderInput.value);
+        if (weaponFolderInput?.value) await game.settings.set(MODULE_ID, "weaponFolderName", weaponFolderInput.value);
+        if (armorFolderInput?.value) await game.settings.set(MODULE_ID, "armorFolderName", armorFolderInput.value);
+        if (featureFolderInput?.value) await game.settings.set(MODULE_ID, "featureFolderName", featureFolderInput.value);
+        if (domainCardFolderInput?.value) await game.settings.set(MODULE_ID, "domainCardFolderName", domainCardFolderInput.value);
+        if (separatorModeInput?.value) await game.settings.set(MODULE_ID, "separatorMode", separatorModeInput.value);
 
         const featureIconAdversaryInput = form.querySelector("input[name='featureIconAdversary']");
         const featureIconEnvironmentInput = form.querySelector("input[name='featureIconEnvironment']");
@@ -193,15 +197,15 @@ export class StatblockConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         const featureIconMatchEnvironmentInput = form.querySelector("input[name='featureIconMatchEnvironment']");
 
         const adversaryIconVal = featureIconAdversaryInput?.value?.trim();
-        if (adversaryIconVal) await game.settings.set("dh-statblock-importer", "featureIconAdversary", adversaryIconVal);
+        if (adversaryIconVal) await game.settings.set(MODULE_ID, "featureIconAdversary", adversaryIconVal);
         const environmentIconVal = featureIconEnvironmentInput?.value?.trim();
-        if (environmentIconVal) await game.settings.set("dh-statblock-importer", "featureIconEnvironment", environmentIconVal);
+        if (environmentIconVal) await game.settings.set(MODULE_ID, "featureIconEnvironment", environmentIconVal);
         const featureIconVal = featureIconFeatureInput?.value?.trim();
-        if (featureIconVal) await game.settings.set("dh-statblock-importer", "featureIconFeature", featureIconVal);
+        if (featureIconVal) await game.settings.set(MODULE_ID, "featureIconFeature", featureIconVal);
 
-        await game.settings.set("dh-statblock-importer", "featureIconMatchAdversary", featureIconMatchAdversaryInput?.checked || false);
-        await game.settings.set("dh-statblock-importer", "featureIconMatchEnvironment", featureIconMatchEnvironmentInput?.checked || false);
+        await game.settings.set(MODULE_ID, "featureIconMatchAdversary", featureIconMatchAdversaryInput?.checked || false);
+        await game.settings.set(MODULE_ID, "featureIconMatchEnvironment", featureIconMatchEnvironmentInput?.checked || false);
 
-        await game.settings.set("dh-statblock-importer", "configInitialized", true);
+        await game.settings.set(MODULE_ID, "configInitialized", true);
     }
 }
