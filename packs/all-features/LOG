@@ -1,14 +1,14 @@
-2026/06/03-10:48:49.973 ad0 Recovering log #1409
-2026/06/03-10:48:49.976 ad0 Delete type=0 #1409
-2026/06/03-10:48:49.977 ad0 Delete type=3 #1407
-2026/06/03-10:59:47.007 55d8 Level-0 table #1414: started
-2026/06/03-10:59:47.015 55d8 Level-0 table #1414: 385888 bytes OK
-2026/06/03-10:59:47.016 55d8 Delete type=0 #1412
-2026/06/03-10:59:47.020 55d8 Manual compaction at level-0 from '!folders!0zbWjLscN4trQAbd' @ 72057594037927935 : 1 .. '!items.effects!zZvLoFAZe88wZ2ZF.Q99saHj6NOY2PSXf' @ 0 : 0; will stop at '!items.effects!zZvLoFAZe88wZ2ZF.Q99saHj6NOY2PSXf' @ 5308 : 1
-2026/06/03-10:59:47.020 55d8 Compacting 1@0 + 1@1 files
-2026/06/03-10:59:47.031 55d8 Generated table #1415@0: 598 keys, 413190 bytes
-2026/06/03-10:59:47.031 55d8 Compacted 1@0 + 1@1 files => 413190 bytes
-2026/06/03-10:59:47.032 55d8 compacted to: files[ 0 1 0 0 0 0 0 ]
-2026/06/03-10:59:47.032 55d8 Delete type=2 #1392
-2026/06/03-10:59:47.033 55d8 Delete type=2 #1414
-2026/06/03-10:59:47.035 55d8 Manual compaction at level-0 from '!items.effects!zZvLoFAZe88wZ2ZF.Q99saHj6NOY2PSXf' @ 5308 : 1 .. '!items.effects!zZvLoFAZe88wZ2ZF.Q99saHj6NOY2PSXf' @ 0 : 0; will stop at (end)
+2026/06/06-11:34:32.650 67f4 Recovering log #1457
+2026/06/06-11:34:32.654 67f4 Delete type=0 #1457
+2026/06/06-11:34:32.654 67f4 Delete type=3 #1455
+2026/06/06-11:41:21.192 ee0 Level-0 table #1462: started
+2026/06/06-11:41:21.198 ee0 Level-0 table #1462: 390764 bytes OK
+2026/06/06-11:41:21.199 ee0 Delete type=0 #1460
+2026/06/06-11:41:21.202 ee0 Manual compaction at level-0 from '!folders!0Uf5pisK3xV01LoU' @ 72057594037927935 : 1 .. '!items.effects!zZvLoFAZe88wZ2ZF.Q99saHj6NOY2PSXf' @ 0 : 0; will stop at '!items.effects!zYPwoLqrbTN0eH3s.odAyKY0BSAkcO3Dd' @ 6113 : 1
+2026/06/06-11:41:21.202 ee0 Compacting 1@0 + 1@1 files
+2026/06/06-11:41:21.211 ee0 Generated table #1463@0: 598 keys, 437029 bytes
+2026/06/06-11:41:21.211 ee0 Compacted 1@0 + 1@1 files => 437029 bytes
+2026/06/06-11:41:21.212 ee0 compacted to: files[ 0 1 0 0 0 0 0 ]
+2026/06/06-11:41:21.213 ee0 Delete type=2 #1422
+2026/06/06-11:41:21.213 ee0 Delete type=2 #1462
+2026/06/06-11:41:21.214 ee0 Manual compaction at level-0 from '!items.effects!zYPwoLqrbTN0eH3s.odAyKY0BSAkcO3Dd' @ 6113 : 1 .. '!items.effects!zZvLoFAZe88wZ2ZF.Q99saHj6NOY2PSXf' @ 0 : 0; will stop at (end)

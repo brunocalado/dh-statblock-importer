@@ -273,8 +273,9 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
             }
 
             // Damage
-            if (attack.damage?.parts?.length > 0) {
-                const dmgPart = attack.damage.parts[0];
+            const exportParts = Object.values(attack.damage?.parts ?? {});
+            if (exportParts.length > 0) {
+                const dmgPart = exportParts[0];
                 const dmgStr = this._formatDamage(dmgPart);
                 if (dmgStr) atkParts.push(dmgStr);
             }

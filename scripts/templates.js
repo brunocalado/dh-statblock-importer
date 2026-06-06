@@ -15,6 +15,7 @@ export const TEMPLATES = {
     system: {
       attribution: {},
       description: "",
+      quantity: 1,
       actions: {},
       attached: [],
       tier: 1,
@@ -50,9 +51,10 @@ export const TEMPLATES = {
           },
           useDefault: false
         },
+        areas: [],
         damage: {
-          parts: [
-            {
+          parts: {
+            hitPoints: {
               type: ["physical"],
               value: {
                 multiplier: "prof",
@@ -67,7 +69,7 @@ export const TEMPLATES = {
               applyTo: "hitPoints",
               resultBased: false,
               valueAlt: {
-                multiplier: "prof",
+                multiplier: "flat",
                 flatMultiplier: 1,
                 dice: "d6",
                 bonus: null,
@@ -78,7 +80,7 @@ export const TEMPLATES = {
               },
               base: false
             }
-          ],
+          },
           includeBase: false,
           direct: false
         },
@@ -124,15 +126,16 @@ export const TEMPLATES = {
     system: {
       attribution: {},
       description: "",
+      quantity: 1,
       actions: {},
       attached: [],
       tier: 1,
       equipped: false,
-      baseScore: 0,
-      armorFeatures: [],
-      marks: {
-        value: 0
+      armor: {
+        current: 0,
+        max: 0
       },
+      armorFeatures: [],
       baseThresholds: {
         major: 0,
         severe: 0
@@ -199,8 +202,7 @@ export const TEMPLATES = {
       description: "",
       quantity: 1,
       actions: {},
-      consumeOnUse: true,
-      destroyOnEmpty: true
+      consumeOnUse: true
     },
     effects: [],
     flags: {}
@@ -220,10 +222,11 @@ export const TEMPLATES = {
     originItem: { type: "itemCollection" },
     actionType: "action",
     triggers: [],
+    areas: [],
     cost: [],
     uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
     damage: {
-      parts: [],
+      parts: {},
       includeBase: false,
       direct: false
     },
@@ -263,29 +266,32 @@ export const TEMPLATES = {
     originItem: { type: "itemCollection" },
     actionType: "action",
     triggers: [],
+    areas: [],
     cost: [],
     uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
     damage: {
-      parts: [{
-        resultBased: false,
-        value: {
-          custom: { enabled: true, formula: "" },
-          multiplier: "prof",
-          flatMultiplier: 1,
-          dice: "d6",
-          bonus: null
-        },
-        applyTo: "hitPoints",
-        type: ["physical"],
-        base: false,
-        valueAlt: {
-          multiplier: "prof",
-          flatMultiplier: 1,
-          dice: "d6",
-          bonus: null,
-          custom: { enabled: false, formula: "" }
+      parts: {
+        hitPoints: {
+          resultBased: false,
+          value: {
+            custom: { enabled: true, formula: "" },
+            multiplier: "prof",
+            flatMultiplier: 1,
+            dice: "d6",
+            bonus: null
+          },
+          applyTo: "hitPoints",
+          type: ["physical"],
+          base: false,
+          valueAlt: {
+            multiplier: "flat",
+            flatMultiplier: 1,
+            dice: "d6",
+            bonus: null,
+            custom: { enabled: false, formula: "" }
+          }
         }
-      }],
+      },
       includeBase: false,
       direct: false
     },
@@ -325,29 +331,32 @@ export const TEMPLATES = {
     originItem: { type: "itemCollection" },
     actionType: "action",
     triggers: [],
+    areas: [],
     cost: [],
     uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
     damage: {
-      parts: [{
-        value: {
-          custom: { enabled: true, formula: "" },
-          multiplier: "prof",
-          flatMultiplier: 1,
-          dice: "d6",
-          bonus: null
-        },
-        applyTo: "hitPoints",
-        type: ["physical"],
-        base: false,
-        resultBased: false,
-        valueAlt: {
-          multiplier: "prof",
-          flatMultiplier: 1,
-          dice: "d6",
-          bonus: null,
-          custom: { enabled: false, formula: "" }
+      parts: {
+        hitPoints: {
+          value: {
+            custom: { enabled: true, formula: "" },
+            multiplier: "prof",
+            flatMultiplier: 1,
+            dice: "d6",
+            bonus: null
+          },
+          applyTo: "hitPoints",
+          type: ["physical"],
+          base: false,
+          resultBased: false,
+          valueAlt: {
+            multiplier: "flat",
+            flatMultiplier: 1,
+            dice: "d6",
+            bonus: null,
+            custom: { enabled: false, formula: "" }
+          }
         }
-      }],
+      },
       includeBase: false,
       direct: true
     },
@@ -367,6 +376,7 @@ export const TEMPLATES = {
     originItem: { type: "itemCollection" },
     actionType: "action",
     triggers: [],
+    areas: [],
     cost: [{
       scalable: false,
       key: "quantity",
@@ -422,6 +432,8 @@ export const TEMPLATES = {
         }
       },
       size: "medium",
+      advantageSources: [],
+      disadvantageSources: [],
       tier: 1,
       type: "standard",
       notes: "",
@@ -435,13 +447,11 @@ export const TEMPLATES = {
       resources: {
         hitPoints: {
           value: 0,
-          max: 0,
-          isReversed: true
+          max: null
         },
         stress: {
           value: 0,
-          max: 0,
-          isReversed: true
+          max: null
         }
       },
       rules: {
@@ -493,9 +503,10 @@ export const TEMPLATES = {
           },
           useDefault: false
         },
+        areas: [],
         damage: {
-          parts: [
-            {
+          parts: {
+            hitPoints: {
               type: ["physical"],
               value: {
                 multiplier: "flat",
@@ -510,7 +521,7 @@ export const TEMPLATES = {
               applyTo: "hitPoints",
               resultBased: false,
               valueAlt: {
-                multiplier: "prof",
+                multiplier: "flat",
                 flatMultiplier: 1,
                 dice: "d6",
                 bonus: null,
@@ -521,7 +532,7 @@ export const TEMPLATES = {
               },
               base: false
             }
-          ],
+          },
           includeBase: false,
           direct: false
         },
@@ -580,16 +591,14 @@ export const TEMPLATES = {
       actorLink: false,
       width: 1,
       height: 1,
+      depth: 1,
       texture: {
         src: "systems/daggerheart/assets/icons/documents/actors/dragon-head.svg",
         anchorX: 0.5,
         anchorY: 0.5,
-        offsetX: 0,
-        offsetY: 0,
         fit: "contain",
         scaleX: 1,
         scaleY: 1,
-        rotation: 0,
         tint: "#ffffff",
         alphaThreshold: 0.75
       },
@@ -640,7 +649,7 @@ export const TEMPLATES = {
         saturation: 0,
         contrast: 0
       },
-      detectionModes: [],
+      detectionModes: {},
       occludable: {
         radius: 0
       },
@@ -656,6 +665,13 @@ export const TEMPLATES = {
           texture: null
         }
       },
+      turnMarker: {
+        mode: 1,
+        animation: null,
+        src: null,
+        disposition: false
+      },
+      movementAction: null,
       flags: {},
       randomImg: false,
       appendNumber: false,
@@ -687,16 +703,14 @@ export const TEMPLATES = {
       actorLink: false,
       width: 1,
       height: 1,
+      depth: 1,
       texture: {
         src: "systems/daggerheart/assets/icons/documents/actors/forest.svg",
         anchorX: 0.5,
         anchorY: 0.5,
-        offsetX: 0,
-        offsetY: 0,
         fit: "contain",
         scaleX: 1,
         scaleY: 1,
-        rotation: 0,
         tint: "#ffffff",
         alphaThreshold: 0.75
       },
@@ -747,7 +761,7 @@ export const TEMPLATES = {
         saturation: 0,
         contrast: 0
       },
-      detectionModes: [],
+      detectionModes: {},
       occludable: {
         radius: 0
       },
@@ -763,6 +777,13 @@ export const TEMPLATES = {
           texture: null
         }
       },
+      turnMarker: {
+        mode: 1,
+        animation: null,
+        src: null,
+        disposition: false
+      },
+      movementAction: null,
       flags: {},
       randomImg: false,
       appendNumber: false,

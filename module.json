@@ -1,13 +1,12 @@
 {
   "id": "dh-statblock-importer",
   "title": "Daggerheart: Stats Toolbox",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Import using a statblock.",
   "compatibility": {
     "minimum": "14",
     "verified": "14"
   },
-
   "authors": [
     {
       "name": "Mestre Digital",
@@ -15,7 +14,6 @@
       "flags": {}
     }
   ],
-
   "esmodules": [
     "scripts/main.js"
   ],
@@ -39,7 +37,7 @@
         "id": "daggerheart",
         "type": "system",
         "compatibility": {
-          "minimum": "2.3.1"
+          "minimum": "2.3.2"
         }
       }
     ]
@@ -100,6 +98,6 @@
       ],
       "folders": []
     }
-  ]
-
+  ],
+  "flags": {}
 }

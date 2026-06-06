@@ -614,8 +614,9 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           fullHtml += show("Trait", result.system.attack.roll.trait);
           fullHtml += show("Range", result.system.attack.range);
 
-          if (result.system.attack.damage.parts.length > 0) {
-              const part = result.system.attack.damage.parts[0];
+          const weaponParts = Object.values(result.system.attack.damage.parts ?? {});
+          if (weaponParts.length > 0) {
+              const part = weaponParts[0];
               const dmgStr = `${part.value.flatMultiplier > 1 ? part.value.flatMultiplier : ""}${part.value.dice}${part.value.bonus ? (part.value.bonus > 0 ? "+"+part.value.bonus : part.value.bonus) : ""} ${part.type.join("/")}`;
               fullHtml += show("Damage", dmgStr);
           }
@@ -630,7 +631,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           // ARMOR PREVIEW
           fullHtml += show("Type", "Armor");
           fullHtml += show("Tier", result.system.tier);
-          fullHtml += show("Base Score", result.system.baseScore);
+          fullHtml += show("Armor Score", result.system.armor?.max);
           fullHtml += show("Thresholds", `${result.system.baseThresholds?.major || "?"}/${result.system.baseThresholds?.severe || "?"}`);
 
           if (result.system.description) {
@@ -697,8 +698,9 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
              let dmgDice = null;
              let dmgType = null;
              let hordeDmg = null;
-             if (data.attack?.damage?.parts?.length > 0) {
-                 const part = data.attack.damage.parts[0];
+             const attackParts = Object.values(data.attack?.damage?.parts ?? {});
+             if (attackParts.length > 0) {
+                 const part = attackParts[0];
                  const dmgVal = part.value;
                  if (dmgVal.custom?.enabled && dmgVal.custom?.formula) {
                      dmgDice = dmgVal.custom.formula;
@@ -1355,6 +1357,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               originItem: { type: "itemCollection" },
               actionType: "action",
               triggers: [],
+              areas: [],
               cost: [{
                   scalable: false,
                   key: "stress",
@@ -1387,6 +1390,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               originItem: { type: "itemCollection" },
               actionType: "action",
               triggers: [],
+              areas: [],
               cost: [{
                   scalable: false,
                   key: "fear",
@@ -1419,6 +1423,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               originItem: { type: "itemCollection" },
               actionType: "action",
               triggers: [],
+              areas: [],
               cost: [{
                   scalable: false,
                   key: "hope",
@@ -1451,10 +1456,11 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   originItem: { type: "itemCollection" },
                   actionType: "action",
                   triggers: [],
+                  areas: [],
                   cost: [],
                   uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
                   damage: {
-                      parts: [],
+                      parts: {},
                       includeBase: false,
                       direct: false
                   },
@@ -1499,10 +1505,11 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               originItem: { type: "itemCollection" },
               actionType: "action",
               triggers: [],
+              areas: [],
               cost: [],
               uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
               damage: {
-                  parts: [],
+                  parts: {},
                   includeBase: false,
                   direct: false
               },
@@ -1581,29 +1588,32 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   originItem: { type: "itemCollection" },
                   actionType: "action",
                   triggers: [],
+                  areas: [],
                   cost: [],
                   uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
                   damage: {
-                      parts: [{
-                          value: {
-                              custom: { enabled: true, formula: formula },
-                              multiplier: "prof",
-                              flatMultiplier: 1,
-                              dice: "d6",
-                              bonus: null
-                          },
-                          applyTo: "hitPoints",
-                          type: damageType,
-                          base: false,
-                          resultBased: false,
-                          valueAlt: {
-                              multiplier: "prof",
-                              flatMultiplier: 1,
-                              dice: "d6",
-                              bonus: null,
-                              custom: { enabled: false, formula: "" }
+                      parts: {
+                          hitPoints: {
+                              value: {
+                                  custom: { enabled: true, formula: formula },
+                                  multiplier: "prof",
+                                  flatMultiplier: 1,
+                                  dice: "d6",
+                                  bonus: null
+                              },
+                              applyTo: "hitPoints",
+                              type: damageType,
+                              base: false,
+                              resultBased: false,
+                              valueAlt: {
+                                  multiplier: "flat",
+                                  flatMultiplier: 1,
+                                  dice: "d6",
+                                  bonus: null,
+                                  custom: { enabled: false, formula: "" }
+                              }
                           }
-                      }],
+                      },
                       includeBase: false,
                       direct: isDirect
                   },
@@ -1953,7 +1963,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       // Damage overrides (se parsing foi bem sucedido)
       if (damageParts.length > 0) {
           const parsed = damageParts[0];
-          const dmgPart = result.system.attack.damage.parts[0];
+          const dmgPart = result.system.attack.damage.parts.hitPoints;
           dmgPart.type = parsed.type;
           dmgPart.value.dice = parsed.value.dice;
           dmgPart.value.flatMultiplier = parsed.value.flatMultiplier;
@@ -2035,7 +2045,10 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           img: StatblockImporter._getDefaultImage("armor"),
           system: {
               tier: tier,
-              baseScore: baseScore,
+              armor: {
+                  current: 0,
+                  max: baseScore
+              },
               baseThresholds: {
                   major: major,
                   severe: severe
@@ -2304,7 +2317,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           systemData.resources = { hitPoints: { value: 0 }, stress: { value: 0 } };
           // CHANGE: Added type: "attack" inside roll object
           //systemData.attack = { roll: { type: "attack" }, img: "icons/magic/death/skull-humanoid-white-blue.webp", damage: { parts: [], includeBase: false, direct: false } };
-          systemData.attack = { chatDisplay: false, roll: { type: "attack" }, img: "icons/magic/death/skull-humanoid-white-blue.webp", damage: { parts: [], includeBase: false, direct: false } };
+          systemData.attack = { chatDisplay: false, roll: { type: "attack" }, img: "icons/magic/death/skull-humanoid-white-blue.webp", damage: { parts: {}, includeBase: false, direct: false } };
           systemData.experiences = {};
       }
 
@@ -2376,7 +2389,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                       damagePart.value.bonus = parseInt(cleanBonus, 10);
                   }
               }
-              if (types.length > 0) systemData.attack.damage.parts = [damagePart];
+              if (types.length > 0) systemData.attack.damage.parts = { hitPoints: damagePart };
           }
           
            if (segment.startsWith("Experience:")) {
@@ -2501,7 +2514,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
       if (currentFeature) await pushCurrentFeature();
 
-      if (actorType === "adversary" && systemData.type === "horde" && systemData.attack.damage.parts.length > 0) {
+      if (actorType === "adversary" && systemData.type === "horde" && Object.keys(systemData.attack.damage.parts).length > 0) {
           const hordeFeature = items.find(i => /^Horde\s*\(.+\)$/i.test(i.name));
           if (hordeFeature) {
               const diceMatch = hordeFeature.name.match(/^Horde\s*\(\s*(\d+)d(\d+)([+-]\d+)?\s*\)$/i);
@@ -2509,7 +2522,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   const flatMultiplier = parseInt(diceMatch[1], 10);
                   const dice = `d${diceMatch[2]}`;
                   const bonus = diceMatch[3] ? parseInt(diceMatch[3], 10) : 0;
-                  systemData.attack.damage.parts[0].valueAlt = {
+                  systemData.attack.damage.parts.hitPoints.valueAlt = {
                       multiplier: "flat", flatMultiplier, dice, bonus, custom: { enabled: false, formula: "" }
                   };
               }

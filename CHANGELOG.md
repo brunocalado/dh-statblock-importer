@@ -1,3 +1,16 @@
+# 0.3.1
+
+## Schema update for Daggerheart 2.3.2
+
+- [Fixed] `damage.parts` migrated from array to object (keyed by `"hitPoints"`) — affects weapon attack, adversary attack, and all inline action damage across the importer.
+- [Fixed] Armor schema updated: `baseScore` + `marks` replaced by `armor: { current, max }`.
+- [Fixed] Adversary resources: `isReversed` field removed, `max` default changed to `null`.
+- [Changed] `prototypeToken` for adversary and environment updated with v14 fields: `depth`, `turnMarker`, `movementAction`; `detectionModes` changed to object.
+- [Changed] Consumable: `destroyOnEmpty` field removed (no longer in system schema).
+- [Changed] All action objects now include `areas: []` field.
+- [Changed] Weapon and armor templates now include `quantity: 1`.
+- [Changed] Adversary template now includes `advantageSources` and `disadvantageSources` fields.
+
 # 0.3.0
 
 - v14 only
