@@ -275,7 +275,7 @@ export const TEMPLATES = {
           resultBased: false,
           value: {
             custom: { enabled: true, formula: "" },
-            multiplier: "prof",
+            multiplier: "flat",
             flatMultiplier: 1,
             dice: "d6",
             bonus: null
@@ -339,7 +339,7 @@ export const TEMPLATES = {
         hitPoints: {
           value: {
             custom: { enabled: true, formula: "" },
-            multiplier: "prof",
+            multiplier: "flat",
             flatMultiplier: 1,
             dice: "d6",
             bonus: null

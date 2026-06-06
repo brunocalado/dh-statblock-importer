@@ -1596,7 +1596,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                           hitPoints: {
                               value: {
                                   custom: { enabled: true, formula: formula },
-                                  multiplier: "prof",
+                                  multiplier: "flat",
                                   flatMultiplier: 1,
                                   dice: "d6",
                                   bonus: null
