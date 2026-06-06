@@ -2,8 +2,6 @@
 
 ## for Daggerheart
 
-<p align="center"><img width="600" src="assets/images/logo.webp"></p>
-
 Effortlessly import **Adversaries** and **Environments** and **more** into Foundry VTT by pasting text statblocks. This module parses raw text, detects stats, links features from compendiums, and creates actors instantly.
 
 <p align="center"><img width="800" src="docs/preview.webp"></p>
