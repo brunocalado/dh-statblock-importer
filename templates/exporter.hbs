@@ -3,12 +3,12 @@
 
         {{!-- Left Column: Drop Zone --}}
         <div class="dh-column dh-exporter-drop-col">
-            <p class="notes dh-notes">Drag an Adversary, Environment, Class, Ancestry, or Community here</p>
+            <p class="notes dh-notes">{{localize "DH_STATBLOCK_IMPORTER.Exporter.dropPrompt"}}</p>
             <div class="dh-drop-zone" id="dh-exporter-dropzone">
                 <div class="dh-drop-placeholder">
                     <i class="fas fa-hand-pointer fa-3x"></i>
-                    <p>Drop Here</p>
-                    <p class="dh-drop-subtitle">Adversary, Environment, Class, Ancestry, or Community</p>
+                    <p>{{localize "DH_STATBLOCK_IMPORTER.Exporter.dropHere"}}</p>
+                    <p class="dh-drop-subtitle">{{localize "DH_STATBLOCK_IMPORTER.Exporter.dropSubtitle"}}</p>
                 </div>
                 <div class="dh-dropped-actor">
                     <img class="dh-dropped-img" src="">
@@ -16,7 +16,7 @@
                         <div class="dh-dropped-name"></div>
                         <div class="dh-dropped-type"></div>
                     </div>
-                    <button type="button" class="dh-clear-btn" data-action="clearActor" title="Remove Actor">
+                    <button type="button" class="dh-clear-btn" data-action="clearActor" title="{{localize "DH_STATBLOCK_IMPORTER.Exporter.removeActor"}}">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -25,8 +25,8 @@
 
         {{!-- Right Column: Output --}}
         <div class="dh-column dh-exporter-output-col">
-            <p class="notes dh-notes">Generated Statblock</p>
-            <textarea name="statblockOutput" readonly placeholder="The formatted statblock will appear here..."></textarea>
+            <p class="notes dh-notes">{{localize "DH_STATBLOCK_IMPORTER.Exporter.generatedStatblock"}}</p>
+            <textarea name="statblockOutput" readonly placeholder="{{localize "DH_STATBLOCK_IMPORTER.Exporter.outputPlaceholder"}}"></textarea>
         </div>
 
     </div>
@@ -34,7 +34,7 @@
     {{!-- Footer Actions --}}
     <div class="dh-exporter-actions">
         <button type="button" data-action="copyStatblock" class="save-button">
-            <i class="fas fa-copy"></i> Copy to Clipboard
+            <i class="fas fa-copy"></i> {{localize "DH_STATBLOCK_IMPORTER.Common.copyToClipboard"}}
         </button>
     </div>
 </div>

@@ -2,8 +2,7 @@
     <div class="instructions">
         <p>
             <i class="fas fa-info-circle"></i>
-            Generated code for <strong>{{featureCount}}</strong> feature(s).
-            Copy this into into your module to register the features in Daggerheart.
+            {{{localize "DH_STATBLOCK_IMPORTER.CodeDialog.instructions" count=featureCount}}}
         </p>
     </div>
 
@@ -11,7 +10,7 @@
 
     <div class="dialog-buttons">
         <button type="button" data-action="copy" class="copy-button">
-            <i class="fas fa-clipboard"></i> Copy to Clipboard
+            <i class="fas fa-clipboard"></i> {{localize "DH_STATBLOCK_IMPORTER.Common.copyToClipboard"}}
         </button>
     </div>
 </div>

@@ -3,15 +3,15 @@
 
         {{!-- Coluna da Esquerda: Input --}}
         <div class="dh-column dh-importer-input-col">
-            <p class="notes dh-notes">Paste the statblock text below.</p>
-            <textarea name="statblockText" placeholder="MASTER ASSASSIN&#10;Tier 2 Leader&#10;A seasoned killer...&#10;Motives & Tactics: Ambush...&#10;Difficulty: 14 | HP: 5&#10;FEATURES&#10;Horde (1d6) - Passive: ..."></textarea>
+            <p class="notes dh-notes">{{localize "DH_STATBLOCK_IMPORTER.Importer.pastePrompt"}}</p>
+            <textarea name="statblockText" placeholder='{{localize "DH_STATBLOCK_IMPORTER.Importer.placeholder"}}'></textarea>
         </div>
 
         {{!-- Coluna da Direita: Validação --}}
         <div class="dh-column dh-importer-preview-col">
-            <p class="notes dh-notes">Validation Preview</p>
+            <p class="notes dh-notes">{{localize "DH_STATBLOCK_IMPORTER.Importer.previewTitle"}}</p>
             <div class="dh-preview-box" id="dh-importer-preview">
-                <p class="dh-preview-placeholder">Click "Validate" to see identified fields here...</p>
+                <p class="dh-preview-placeholder">{{localize "DH_STATBLOCK_IMPORTER.Importer.previewPlaceholder"}}</p>
             </div>
         </div>
 
@@ -21,54 +21,54 @@
     <div class="dh-importer-actions">
         {{!-- Botões de Config e Instruções --}}
         <div class="dh-actions-left">
-            <button type="button" data-action="config" title="Configure Compendiums">
-                <i class="fas fa-cog"></i> Config
+            <button type="button" data-action="config" title="{{localize "DH_STATBLOCK_IMPORTER.Importer.configureCompendiums"}}">
+                <i class="fas fa-cog"></i> {{localize "DH_STATBLOCK_IMPORTER.Common.config"}}
             </button>
-            <button type="button" data-action="instructions" title="Open Instructions">
-                <i class="fas fa-book"></i> Instructions
+            <button type="button" data-action="instructions" title="{{localize "DH_STATBLOCK_IMPORTER.Importer.openInstructions"}}">
+                <i class="fas fa-book"></i> {{localize "DH_STATBLOCK_IMPORTER.Common.instructions"}}
             </button>
         </div>
 
         {{!-- +Features Toggle (only visible for adversary/environment modes) --}}
         <div class="dh-plus-features-container">
-            <button type="button" data-action="plusFeatures" class="dh-plus-features-btn {{#if plusFeaturesEnabled}}active{{/if}}" title="Also create features as separate items">
+            <button type="button" data-action="plusFeatures" class="dh-plus-features-btn {{#if plusFeaturesEnabled}}active{{/if}}" title="{{localize "DH_STATBLOCK_IMPORTER.Importer.alsoCreateFeatures"}}">
                 <i class="fas fa-puzzle-piece"></i> +Features
             </button>
-            <button type="button" data-action="plusFeaturesHelp" class="dh-plus-features-help" title="Help about +Features">
+            <button type="button" data-action="plusFeaturesHelp" class="dh-plus-features-help" title="{{localize "DH_STATBLOCK_IMPORTER.Importer.plusFeaturesHelp"}}">
                 <i class="fas fa-question"></i>
             </button>
         </div>
 
         {{!-- +Code Generator Toggle (only visible for weapon/armor modes) --}}
         <div class="dh-code-generator-container">
-            <button type="button" data-action="codeGenerator" class="dh-code-generator-btn {{#if codeGeneratorEnabled}}active{{/if}}" title="Generate feature code after import">
+            <button type="button" data-action="codeGenerator" class="dh-code-generator-btn {{#if codeGeneratorEnabled}}active{{/if}}" title="{{localize "DH_STATBLOCK_IMPORTER.Importer.generateFeatureCode"}}">
                 <i class="fas fa-code"></i> +Code
             </button>
-            <button type="button" data-action="codeGeneratorHelp" class="dh-code-generator-help" title="Help about Code Generator">
+            <button type="button" data-action="codeGeneratorHelp" class="dh-code-generator-help" title="{{localize "DH_STATBLOCK_IMPORTER.Importer.codeGeneratorHelp"}}">
                 <i class="fas fa-question"></i>
             </button>
         </div>
 
         <label class="dh-mode-select">
-            <span>Mode:</span>
+            <span>{{localize "DH_STATBLOCK_IMPORTER.Common.mode"}}:</span>
             <select name="importMode">
-                <option value="adversary">Adversary</option>
-                <option value="environment">Environment</option>
-                <option value="feature">Feature</option>
-                <option value="domainCard">Domain Card</option>
-                <option value="loot">Loot</option>
-                <option value="consumable">Consumable</option>
-                <option value="weapon">Weapon</option>
-                <option value="armor">Armor</option>
+                <option value="adversary">{{localize "TYPES.Actor.adversary"}}</option>
+                <option value="environment">{{localize "TYPES.Actor.environment"}}</option>
+                <option value="feature">{{localize "TYPES.Item.feature"}}</option>
+                <option value="domainCard">{{localize "TYPES.Item.domainCard"}}</option>
+                <option value="loot">{{localize "TYPES.Item.loot"}}</option>
+                <option value="consumable">{{localize "TYPES.Item.consumable"}}</option>
+                <option value="weapon">{{localize "TYPES.Item.weapon"}}</option>
+                <option value="armor">{{localize "TYPES.Item.armor"}}</option>
             </select>
         </label>
 
         <button type="button" data-action="validate">
-            <i class="fas fa-search"></i> Validate
+            <i class="fas fa-search"></i> {{localize "DH_STATBLOCK_IMPORTER.Common.validate"}}
         </button>
 
         <button type="button" data-action="parse" class="save-button">
-            <i class="fas fa-file-import"></i> Create
+            <i class="fas fa-file-import"></i> {{localize "DH_STATBLOCK_IMPORTER.Common.create"}}
         </button>
     </div>
 </div>

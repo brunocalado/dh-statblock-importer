@@ -1,4 +1,12 @@
 import { MODULE_ID } from "./constants.js";
+import {
+    actorTypeLabel,
+    adversaryTypeLabel,
+    environmentTypeLabel,
+    itemTypeLabel,
+    localize,
+    moduleKey
+} from "./i18n.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -7,12 +15,17 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
  */
 export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2) {
 
+    constructor(options = {}) {
+        super(options);
+        this.options.window.title = localize("Exporter.Title");
+    }
+
     /** @override */
     static DEFAULT_OPTIONS = {
         id: "dh-statblock-exporter",
         tag: "form",
         window: {
-            title: "Daggerheart: Statblock Exporter",
+            title: moduleKey("Exporter.Title"),
             icon: "fas fa-file-export",
             resizable: true,
             contentClasses: ["standard-form"]
@@ -83,7 +96,7 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
         try {
             data = JSON.parse(ev.dataTransfer.getData("text/plain"));
         } catch (e) {
-            ui.notifications.warn("Invalid drop data.");
+            ui.notifications.warn(localize("Exporter.invalidDrop"));
             return;
         }
 
@@ -96,12 +109,12 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
             }
 
             if (!actor) {
-                ui.notifications.warn("Could not find the actor.");
+                ui.notifications.warn(localize("Exporter.actorMissing"));
                 return;
             }
 
             if (actor.type !== "adversary" && actor.type !== "environment") {
-                ui.notifications.warn("Only Adversary or Environment actors are supported.");
+                ui.notifications.warn(localize("Exporter.unsupportedActor"));
                 return;
             }
 
@@ -117,13 +130,13 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
             }
 
             if (!item) {
-                ui.notifications.warn("Could not find the item.");
+                ui.notifications.warn(localize("Exporter.itemMissing"));
                 return;
             }
 
             const supportedItemTypes = ["class", "ancestry", "community"];
             if (!supportedItemTypes.includes(item.type)) {
-                ui.notifications.warn("Only Class, Ancestry, or Community items are supported.");
+                ui.notifications.warn(localize("Exporter.unsupportedItem"));
                 return;
             }
 
@@ -131,7 +144,7 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
             this._droppedActor = null;
 
         } else {
-            ui.notifications.warn("Please drop an Actor or an Item.");
+            ui.notifications.warn(localize("Exporter.dropActorOrItem"));
             return;
         }
 
@@ -160,11 +173,11 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
 
             if (this._droppedItem) {
                 // Item drops show their document type directly
-                type.textContent = doc.type.charAt(0).toUpperCase() + doc.type.slice(1);
+                type.textContent = itemTypeLabel(doc.type);
             } else {
-                const actorType = doc.type.charAt(0).toUpperCase() + doc.type.slice(1);
+                const actorType = actorTypeLabel(doc.type);
                 const subType = doc.system.type
-                    ? (doc.system.type.charAt(0).toUpperCase() + doc.system.type.slice(1))
+                    ? (doc.type === "environment" ? environmentTypeLabel(doc.system.type) : adversaryTypeLabel(doc.system.type))
                     : "";
                 type.textContent = subType ? `${actorType} - ${subType}` : actorType;
             }
@@ -185,7 +198,7 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
         const textarea = this.element.querySelector("textarea[name='statblockOutput']");
         if (!textarea) return;
 
-        textarea.value = "Generating statblock...";
+        textarea.value = localize("Exporter.generating");
 
         let statblock = "";
         try {
@@ -203,7 +216,7 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
             textarea.value = statblock;
         } catch (error) {
             console.error(error);
-            textarea.value = "Error generating statblock. Check console.";
+            textarea.value = localize("Exporter.generationFailed");
         }
     }
 
@@ -394,7 +407,7 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
                     // Normalize UUID: entry might be string or object {uuid: "..."}
                     const uuid = (typeof entry === 'object' && entry?.uuid) ? entry.uuid : entry;
                     
-                    if (!uuid || typeof uuid !== 'string') return "Invalid UUID";
+                    if (!uuid || typeof uuid !== 'string') return localize("Exporter.invalidUuid");
 
                     try {
                         let actorDoc = await fromUuid(uuid);
@@ -410,11 +423,11 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
 
                         // Log failure for debugging
                         console.warn(`Statblock Exporter | Failed to resolve adversary UUID: ${uuid}`);
-                        return "Unknown Actor";
+                        return localize("Exporter.unknownActor");
 
                     } catch (err) {
                         console.error(`Statblock Exporter | Error fetching UUID ${uuid}:`, err);
-                        return "Unknown Actor";
+                        return localize("Exporter.unknownActor");
                     }
                 });
                 
@@ -883,7 +896,7 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
     static async _onCopyStatblock(event, target) {
         const textarea = this.element.querySelector("textarea[name='statblockOutput']");
         if (!textarea || !textarea.value.trim()) {
-            ui.notifications.warn("No statblock to copy. Drop an actor or class item first.");
+            ui.notifications.warn(localize("Exporter.noStatblock"));
             return;
         }
 

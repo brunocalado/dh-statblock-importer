@@ -3,6 +3,20 @@ import { StatblockConfig } from "./config.js";
 import { TEMPLATES } from "./templates.js";
 import { FeatureCodeDialog } from "./code-dialog.js";
 import { TextNormalizer } from "./utils/text-normalizer.js";
+import {
+  actorTypeLabel,
+  adversaryTypeLabel,
+  environmentTypeLabel,
+  featureFormLabel,
+  format,
+  itemTypeLabel,
+  localize,
+  localizeKey,
+  localizeSettingValue,
+  moduleKey,
+  rangeLabel,
+  titleCase
+} from "./i18n.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -11,11 +25,19 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
  */
 export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2) {
 
+  constructor(options = {}) {
+    super(options);
+    this.options.window.title = localize("Importer.Title");
+  }
+
   /** Valid adversary types (lowercase) */
   static VALID_ADVERSARY_TYPES = ["bruiser", "horde", "leader", "minion", "ranged", "skulk", "social", "solo", "standard", "support"];
 
   /** Valid environment types (lowercase) */
   static VALID_ENVIRONMENT_TYPES = ["exploration", "social", "traversal", "event"];
+
+  /** Import modes that create Item documents instead of Actor documents. */
+  static ITEM_IMPORT_MODES = ["loot", "consumable", "weapon", "armor", "feature", "domainCard"];
 
   /** Folder Colors based on Adversary Type */
   static TYPE_COLORS = {
@@ -41,12 +63,44 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       "Unknown": "#333333"       // Dark Gray
   };
 
+  static isItemMode(mode) {
+      return StatblockImporter.ITEM_IMPORT_MODES.includes(mode);
+  }
+
+  static _folderSetting(settingKey, fallbackPath) {
+      return localizeSettingValue(game.settings.get(MODULE_ID, settingKey), fallbackPath);
+  }
+
+  static _rawFolderSetting(settingKey, fallbackPath) {
+      const value = game.settings.get(MODULE_ID, settingKey);
+      return (typeof value === "string" && value.trim()) ? value : moduleKey(fallbackPath);
+  }
+
+  static async _findOrCreateFolder({ name, type, color, folder, legacyNames = [] }) {
+      const matchesParent = candidate => folder === undefined || candidate.folder?.id === folder;
+      let found = game.folders.find(candidate => candidate.name === name && candidate.type === type && matchesParent(candidate));
+
+      if (!found) {
+          const legacyName = legacyNames.find(candidateName => candidateName && candidateName !== name);
+          if (legacyName) {
+              found = game.folders.find(candidate => candidate.name === legacyName && candidate.type === type && matchesParent(candidate));
+              if (found) await found.update({ name });
+          }
+      }
+
+      if (found) return found;
+
+      const data = { name, type, color };
+      if (folder) data.folder = folder;
+      return Folder.create(data);
+  }
+
   /** @override */
   static DEFAULT_OPTIONS = {
     id: MODULE_ID,
     tag: "form",
     window: {
-      title: "Daggerheart: Statblock Importer",
+      title: moduleKey("Importer.Title"),
       icon: "fas fa-skull",
       resizable: true,
       contentClasses: ["standard-form"]
@@ -82,7 +136,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       // Feature Packs
       if (!game.settings.settings.has(`${MODULE_ID}.selectedCompendiums`)) {
           game.settings.register(MODULE_ID, "selectedCompendiums", {
-              name: "Selected Feature Compendiums",
+              name: moduleKey("Settings.selectedCompendiums"),
               scope: "client",
               config: false,
               type: Array,
@@ -93,7 +147,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       // Actor Packs
       if (!game.settings.settings.has(`${MODULE_ID}.selectedActorCompendiums`)) {
           game.settings.register(MODULE_ID, "selectedActorCompendiums", {
-              name: "Selected Actor Compendiums",
+              name: moduleKey("Settings.selectedActorCompendiums"),
               scope: "client",
               config: false,
               type: Array,
@@ -104,7 +158,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       // Initialization Flag
       if (!game.settings.settings.has(`${MODULE_ID}.configInitialized`)) {
           game.settings.register(MODULE_ID, "configInitialized", {
-              name: "Config Initialized",
+              name: moduleKey("Settings.configInitialized"),
               scope: "client",
               config: false,
               type: Boolean,
@@ -115,89 +169,89 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       // Folder Names (Actors)
       if (!game.settings.settings.has(`${MODULE_ID}.adversaryFolderName`)) {
           game.settings.register(MODULE_ID, "adversaryFolderName", {
-              name: "Adversary Folder Name",
+              name: moduleKey("Settings.adversaryFolderName"),
               scope: "world",
               config: false,
               type: String,
-              default: "💀 Imported Adversaries"
+              default: moduleKey("Folders.importedAdversaries")
           });
       }
 
       if (!game.settings.settings.has(`${MODULE_ID}.environmentFolderName`)) {
           game.settings.register(MODULE_ID, "environmentFolderName", {
-              name: "Environment Folder Name",
+              name: moduleKey("Settings.environmentFolderName"),
               scope: "world",
               config: false,
               type: String,
-              default: "🏰 Imported Environments"
+              default: moduleKey("Folders.importedEnvironments")
           });
       }
 
       // Folder Names (Items)
       if (!game.settings.settings.has(`${MODULE_ID}.lootFolderName`)) {
           game.settings.register(MODULE_ID, "lootFolderName", {
-              name: "Loot Folder Name",
+              name: moduleKey("Settings.lootFolderName"),
               scope: "world",
               config: false,
               type: String,
-              default: "👑 Imported Loot"
+              default: moduleKey("Folders.importedLoot")
           });
       }
 
       if (!game.settings.settings.has(`${MODULE_ID}.consumableFolderName`)) {
           game.settings.register(MODULE_ID, "consumableFolderName", {
-              name: "Consumable Folder Name",
+              name: moduleKey("Settings.consumableFolderName"),
               scope: "world",
               config: false,
               type: String,
-              default: "🧪 Imported Consumables"
+              default: moduleKey("Folders.importedConsumables")
           });
       }
 
       if (!game.settings.settings.has(`${MODULE_ID}.weaponFolderName`)) {
           game.settings.register(MODULE_ID, "weaponFolderName", {
-              name: "Weapon Folder Name",
+              name: moduleKey("Settings.weaponFolderName"),
               scope: "world",
               config: false,
               type: String,
-              default: "⚔️ Imported Weapons"
+              default: moduleKey("Folders.importedWeapons")
           });
       }
 
       if (!game.settings.settings.has(`${MODULE_ID}.armorFolderName`)) {
           game.settings.register(MODULE_ID, "armorFolderName", {
-              name: "Armor Folder Name",
+              name: moduleKey("Settings.armorFolderName"),
               scope: "world",
               config: false,
               type: String,
-              default: "🛡️ Imported Armors"
+              default: moduleKey("Folders.importedArmors")
           });
       }
 
       if (!game.settings.settings.has(`${MODULE_ID}.featureFolderName`)) {
           game.settings.register(MODULE_ID, "featureFolderName", {
-              name: "Feature Folder Name",
+              name: moduleKey("Settings.featureFolderName"),
               scope: "world",
               config: false,
               type: String,
-              default: "✨ Imported Features"
+              default: moduleKey("Folders.importedFeatures")
           });
       }
 
       if (!game.settings.settings.has(`${MODULE_ID}.domainCardFolderName`)) {
           game.settings.register(MODULE_ID, "domainCardFolderName", {
-              name: "Domain Card Folder Name",
+              name: moduleKey("Settings.domainCardFolderName"),
               scope: "world",
               config: false,
               type: String,
-              default: "📜 Imported Domain Cards"
+              default: moduleKey("Folders.importedDomainCards")
           });
       }
 
       // Separator Mode (blankLine or separator)
       if (!game.settings.settings.has(`${MODULE_ID}.separatorMode`)) {
           game.settings.register(MODULE_ID, "separatorMode", {
-              name: "Separator Mode",
+              name: moduleKey("Settings.separatorMode"),
               scope: "world",
               config: false,
               type: String,
@@ -208,8 +262,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       // Debug Mode — config: true so Foundry renders it natively in Module Settings
       if (!game.settings.settings.has(`${MODULE_ID}.debugMode`)) {
           game.settings.register(MODULE_ID, "debugMode", {
-              name: "Debug Mode",
-              hint: "When enabled, logs import details to the browser console (F12).",
+              name: moduleKey("Settings.debugMode.name"),
+              hint: moduleKey("Settings.debugMode.hint"),
               scope: "client",
               config: true,
               type: Boolean,
@@ -220,7 +274,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       // +Features Toggle State
       if (!game.settings.settings.has(`${MODULE_ID}.plusFeaturesEnabled`)) {
           game.settings.register(MODULE_ID, "plusFeaturesEnabled", {
-              name: "+Features Enabled",
+              name: moduleKey("Settings.plusFeaturesEnabled"),
               scope: "client",
               config: false,
               type: Boolean,
@@ -231,7 +285,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       // +Code Generator Toggle State
       if (!game.settings.settings.has(`${MODULE_ID}.codeGeneratorEnabled`)) {
           game.settings.register(MODULE_ID, "codeGeneratorEnabled", {
-              name: "+Code Generator Enabled",
+              name: moduleKey("Settings.codeGeneratorEnabled"),
               scope: "client",
               config: false,
               type: Boolean,
@@ -242,7 +296,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       // Feature Icon: Adversary
       if (!game.settings.settings.has(`${MODULE_ID}.featureIconAdversary`)) {
           game.settings.register(MODULE_ID, "featureIconAdversary", {
-              name: "Feature Icon (Adversary)",
+              name: moduleKey("Settings.featureIconAdversary"),
               scope: "world",
               config: false,
               type: String,
@@ -253,7 +307,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       // Feature Icon: Environment
       if (!game.settings.settings.has(`${MODULE_ID}.featureIconEnvironment`)) {
           game.settings.register(MODULE_ID, "featureIconEnvironment", {
-              name: "Feature Icon (Environment)",
+              name: moduleKey("Settings.featureIconEnvironment"),
               scope: "world",
               config: false,
               type: String,
@@ -264,7 +318,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       // Feature Icon: Feature (standalone Item mode)
       if (!game.settings.settings.has(`${MODULE_ID}.featureIconFeature`)) {
           game.settings.register(MODULE_ID, "featureIconFeature", {
-              name: "Feature Icon (Feature Item)",
+              name: moduleKey("Settings.featureIconFeature"),
               scope: "world",
               config: false,
               type: String,
@@ -275,7 +329,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       // Use actor portrait for adversary features
       if (!game.settings.settings.has(`${MODULE_ID}.featureIconMatchAdversary`)) {
           game.settings.register(MODULE_ID, "featureIconMatchAdversary", {
-              name: "Feature Icon matches Adversary portrait",
+              name: moduleKey("Settings.featureIconMatchAdversary"),
               scope: "world",
               config: false,
               type: Boolean,
@@ -286,7 +340,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       // Use actor portrait for environment features
       if (!game.settings.settings.has(`${MODULE_ID}.featureIconMatchEnvironment`)) {
           game.settings.register(MODULE_ID, "featureIconMatchEnvironment", {
-              name: "Feature Icon matches Environment portrait",
+              name: moduleKey("Settings.featureIconMatchEnvironment"),
               scope: "world",
               config: false,
               type: Boolean,
@@ -406,7 +460,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                       journal.sheet.render(true, { pageId: page.id });
                   }
               } else {
-                  ui.notifications.warn(`Instructions page for "${mode}" not found in Compendium.`);
+                  ui.notifications.warn(format("Importer.instructionsMissing", { mode }));
                   console.warn(`DH Importer | Could not find JournalEntryPage with UUID: ${pageUuid}`);
               }
           } else {
@@ -417,8 +471,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               }
           }
       } catch (err) {
-          StatblockImporter.errorLog("Error opening instructions", err);
-          ui.notifications.error("Failed to open instructions.");
+          StatblockImporter.errorLog(localize("Importer.errorOpeningInstructions"), err);
+          ui.notifications.error(localize("Importer.instructionsOpenFailed"));
       }
   }
 
@@ -444,12 +498,12 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   journal.sheet.render(true, { pageId: doc.id });
               }
           } else {
-              ui.notifications.warn("+Features help page not found in Compendium.");
+              ui.notifications.warn(localize("Importer.plusFeaturesMissing"));
               console.warn("DH Importer | Could not find JournalEntryPage with UUID: Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp.JournalEntryPage.wvgvxX1ksmUL2Ahj");
           }
       } catch (err) {
-          StatblockImporter.errorLog("Error opening +Features help", err);
-          ui.notifications.error("Failed to open +Features help.");
+          StatblockImporter.errorLog(localize("Importer.errorOpeningPlusFeatures"), err);
+          ui.notifications.error(localize("Importer.plusFeaturesOpenFailed"));
       }
   }
 
@@ -474,12 +528,12 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   journal.sheet.render(true, { pageId: doc.id });
               }
           } else {
-              ui.notifications.warn("+Code help page not found in Compendium.");
+              ui.notifications.warn(localize("Importer.codeHelpMissing"));
               console.warn("DH Importer | Could not find JournalEntryPage with UUID: Compendium.dh-statblock-importer.journal.JournalEntry.skE6HClujYrdKfKp.JournalEntryPage.LiVwLebJ7Ih66gBw");
           }
       } catch (err) {
-          StatblockImporter.errorLog("Error opening +Code help", err);
-          ui.notifications.error("Failed to open +Code help.");
+          StatblockImporter.errorLog(localize("Importer.errorOpeningCodeHelp"), err);
+          ui.notifications.error(localize("Importer.codeHelpOpenFailed"));
       }
   }
 
@@ -538,7 +592,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     const previewBox = formElement.querySelector("#dh-importer-preview");
 
     if (!textarea || !textarea.value.trim()) {
-      previewBox.innerHTML = `<p style="color:red">Please paste text to validate.</p>`;
+      previewBox.innerHTML = `<p style="color:red">${localize("Importer.emptyValidate")}</p>`;
       return;
     }
 
@@ -547,7 +601,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     
     // Determine parsing strategy
     let blocks = [];
-    let isItemMode = (mode === "loot" || mode === "consumable" || mode === "weapon" || mode === "armor" || mode === "feature" || mode === "domainCard");
+    let isItemMode = StatblockImporter.isItemMode(mode);
 
     if (isItemMode) {
         blocks = StatblockImporter.splitSimpleItems(text);
@@ -559,7 +613,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     let fullHtml = "";
 
     if (isMultiple) {
-      fullHtml += `<div class="dh-preview-item success" style="background:rgba(72,187,72,0.2);padding:8px;margin-bottom:10px;border-radius:4px;"><strong>Batch Mode:</strong> ${blocks.length} items detected</div>`;
+      fullHtml += `<div class="dh-preview-item success" style="background:rgba(72,187,72,0.2);padding:8px;margin-bottom:10px;border-radius:4px;"><strong>${localize("Importer.batchMode")}:</strong> ${format("Importer.itemsDetected", { count: blocks.length })}</div>`;
     }
 
     for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
@@ -581,8 +635,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
             result = await StatblockImporter.parseStatblockData(block, mode);
         }
       } catch (error) {
-        const firstLine = block.split(/\r?\n/)[0] || "Unknown";
-        fullHtml += `<div class="dh-preview-item warning"><strong>#${blockIndex + 1} Error:</strong> ${error.message} (${firstLine})</div>`;
+        const firstLine = block.split(/\r?\n/)[0] || localize("Common.unknown");
+        fullHtml += `<div class="dh-preview-item warning"><strong>${format("Importer.blockError", { index: blockIndex + 1 })}:</strong> ${error.message} (${firstLine})</div>`;
         continue;
       }
 
@@ -594,106 +648,138 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       
       fullHtml += `
           <div class="dh-preview-header">
-              <img src="${defaultImg}" class="dh-preview-img" data-idx="${blockIndex}" title="Click to change image">
+              <img src="${defaultImg}" class="dh-preview-img" data-idx="${blockIndex}" title="${localize("Importer.imageChange")}">
               <div class="dh-preview-name">${labelPrefix}${result.name}</div>
           </div>
       `;
 
       fullHtml += `<div class="dh-preview-body">`;
+
+      const labels = {
+        type: localizeKey("DAGGERHEART.GENERAL.type", localize("Fields.type")),
+        tier: localizeKey("DAGGERHEART.ACTORS.Adversary.FIELDS.tier.label", localize("Fields.tier")),
+        trait: localize("Fields.trait"),
+        range: localizeKey("DAGGERHEART.ACTORS.Adversary.FIELDS.attack.range.label", localize("Fields.range")),
+        damage: localizeKey("DAGGERHEART.ACTORS.Adversary.FIELDS.attack.damage.value.label", localize("Fields.damage")),
+        damageType: localizeKey("DAGGERHEART.ACTORS.Adversary.FIELDS.attack.damage.type.label", localize("Fields.damageType")),
+        burden: localize("Fields.burden"),
+        fullDescription: localize("Importer.fullDescription"),
+        description: localizeKey("DAGGERHEART.GENERAL.description", localize("Fields.description")),
+        actionType: localize("Importer.actionType"),
+        cardType: localize("Importer.cardType"),
+        actorType: localize("Importer.actorType"),
+        hordeHP: localize("Importer.hordeHP"),
+        hp: localize("Fields.hp"),
+        stress: localizeKey("DAGGERHEART.GENERAL.stress", localize("Fields.stress")),
+        thresholds: localize("Fields.thresholds"),
+        attack: localizeKey("DAGGERHEART.ACTIONS.TYPES.attack.name", localize("Fields.attack")),
+        atkBonus: localize("Importer.atkBonus"),
+        hordeDamage: localizeKey("DAGGERHEART.ACTORS.Adversary.hordeDamage", localize("Importer.hordeDamage")),
+        experience: localizeKey("DAGGERHEART.APPLICATIONS.CharacterCreation.tabs.experience", localize("Fields.experience")),
+        motives: localize("Importer.motives"),
+        impulses: localizeKey("DAGGERHEART.ACTORS.Environment.FIELDS.impulses.label", localize("Fields.impulses")),
+        potentialAdversaries: localize("Importer.potentialAdversaries"),
+        features: localizeKey("DAGGERHEART.GENERAL.features", localize("Fields.features")),
+        domain: localizeKey("DAGGERHEART.GENERAL.Domain.single", localize("Fields.domain")),
+        level: localizeKey("DAGGERHEART.GENERAL.level", localize("Fields.level")),
+        recallCost: localizeKey("DAGGERHEART.ITEMS.DomainCard.recallCost", localize("Fields.recallCost")),
+        baseScore: localizeKey("DAGGERHEART.ITEMS.Armor.baseScore", localize("Fields.baseScore")),
+        armorScore: localize("Fields.armorScore")
+      };
       
       const show = (label, value) => {
         if (value !== undefined && value !== null && value !== "") {
           return `<div class="dh-preview-item success"><strong>${label}:</strong> ${value}</div>`;
         }
-        return `<div class="dh-preview-item warning"><strong>${label}:</strong> Not Found</div>`;
+        return `<div class="dh-preview-item warning"><strong>${label}:</strong> ${localize("Common.notFound")}</div>`;
       };
 
       if (mode === "weapon") {
           // WEAPON PREVIEW
-          fullHtml += show("Type", "Weapon");
-          fullHtml += show("Tier", result.system.tier);
-          fullHtml += show("Trait", result.system.attack.roll.trait);
-          fullHtml += show("Range", result.system.attack.range);
+          fullHtml += show(labels.type, itemTypeLabel("weapon"));
+          fullHtml += show(labels.tier, result.system.tier);
+          fullHtml += show(labels.trait, result.system.attack.roll.trait);
+          fullHtml += show(labels.range, rangeLabel(result.system.attack.range));
 
           const weaponParts = Object.values(result.system.attack.damage.parts ?? {});
           if (weaponParts.length > 0) {
               const part = weaponParts[0];
               const dmgStr = `${part.value.flatMultiplier > 1 ? part.value.flatMultiplier : ""}${part.value.dice}${part.value.bonus ? (part.value.bonus > 0 ? "+"+part.value.bonus : part.value.bonus) : ""} ${part.type.join("/")}`;
-              fullHtml += show("Damage", dmgStr);
+              fullHtml += show(labels.damage, dmgStr);
           }
 
-          fullHtml += show("Burden", result.system.burden);
+          fullHtml += show(labels.burden, result.system.burden);
 
           // Show combined description (Feature + Desc)
           const descPreview = result.system.description.length > 100 ? result.system.description.substring(0, 100) + "..." : result.system.description;
-          fullHtml += `<div class="dh-preview-item success"><strong>Full Description:</strong><br><em style="font-size:0.9em">${descPreview}</em></div>`;
+          fullHtml += `<div class="dh-preview-item success"><strong>${labels.fullDescription}:</strong><br><em style="font-size:0.9em">${descPreview}</em></div>`;
 
       } else if (mode === "armor") {
           // ARMOR PREVIEW
-          fullHtml += show("Type", "Armor");
-          fullHtml += show("Tier", result.system.tier);
-          fullHtml += show("Armor Score", result.system.armor?.max);
-          fullHtml += show("Thresholds", `${result.system.baseThresholds?.major || "?"}/${result.system.baseThresholds?.severe || "?"}`);
+          fullHtml += show(labels.type, itemTypeLabel("armor"));
+          fullHtml += show(labels.tier, result.system.tier);
+          fullHtml += show(labels.armorScore, result.system.armor?.max);
+          fullHtml += show(labels.thresholds, `${result.system.baseThresholds?.major || "?"}/${result.system.baseThresholds?.severe || "?"}`);
 
           if (result.system.description) {
               const descPreview = result.system.description.length > 100 ? result.system.description.substring(0, 100) + "..." : result.system.description;
-              fullHtml += `<div class="dh-preview-item success"><strong>Description:</strong><br><em style="font-size:0.9em">${descPreview}</em></div>`;
+              fullHtml += `<div class="dh-preview-item success"><strong>${labels.description}:</strong><br><em style="font-size:0.9em">${descPreview}</em></div>`;
           }
 
       } else if (mode === "feature") {
           // FEATURE PREVIEW
-          fullHtml += show("Type", "Feature");
-          const formLabel = result.system.featureForm ? (result.system.featureForm.charAt(0).toUpperCase() + result.system.featureForm.slice(1)) : "Passive";
-          fullHtml += show("Action Type", formLabel);
+          fullHtml += show(labels.type, itemTypeLabel("feature"));
+          const formLabel = result.system.featureForm ? featureFormLabel(result.system.featureForm) : featureFormLabel("passive");
+          fullHtml += show(labels.actionType, formLabel);
 
           if (result.system.description) {
               const descPreview = result.system.description.length > 100 ? result.system.description.substring(0, 100) + "..." : result.system.description;
-              fullHtml += `<div class="dh-preview-item success"><strong>Description:</strong><br><em style="font-size:0.9em">${descPreview}</em></div>`;
+              fullHtml += `<div class="dh-preview-item success"><strong>${labels.description}:</strong><br><em style="font-size:0.9em">${descPreview}</em></div>`;
           }
 
       } else if (mode === "domainCard") {
           // DOMAIN CARD PREVIEW
-          fullHtml += show("Type", "Domain Card");
-          fullHtml += show("Domain", result.system.domain);
-          fullHtml += show("Card Type", result.system.type);
-          fullHtml += show("Level", result.system.level);
-          fullHtml += show("Recall Cost", result.system.recallCost);
+          fullHtml += show(labels.type, itemTypeLabel("domainCard"));
+          fullHtml += show(labels.domain, result.system.domain);
+          fullHtml += show(labels.cardType, result.system.type);
+          fullHtml += show(labels.level, result.system.level);
+          fullHtml += show(labels.recallCost, result.system.recallCost);
 
           if (result.system.description) {
               const descPreview = result.system.description.length > 100 ? result.system.description.substring(0, 100) + "..." : result.system.description;
-              fullHtml += `<div class="dh-preview-item success"><strong>Description:</strong><br><em style="font-size:0.9em">${descPreview}</em></div>`;
+              fullHtml += `<div class="dh-preview-item success"><strong>${labels.description}:</strong><br><em style="font-size:0.9em">${descPreview}</em></div>`;
           }
       
       } else if (isItemMode) {
           // SIMPLE ITEM PREVIEW
-          fullHtml += show("Type", result.type);
-          fullHtml += `<div class="dh-preview-item success"><strong>Description:</strong><br><em style="font-size:0.9em">${result.system.description}</em></div>`;
+          fullHtml += show(labels.type, itemTypeLabel(result.type));
+          fullHtml += `<div class="dh-preview-item success"><strong>${labels.description}:</strong><br><em style="font-size:0.9em">${result.system.description}</em></div>`;
       } else {
           // ACTOR PREVIEW
           const data = result.systemData;
           const isEnvironment = result.actorType === "environment";
 
-          fullHtml += show("Actor Type", isEnvironment ? "Environment" : "Adversary");
-          fullHtml += show("Tier", data.tier);
-          fullHtml += show("Type", data.type);
-          if (data.type === "horde") fullHtml += show("Horde HP", data.hordeHp);
-          fullHtml += show("Difficulty", data.difficulty);
+          fullHtml += show(labels.actorType, isEnvironment ? actorTypeLabel("environment") : actorTypeLabel("adversary"));
+          fullHtml += show(labels.tier, data.tier);
+          fullHtml += show(labels.type, isEnvironment ? environmentTypeLabel(data.type) : adversaryTypeLabel(data.type));
+          if (data.type === "horde") fullHtml += show(labels.hordeHP, data.hordeHp);
+          fullHtml += show(localizeKey("DAGGERHEART.ACTORS.Adversary.FIELDS.difficulty.label", localize("Fields.difficulty")), data.difficulty);
 
           if (!isEnvironment) {
              // ADVERSARY SPECIFIC FIELDS
-             fullHtml += show("HP", data.resources?.hitPoints?.max);
-             fullHtml += show("Stress", data.resources?.stress?.max);
+             fullHtml += show(labels.hp, data.resources?.hitPoints?.max);
+             fullHtml += show(labels.stress, data.resources?.stress?.max);
 
              // Damage Thresholds
              const threshStr = (data.damageThresholds?.major || data.damageThresholds?.severe)
                  ? `${data.damageThresholds.major || "?"}/${data.damageThresholds.severe || "?"}`
                  : null;
-             fullHtml += show("Thresholds", threshStr);
+             fullHtml += show(labels.thresholds, threshStr);
 
              // Attack details - separate fields
-             fullHtml += show("Attack", data.attack?.name);
-             fullHtml += show("Range", data.attack?.range);
-             fullHtml += show("ATK Bonus", data.attack?.roll?.bonus);
+             fullHtml += show(labels.attack, data.attack?.name);
+             fullHtml += show(labels.range, data.attack?.range ? rangeLabel(data.attack.range) : null);
+             fullHtml += show(labels.atkBonus, data.attack?.roll?.bonus);
 
              // Damage - dice and type separate
              let dmgDice = null;
@@ -720,28 +806,28 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                      }
                  }
              }
-             fullHtml += show("Damage", dmgDice);
-             fullHtml += show("Damage Type", dmgType);
-             if (data.type === "horde") fullHtml += show("Horde Damage", hordeDmg);
+             fullHtml += show(labels.damage, dmgDice);
+             fullHtml += show(labels.damageType, dmgType);
+             if (data.type === "horde") fullHtml += show(labels.hordeDamage, hordeDmg);
 
              // Experiences
              const expEntries = Object.values(data.experiences || {});
              const expStr = expEntries.length > 0
                  ? expEntries.map(e => `${e.name} ${e.value >= 0 ? "+"+e.value : e.value}`).join(", ")
                  : null;
-             fullHtml += show("Experience", expStr);
+             fullHtml += show(labels.experience, expStr);
 
              // Motives & Tactics
              const motivesPreview = data.motivesAndTactics
                  ? (data.motivesAndTactics.length > 80 ? data.motivesAndTactics.substring(0, 80) + "..." : data.motivesAndTactics)
                  : null;
-             fullHtml += show("Motives", motivesPreview);
+             fullHtml += show(labels.motives, motivesPreview);
           } else {
              // ENVIRONMENT SPECIFIC FIELDS
              const impulsesPreview = data.impulses
                  ? (data.impulses.length > 80 ? data.impulses.substring(0, 80) + "..." : data.impulses)
                  : null;
-             fullHtml += show("Impulses", impulsesPreview);
+             fullHtml += show(labels.impulses, impulsesPreview);
 
              // Potential Adversaries - show each actor with (Compendium) or (New), same style as features
              const potAdvPreview = data._potentialAdvPreview || [];
@@ -752,18 +838,18 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                      if (!byLabel[item.label]) byLabel[item.label] = [];
                      byLabel[item.label].push(item);
                  }
-                 fullHtml += `<div class="dh-preview-item success"><strong>Potential Adversaries (${potAdvPreview.length}):</strong></div>`;
+                 fullHtml += `<div class="dh-preview-item success"><strong>${format("Importer.potentialAdversariesCount", { count: potAdvPreview.length })}:</strong></div>`;
                  for (const [label, actors] of Object.entries(byLabel)) {
                      fullHtml += `<div class="dh-preview-subitem" style="font-weight:bold; margin-top:4px;">— ${label}:</div>`;
                      for (const actor of actors) {
                          const sourceTag = actor.found
-                             ? '<span style="color:#48bb48">(Compendium)</span>'
-                             : '<span style="color:#ffaa00">(New)</span>';
+                             ? `<span style="color:#48bb48">(${localize("Common.compendium")})</span>`
+                             : `<span style="color:#ffaa00">(${localize("Common.new")})</span>`;
                          fullHtml += `<div class="dh-preview-subitem">• ${actor.name} ${sourceTag}</div>`;
                      }
                  }
              } else if (data.notes) {
-                 fullHtml += show("Potential Adversaries", data.notes);
+                 fullHtml += show(labels.potentialAdversaries, data.notes);
              }
           }
 
@@ -771,18 +857,18 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           const descPreview = data.description
               ? (data.description.length > 100 ? data.description.substring(0, 100) + "..." : data.description)
               : null;
-          fullHtml += show("Description", descPreview);
+          fullHtml += show(labels.description, descPreview);
 
           // Features - one per line with source indicator
           if (result.items?.length > 0) {
-              fullHtml += `<div class="dh-preview-item success"><strong>Features (${result.items.length}):</strong></div>`;
+              fullHtml += `<div class="dh-preview-item success"><strong>${format("Importer.featuresCount", { count: result.items.length })}:</strong></div>`;
               for (const item of result.items) {
                   const isCompendium = item.flags?.dhImporter?.isCompendium === true;
-                  const sourceTag = isCompendium ? '<span style="color:#48bb48">(Compendium)</span>' : '<span style="color:#ffaa00">(New)</span>';
+                  const sourceTag = isCompendium ? `<span style="color:#48bb48">(${localize("Common.compendium")})</span>` : `<span style="color:#ffaa00">(${localize("Common.new")})</span>`;
                   fullHtml += `<div class="dh-preview-subitem">• ${item.name} ${sourceTag}</div>`;
               }
           } else {
-              fullHtml += show("Features", null);
+              fullHtml += show(labels.features, null);
           }
       }
 
@@ -815,13 +901,13 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     const previewBox = formElement.querySelector("#dh-importer-preview");
 
     if (!textarea || !textarea.value.trim()) {
-      ui.notifications.warn("Please paste some text first.");
+      ui.notifications.warn(localize("Importer.emptyImport"));
       return;
     }
 
     const text = textarea.value.trim();
     const mode = modeSelect?.value || "adversary";
-    const isItemMode = (mode === "loot" || mode === "consumable" || mode === "weapon" || mode === "armor" || mode === "feature" || mode === "domainCard");
+    const isItemMode = StatblockImporter.isItemMode(mode);
 
     let blocks = [];
     if (isItemMode) {
@@ -842,7 +928,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     try {
         if (isItemMode) {
             // 1. Find or Create ROOT Item Folder (Fixed Name/Color)
-            const rootName = "📦 Imported Items";
+            const rootName = localize("Folders.importedItems");
             const rootColor = "#052e00";
             
             let rootFolder = game.folders.find(f => f.name === rootName && f.type === "Item");
@@ -853,69 +939,87 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
             // 2. Determine Subfolder Settings based on Mode
             let settingKey = "";
             let defaultName = "";
+            let fallbackPath = "";
             let color = "#333333";
 
             if (mode === "loot") {
                 settingKey = "lootFolderName";
-                defaultName = "👑 Imported Loot";
+                fallbackPath = "Folders.importedLoot";
+                defaultName = localize(fallbackPath);
                 color = "#5c4600";
             } else if (mode === "consumable") {
                 settingKey = "consumableFolderName";
-                defaultName = "🧪 Imported Consumables";
+                fallbackPath = "Folders.importedConsumables";
+                defaultName = localize(fallbackPath);
                 color = "#750027";
             } else if (mode === "weapon") {
                 settingKey = "weaponFolderName";
-                defaultName = "⚔️ Imported Weapons";
+                fallbackPath = "Folders.importedWeapons";
+                defaultName = localize(fallbackPath);
                 color = "#002b3d"; // Deep Blue/Teal
             } else if (mode === "armor") {
                 settingKey = "armorFolderName";
-                defaultName = "🛡️ Imported Armors";
+                fallbackPath = "Folders.importedArmors";
+                defaultName = localize(fallbackPath);
                 color = "#3d2b00"; // Bronze/Brown
             } else if (mode === "feature") {
                 settingKey = "featureFolderName";
-                defaultName = "✨ Imported Features";
+                fallbackPath = "Folders.importedFeatures";
+                defaultName = localize(fallbackPath);
                 color = "#4a3d00"; // Gold/Yellow
             } else if (mode === "domainCard") {
                 settingKey = "domainCardFolderName";
-                defaultName = "📜 Imported Domain Cards";
+                fallbackPath = "Folders.importedDomainCards";
+                defaultName = localize(fallbackPath);
                 color = "#1e0047"; // Indigo/Purple
             }
 
-            const subFolderName = game.settings.get(MODULE_ID,settingKey) || defaultName;
+            const subFolderName = settingKey
+                ? StatblockImporter._folderSetting(settingKey, fallbackPath)
+                : defaultName;
+            const rawSubFolderName = settingKey
+                ? StatblockImporter._rawFolderSetting(settingKey, fallbackPath)
+                : null;
             
             // 3. Find or Create Subfolder (Parent = Root)
-            targetFolder = game.folders.find(f => f.name === subFolderName && f.type === "Item" && f.folder?.id === rootFolder.id);
-            if (!targetFolder) {
-                targetFolder = await Folder.create({ 
-                    name: subFolderName, 
-                    type: "Item", 
-                    color: color,
-                    folder: rootFolder.id // Set parent
-                });
-            }
+            targetFolder = await StatblockImporter._findOrCreateFolder({
+                name: subFolderName,
+                type: "Item",
+                color,
+                folder: rootFolder.id,
+                legacyNames: [rawSubFolderName]
+            });
 
         } else {
             // Actor Folder Logic (Existing)
-            const advName = game.settings.get(MODULE_ID, "adversaryFolderName");
-            const envName = game.settings.get(MODULE_ID, "environmentFolderName");
+            const advName = StatblockImporter._folderSetting("adversaryFolderName", "Folders.importedAdversaries");
+            const envName = StatblockImporter._folderSetting("environmentFolderName", "Folders.importedEnvironments");
+            const rawAdvName = StatblockImporter._rawFolderSetting("adversaryFolderName", "Folders.importedAdversaries");
+            const rawEnvName = StatblockImporter._rawFolderSetting("environmentFolderName", "Folders.importedEnvironments");
             
             if (mode === "environment") {
-                 let f = game.folders.find(f => f.name === envName && f.type === "Actor");
-                 if (!f) f = await Folder.create({ name: envName, type: "Actor", color: "#2a3d00" });
-                 targetFolder = f;
+                 targetFolder = await StatblockImporter._findOrCreateFolder({
+                    name: envName,
+                    type: "Actor",
+                    color: "#2a3d00",
+                    legacyNames: [rawEnvName]
+                 });
             } else {
-                 let f = game.folders.find(f => f.name === advName && f.type === "Actor");
-                 if (!f) f = await Folder.create({ name: advName, type: "Actor", color: "#430047" });
-                 targetFolder = f;
+                 targetFolder = await StatblockImporter._findOrCreateFolder({
+                    name: advName,
+                    type: "Actor",
+                    color: "#430047",
+                    legacyNames: [rawAdvName]
+                 });
             }
         }
     } catch (error) {
-        StatblockImporter.errorLog("Failed to create/find folders", error);
+        StatblockImporter.errorLog(localize("Importer.failedFolders"), error);
         return;
     }
 
     const progressNotification = (blocks.length > 1)
-        ? ui.notifications.info(`Importing... (0/${totalBlocks})`, { progress: true })
+        ? ui.notifications.info(format("Importer.importing", { current: 0, total: totalBlocks }), { progress: true })
         : null;
 
     // Accumulate features for batch creation (performance optimization)
@@ -928,7 +1032,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     for (let i = 0; i < blocks.length; i++) {
         const block = blocks[i];
         if (progressNotification) {
-            progressNotification.update({ pct: (i + 1) / totalBlocks, message: `Importing... (${i + 1}/${totalBlocks})` });
+            progressNotification.update({ pct: (i + 1) / totalBlocks, message: format("Importer.importing", { current: i + 1, total: totalBlocks }) });
         }
 
         try {
@@ -1062,16 +1166,16 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
             }
 
         } catch (error) {
-            const firstLine = block.split(/\r?\n/)[0] || "Unknown";
+            const firstLine = block.split(/\r?\n/)[0] || localize("Common.unknown");
             failedBlocks.push({ index: i + 1, name: firstLine, error: error.message });
-            StatblockImporter.errorLog(`Failed to import block ${i + 1}`, error);
+            StatblockImporter.errorLog(format("Importer.failedBlock", { index: i + 1 }), error);
         }
     }
 
     // Batch create all accumulated features
     if (pendingFeatures.length > 0) {
         if (progressNotification) {
-            progressNotification.update({ pct: 0.95, message: `Creating ${pendingFeatures.length} features...` });
+            progressNotification.update({ pct: 0.95, message: format("Importer.creatingFeatures", { count: pendingFeatures.length }) });
         }
 
         try {
@@ -1113,14 +1217,14 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
             StatblockImporter.debugLog(`+Features: Batch created ${createdFeatures.length} features`);
         } catch (batchError) {
             StatblockImporter.errorLog(`+Features: Batch creation failed`, batchError);
-            ui.notifications.error(`Failed to create features in batch. Check console.`);
+            ui.notifications.error(localize("Importer.failedFeatures"));
         }
     }
 
-    if (progressNotification) progressNotification.update({ pct: 1, message: "Import complete!" });
+    if (progressNotification) progressNotification.update({ pct: 1, message: localize("Importer.importComplete") });
 
     if (createdObjects.length > 0) {
-        if (blocks.length > 1) ui.notifications.info(`Imported ${createdObjects.length} objects.`);
+        if (blocks.length > 1) ui.notifications.info(format("Importer.importedObjects", { count: createdObjects.length }));
         if (createdObjects.length === 1 && !blocks.length > 1) createdObjects[0].sheet.render(true);
     }
 
@@ -1130,7 +1234,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
     }
 
     if (failedBlocks.length > 0) {
-        ui.notifications.warn(`Failed to import ${failedBlocks.length} items. Check console.`);
+        ui.notifications.warn(format("Importer.failedItems", { count: failedBlocks.length }));
     }
   }
 
@@ -1161,10 +1265,14 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
    * Helper to ensure the folder hierarchy (Type -> Tier) exists inside the root folder.
    */
   static async _ensureFolderHierarchy(rootFolder, type, tier, colorMap) {
-      if (!type) type = "Unknown";
+      const isEnvironment = colorMap === StatblockImporter.ENVIRONMENT_TYPE_COLORS;
+      const normalizedType = type ? String(type).toLowerCase() : "unknown";
       
-      const typeKey = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
-      const color = colorMap[typeKey] || colorMap["Unknown"] || "#333333";
+      const colorKey = titleCase(normalizedType);
+      const typeKey = type
+          ? (isEnvironment ? environmentTypeLabel(normalizedType) : adversaryTypeLabel(normalizedType))
+          : localize("Common.unknown");
+      const color = colorMap[colorKey] || colorMap["Unknown"] || "#333333";
 
       let typeFolder = game.folders.find(f => f.name === typeKey && f.type === "Actor" && f.folder?.id === rootFolder.id);
       
@@ -1178,7 +1286,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           });
       }
 
-      const tierName = `Tier ${tier}`;
+      const tierName = format("Folders.tier", { tier });
       let tierFolder = game.folders.find(f => f.name === tierName && f.type === "Actor" && f.folder?.id === typeFolder.id);
       
       if (!tierFolder) {
@@ -1204,7 +1312,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
    */
   static async _ensureFeatureFolderHierarchy(isEnvironment, actorType, featureType, colorMap) {
       // 1. Find or Create ROOT Item Folder
-      const rootName = "📦 Imported Items";
+      const rootName = localize("Folders.importedItems");
       const rootColor = "#052e00";
 
       let rootFolder = game.folders.find(f => f.name === rootName && f.type === "Item");
@@ -1213,7 +1321,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // 2. Find or Create Category Folder (Adversary Features or Environment Features)
-      const categoryName = isEnvironment ? "✨ Environment Features" : "✨ Adversary Features";
+      const categoryName = isEnvironment ? localize("Folders.environmentFeatures") : localize("Folders.adversaryFeatures");
       const categoryColor = isEnvironment ? "#0f3d0f" : "#4a3d00";
 
       let categoryFolder = game.folders.find(f => f.name === categoryName && f.type === "Item" && f.folder?.id === rootFolder.id);
@@ -1230,8 +1338,10 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       if (!actorType) return categoryFolder;
 
       // 4. Find or Create Actor Type Folder
-      const typeKey = actorType.charAt(0).toUpperCase() + actorType.slice(1).toLowerCase();
-      const typeColor = colorMap[typeKey] || colorMap["Unknown"] || "#333333";
+      const normalizedActorType = String(actorType).toLowerCase();
+      const colorKey = titleCase(normalizedActorType);
+      const typeKey = isEnvironment ? environmentTypeLabel(normalizedActorType) : adversaryTypeLabel(normalizedActorType);
+      const typeColor = colorMap[colorKey] || colorMap["Unknown"] || "#333333";
 
       let typeFolder = game.folders.find(f => f.name === typeKey && f.type === "Item" && f.folder?.id === categoryFolder.id);
       if (!typeFolder) {
@@ -1247,7 +1357,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       if (!featureType) return typeFolder;
 
       // 6. Find or Create Feature Type Folder (Action, Reaction, Passive)
-      const featureTypeKey = featureType.charAt(0).toUpperCase() + featureType.slice(1).toLowerCase();
+      const featureTypeKey = featureFormLabel(featureType);
 
       let featureTypeFolder = game.folders.find(f => f.name === featureTypeKey && f.type === "Item" && f.folder?.id === typeFolder.id);
       if (!featureTypeFolder) {
@@ -1269,8 +1379,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
    * Detects and splits multiple statblocks (Actors) based on "Tier X".
    */
   static splitStatblocks(text) {
-    text = TextNormalizer.clean(text);
     const separatorMode = game.settings.get(MODULE_ID, "separatorMode") || "blankLine";
+    text = StatblockImporter._normalizeActorStatblockText(text);
 
     // If using === separator, split by that first
     if (separatorMode === "separator") {
@@ -1297,6 +1407,416 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       if (blockText.length > 0) blocks.push(blockText);
     }
     return blocks;
+  }
+
+  static _normalizeActorStatblockText(text) {
+      if (!text) return text;
+
+      const cleaned = TextNormalizer.clean(text);
+      let inFeatures = false;
+
+      return cleaned
+          .split("\n")
+          .map(line => {
+              const actorLine = StatblockImporter._normalizeActorStatblockLine(line);
+              if (/^Tier\s+\d+\s+/i.test(actorLine)) inFeatures = false;
+              if (/^FEATURES:?$/i.test(actorLine)) {
+                  inFeatures = true;
+                  return actorLine;
+              }
+              return inFeatures ? StatblockImporter._normalizeFeatureStatblockLine(line) : actorLine;
+          })
+          .join("\n")
+          .trim();
+  }
+
+  static _normalizeActorStatblockLine(line) {
+      let normalized = StatblockImporter._stripStatblockMarkdown(line);
+      if (!normalized) return normalized;
+
+      const sectionKey = StatblockImporter._parserKey(normalized).replace(/:$/, "");
+      if (StatblockImporter._matchesParserPattern(sectionKey, "sections.features", "features")) {
+          return "FEATURES";
+      }
+
+      normalized = normalized.replace(/^Tier\s+(\d+)\s*,\s*/i, "Tier $1 ");
+
+      const tierMatch = normalized.match(StatblockImporter._parserRegex("actor.tierLine", "^Tier\\s+(\\d+)\\s*,?\\s*(.+)$"));
+      if (tierMatch) {
+          let rawType = tierMatch[2].trim();
+          let hordeHp = null;
+          const hordeMatch = rawType.match(StatblockImporter._parserRegex("actor.hordeHp", "^(.+?)\\s*\\(\\s*(\\d+)\\s*\\/\\s*(?:HP)\\s*\\)$"));
+          if (hordeMatch) {
+              rawType = hordeMatch[1].trim();
+              hordeHp = hordeMatch[2];
+          }
+
+          const canonicalType = StatblockImporter._canonicalActorStatblockType(rawType);
+          return hordeHp
+              ? `Tier ${tierMatch[1]} ${canonicalType} (${hordeHp}/HP)`
+              : `Tier ${tierMatch[1]} ${canonicalType}`;
+      }
+
+      normalized = StatblockImporter._replaceLocalizedStatLabels(normalized);
+      normalized = StatblockImporter._replaceLocalizedFeatureForms(normalized);
+
+      const statLikeLine = normalized.includes("|")
+          || /^(?:Difficulty|Thresholds|HP|Stress|ATK|Experience):/i.test(normalized)
+          || StatblockImporter._isLocalizedRangeSegment(normalized)
+          || /^\d*d\d+(?:\s*[+-]\s*\d+)?\s+/i.test(normalized)
+          || /^\d+\s+/.test(normalized);
+
+      if (statLikeLine) {
+          normalized = StatblockImporter._replaceLocalizedRanges(normalized);
+          normalized = StatblockImporter._replaceLocalizedDamageTypes(normalized);
+      }
+
+      return normalized.replace(/[ \t]+/g, " ").trim();
+  }
+
+  static _stripStatblockMarkdown(line) {
+      return String(line ?? "")
+          .replace(/^#{1,6}\s*/, "")
+          .replace(/^\s*[-*+]\s+/, "")
+          .replace(/`([^`]+)`/g, "$1")
+          .replace(/\*\*([^*]+)\*\*/g, "$1")
+          .replace(/__([^_]+)__/g, "$1")
+          .replace(/\*([^*]+)\*/g, "$1")
+          .trim();
+  }
+
+  static _parserPattern(path, fallback) {
+      return localizeKey(moduleKey(`Parser.${path}`), fallback);
+  }
+
+  static _parserRegex(path, fallback, flags = "i") {
+      return new RegExp(StatblockImporter._parserPattern(path, fallback), flags);
+  }
+
+  static _parserKey(value) {
+      return String(value ?? "")
+          .toLowerCase()
+          .replace(/\u0451/g, "\u0435")
+          .replace(/\./g, "")
+          .trim();
+  }
+
+  static _matchesParserPattern(value, path, fallback) {
+      const pattern = StatblockImporter._parserPattern(path, fallback);
+      return new RegExp(`^(?:${pattern})$`, "i").test(StatblockImporter._parserKey(value));
+  }
+
+  static _normalizeFeatureStatblockLine(line) {
+      const normalized = String(line ?? "").trim();
+      if (!normalized) return normalized;
+
+      const withoutBullet = normalized.replace(/^\s*[-*+]\s+/, "");
+      const header = StatblockImporter._parseFeatureHeaderLine(withoutBullet);
+      if (!header) return normalized;
+
+      return `${header.name} - ${header.form}${header.description ? `: ${header.description}` : ""}`;
+  }
+
+  static _parseFeatureHeaderLine(line) {
+      const boldHeaderMatch = line.match(/^(?:\*\*|__)(.+?)\s*-\s*([^*_]+?)\s*:?(?:\*\*|__)\s*:?\s*(.*)$/i);
+      const plainHeaderMatch = line.match(/^(.+?)\s*-\s*([^:]+?)(?::\s*(.*))?$/i);
+      const match = boldHeaderMatch || plainHeaderMatch;
+      if (!match) return null;
+
+      const form = StatblockImporter._canonicalFeatureForm(match[2]);
+      if (!form) return null;
+
+      return {
+          name: StatblockImporter._stripStatblockMarkdown(match[1]),
+          form,
+          description: (match[3] || "").trim()
+      };
+  }
+
+  static _canonicalFeatureForm(form) {
+      const value = StatblockImporter._stripStatblockMarkdown(form);
+      const forms = [
+          ["Action", "featureForms.action", "action"],
+          ["Reaction", "featureForms.reaction", "reaction"],
+          ["Passive", "featureForms.passive", "passive"]
+      ];
+
+      return forms.find(([, path, fallback]) => StatblockImporter._matchesParserPattern(value, path, fallback))?.[0] || null;
+  }
+
+  static _canonicalActorStatblockType(type) {
+      const types = [
+          ["Bruiser", "actorTypes.bruiser", "bruiser"],
+          ["Horde", "actorTypes.horde", "horde"],
+          ["Leader", "actorTypes.leader", "leader"],
+          ["Minion", "actorTypes.minion", "minion"],
+          ["Ranged", "actorTypes.ranged", "ranged"],
+          ["Skulk", "actorTypes.skulk", "skulk"],
+          ["Social", "actorTypes.social", "social"],
+          ["Solo", "actorTypes.solo", "solo"],
+          ["Standard", "actorTypes.standard", "standard"],
+          ["Support", "actorTypes.support", "support"],
+          ["Exploration", "actorTypes.exploration", "exploration"],
+          ["Traversal", "actorTypes.traversal", "traversal"],
+          ["Event", "actorTypes.event", "event"]
+      ];
+
+      return types.find(([, path, fallback]) => StatblockImporter._matchesParserPattern(type, path, fallback))?.[0] || titleCase(type);
+  }
+
+  static _replaceLocalizedStatLabels(line) {
+      const replacements = [
+          ["labels.motives", "Motives & Tactics:", "Motives\\s*(?:&|and)\\s*Tactics"],
+          ["labels.impulses", "Impulses:", "Impulses"],
+          ["labels.potentialAdversaries", "Potential Adversaries:", "Potential\\s+Adversaries"],
+          ["labels.difficulty", "Difficulty:", "Difficulty"],
+          ["labels.thresholds", "Thresholds:", "Thresholds"],
+          ["labels.hitPoints", "HP:", "HP"],
+          ["labels.stress", "Stress:", "Stress"],
+          ["labels.attackModifier", "ATK:", "ATK"],
+          ["labels.experience", "Experience:", "Experience"]
+      ];
+
+      return replacements.reduce((current, [path, replacement, fallback]) => {
+          const pattern = StatblockImporter._parserPattern(path, fallback);
+          return current.replace(new RegExp(`(\\||^)\\s*(?:${pattern})\\s*:`, "gi"), `$1 ${replacement}`);
+      }, line);
+  }
+
+  static _replaceLocalizedFeatureForms(line) {
+      const forms = [
+          ["featureForms.action", "Action", "action"],
+          ["featureForms.reaction", "Reaction", "reaction"],
+          ["featureForms.passive", "Passive", "passive"]
+      ];
+
+      return forms.reduce((current, [path, replacement, fallback]) => {
+          const pattern = StatblockImporter._parserPattern(path, fallback);
+          return current.replace(new RegExp(`\\s*-\\s*(?:${pattern})\\s*:`, "i"), ` - ${replacement}:`);
+      }, line);
+  }
+
+  static _replaceLocalizedRanges(line) {
+      const replacements = [
+          ["ranges.veryFar", "Very Far", "very\\s+far"],
+          ["ranges.veryClose", "Very Close", "very\\s+close"],
+          ["ranges.melee", "Melee", "melee"],
+          ["ranges.close", "Close", "close"],
+          ["ranges.far", "Far", "far"]
+      ];
+
+      return replacements.reduce((current, [path, replacement, fallback]) => {
+          const pattern = StatblockImporter._parserPattern(path, fallback);
+          return current.replace(new RegExp(pattern, "gi"), replacement);
+      }, line);
+  }
+
+  static _replaceLocalizedDamageTypes(line) {
+      return line
+          .replace(new RegExp(`(^|[\\s|,;])(?:${StatblockImporter._parserPattern("damageTypes.physical", "phy|physical")})(?=$|[\\s|,;.])`, "gi"), "$1phy")
+          .replace(new RegExp(`(^|[\\s|,;])(?:${StatblockImporter._parserPattern("damageTypes.magical", "mag|magical")})(?=$|[\\s|,;.])`, "gi"), "$1mag");
+  }
+
+  static _isLocalizedRangeSegment(line) {
+      const rangePattern = ["ranges.veryFar", "ranges.veryClose", "ranges.melee", "ranges.close", "ranges.far"]
+          .map(path => StatblockImporter._parserPattern(path, ""))
+          .filter(Boolean)
+          .join("|");
+      return new RegExp(`^.+:\\s*(?:${rangePattern})$`, "i").test(line);
+  }
+
+  static _detectedActionName(kind, value = null, formula = null) {
+      switch (kind) {
+          case "attack":
+              return localizeKey("DAGGERHEART.ACTIONS.TYPES.attack.name", localize("Actions.attack"));
+          case "damage":
+              return format("Actions.damageFormula", { formula });
+          case "gainFear":
+              return value === 1
+                  ? localize("Actions.gainFear")
+                  : format("Actions.gainFearValue", { value });
+          case "markStress":
+              return value === 1
+                  ? localize("Actions.markStress")
+                  : format("Actions.markStressValue", { value });
+          case "clearHitPoints":
+              return value === 1
+                  ? localize("Actions.clearHitPoints")
+                  : format("Actions.clearHitPointsValue", { value });
+          case "clearStress":
+              return value === 1
+                  ? localize("Actions.clearStress")
+                  : format("Actions.clearStressValue", { value });
+          case "clearHitPointsAndStress":
+              return value === 1
+                  ? localize("Actions.clearHitPointsAndStress")
+                  : format("Actions.clearHitPointsAndStressValue", { value });
+          case "spendFear":
+              return value === 1
+                  ? localize("Actions.spendFear")
+                  : format("Actions.spendFearValue", { value });
+          case "spendHope":
+              return value === 1
+                  ? localize("Actions.spendHope")
+                  : format("Actions.spendHopeValue", { value });
+          case "loseHope":
+              return value === 1
+                  ? localize("Actions.loseHope")
+                  : format("Actions.loseHopeValue", { value });
+          default:
+              return titleCase(kind);
+      }
+  }
+
+  static _resourceValueFromMatch(match) {
+      if (!match) return 1;
+      const value = String(match).toLowerCase();
+      if (StatblockImporter._matchesParserPattern(value, "numbers.one", "a|an|one")) return 1;
+      return parseInt(value, 10) || 1;
+  }
+
+  static _createHealingAction(name, parts, options = {}) {
+      const actionId = foundry.utils.randomID(16);
+      return {
+          type: "healing",
+          _id: actionId,
+          systemPath: "actions",
+          baseAction: false,
+          description: "",
+          chatDisplay: true,
+          originItem: { type: "itemCollection" },
+          actionType: "action",
+          triggers: [],
+          cost: [],
+          uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
+          damage: { parts },
+          target: { type: options.target ?? "self", amount: options.amount ?? null },
+          effects: [],
+          name,
+          range: ""
+      };
+  }
+
+  static _healingPart(resource, formula) {
+      return {
+          applyTo: resource,
+          value: {
+              custom: {
+                  enabled: true,
+                  formula: String(formula)
+              }
+          }
+      };
+  }
+
+  static _detectClearResourceActions(searchText) {
+      const actions = [];
+      const clearVerb = StatblockImporter._parserRegex("actions.clearVerb", "clear|heal|recover|remove");
+      const hpRegex = StatblockImporter._parserRegex("resources.hitPoints", "\\b(?:hit\\s*points?|hp)\\b", "iu");
+      const stressRegex = StatblockImporter._parserRegex("resources.stress", "\\bstress\\b");
+
+      const clauses = String(searchText ?? "")
+          .split(/(?<=[.!?;])\s+/)
+          .map(clause => clause.trim())
+          .filter(Boolean);
+
+      for (const clause of clauses) {
+          if (!clearVerb.test(clause)) continue;
+
+          const hasHitPoints = hpRegex.test(clause);
+          const hasStress = stressRegex.test(clause);
+          if (!hasHitPoints && !hasStress) continue;
+
+          const fullClear = StatblockImporter._parserRegex("actions.fullClear", "\\b(?:all|fully)\\b").test(clause);
+          const valueMatch = clause.match(new RegExp(`\\b(\\d+|${StatblockImporter._parserPattern("numbers.one", "a|an|one")})\\b`, "i"));
+          const value = fullClear ? null : StatblockImporter._resourceValueFromMatch(valueMatch?.[1]);
+          const formulaFor = resource => fullClear ? `@system.resources.${resource}.max` : value;
+          const isChoice = StatblockImporter._parserRegex("actions.choice", "\\bor\\b").test(clause);
+
+          if (hasHitPoints && hasStress && !isChoice) {
+              const name = fullClear
+                  ? localize("Actions.clearHitPointsAndStressAll")
+                  : StatblockImporter._detectedActionName("clearHitPointsAndStress", value);
+              actions.push(StatblockImporter._createHealingAction(name, {
+                  hitPoints: StatblockImporter._healingPart("hitPoints", formulaFor("hitPoints")),
+                  stress: StatblockImporter._healingPart("stress", formulaFor("stress"))
+              }));
+              continue;
+          }
+
+          if (hasHitPoints) {
+              const name = fullClear
+                  ? localize("Actions.clearHitPointsAll")
+                  : StatblockImporter._detectedActionName("clearHitPoints", value);
+              actions.push(StatblockImporter._createHealingAction(name, {
+                  hitPoints: StatblockImporter._healingPart("hitPoints", formulaFor("hitPoints"))
+              }));
+          }
+
+          if (hasStress) {
+              const name = fullClear
+                  ? localize("Actions.clearStressAll")
+                  : StatblockImporter._detectedActionName("clearStress", value);
+              actions.push(StatblockImporter._createHealingAction(name, {
+                  stress: StatblockImporter._healingPart("stress", formulaFor("stress"))
+              }));
+          }
+      }
+
+      return actions;
+  }
+
+  static _formatFeatureDescriptionHtml(description) {
+      if (!description) return "";
+
+      const paragraphs = String(description)
+          .replace(/<\/p>\s*<p>/gi, "\n")
+          .split(/\n+|<\/p>/i)
+          .map(part => part.replace(/^<p>/i, "").trim())
+          .filter(part => part.length > 0);
+
+      const htmlParts = [];
+      let listItems = [];
+
+      const flushList = () => {
+          if (listItems.length === 0) return;
+          htmlParts.push(`<ul>${listItems.join("")}</ul>`);
+          listItems = [];
+      };
+
+      for (const paragraph of paragraphs) {
+          const bulletMatch = paragraph.match(/^(?:[-*]|\u2022)\s+(.*)$/);
+          if (bulletMatch) {
+              listItems.push(`<li>${StatblockImporter._markdownInlineToHtml(bulletMatch[1].trim())}</li>`);
+              continue;
+          }
+
+          flushList();
+          htmlParts.push(`<p>${StatblockImporter._markdownInlineToHtml(paragraph)}</p>`);
+      }
+
+      flushList();
+      return htmlParts.join("");
+  }
+
+  static _markdownInlineToHtml(text) {
+      return String(text ?? "")
+          .replace(/`([^`]+)`/g, "<code>$1</code>")
+          .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+          .replace(/__([^_]+)__/g, "<strong>$1</strong>")
+          .replace(/(^|[\s(])\*([^*\n]+)\*(?=$|[\s).,;:!?])/g, "$1<em>$2</em>")
+          .replace(/(^|[\s(])_([^_\n]+)_(?=$|[\s).,;:!?])/g, "$1<em>$2</em>");
+  }
+
+  static _plainTextForActionDetection(text) {
+      return String(text ?? "")
+          .replace(/<[^>]+>/g, " ")
+          .replace(/&nbsp;/g, " ")
+          .replace(/&amp;/g, "&")
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/\s+/g, " ")
+          .trim();
   }
 
   /**
@@ -1342,12 +1862,24 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
    */
   static detectActionsInDescription(description) {
       const detectedActions = {};
+      const searchText = StatblockImporter._plainTextForActionDetection(description);
 
-      // Detect "Mark Stress" / "Mark a Stress" / "Mark 1 Stress" / "Mark 2 Stress"
-      const stressMatch = description.match(/mark\s+(a\s+|(\d+)\s+)?stress/i);
+      // Detect "Gain Fear" / "Gain 1 Fear" and common Russian equivalents.
+      const gainFearMatch = searchText.match(StatblockImporter._parserRegex("actions.gainFear", "(?:gain|receive|get)\\s+(?:a\\s+|one\\s+|(\\d+)\\s+)?fear"));
+      if (gainFearMatch) {
+          const fearValue = gainFearMatch[1] ? parseInt(gainFearMatch[1], 10) : 1;
+          const fearName = StatblockImporter._detectedActionName("gainFear", fearValue);
+          const fearAction = StatblockImporter._createHealingAction(fearName, {
+              fear: StatblockImporter._healingPart("fear", fearValue)
+          });
+          detectedActions[fearAction._id] = fearAction;
+      }
+
+      // Detect "Mark Stress" / "Mark 1 Stress" and common Russian equivalents.
+      const stressMatch = searchText.match(StatblockImporter._parserRegex("actions.markStress", "(?:mark|spend)\\s+(?:a\\s+|one\\s+|(\\d+)\\s+)?stress"));
       if (stressMatch) {
-          const stressValue = stressMatch[2] ? parseInt(stressMatch[2], 10) : 1;
-          const stressName = stressValue === 1 ? "Mark Stress" : `Mark ${stressValue} Stress`;
+          const stressValue = stressMatch[1] ? parseInt(stressMatch[1], 10) : 1;
+          const stressName = StatblockImporter._detectedActionName("markStress", stressValue);
           const actionId = foundry.utils.randomID(16);
           detectedActions[actionId] = {
               type: "effect",
@@ -1376,11 +1908,11 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           };
       }
 
-      // Detect "Spend Fear" / "Spend a Fear" / "Spend 1 Fear" / "Spend 2 Fear"
-      const fearMatch = description.match(/spend\s+(a\s+|(\d+)\s+)?fear/i);
+      // Detect "Spend Fear" / "Spend 1 Fear" and common Russian equivalents.
+      const fearMatch = searchText.match(StatblockImporter._parserRegex("actions.spendFear", "spend\\s+(?:a\\s+|one\\s+|(\\d+)\\s+)?fear"));
       if (fearMatch) {
-          const fearValue = fearMatch[2] ? parseInt(fearMatch[2], 10) : 1;
-          const fearName = fearValue === 1 ? "Spend Fear" : `Spend ${fearValue} Fear`;
+          const fearValue = fearMatch[1] ? parseInt(fearMatch[1], 10) : 1;
+          const fearName = StatblockImporter._detectedActionName("spendFear", fearValue);
           const actionId = foundry.utils.randomID(16);
           detectedActions[actionId] = {
               type: "effect",
@@ -1409,11 +1941,11 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           };
       }
 
-      // Detect "Spend Hope" / "Spend a Hope" / "Spend 1 Hope" / "Spend 2 Hope"
-      const hopeMatch = description.match(/spend\s+(a\s+|(\d+)\s+)?hope/i);
+      // Detect "Spend Hope" / "Spend 1 Hope" and common Russian equivalents.
+      const hopeMatch = searchText.match(StatblockImporter._parserRegex("actions.spendHope", "spend\\s+(?:a\\s+|one\\s+|(\\d+)\\s+)?hope"));
       if (hopeMatch) {
-          const hopeValue = hopeMatch[2] ? parseInt(hopeMatch[2], 10) : 1;
-          const hopeName = hopeValue === 1 ? "Spend a Hope" : `Spend ${hopeValue} Hope`;
+          const hopeValue = hopeMatch[1] ? parseInt(hopeMatch[1], 10) : 1;
+          const hopeName = StatblockImporter._detectedActionName("spendHope", hopeValue);
           const actionId = foundry.utils.randomID(16);
           detectedActions[actionId] = {
               type: "effect",
@@ -1442,11 +1974,47 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           };
       }
 
+      // Detect localized lose-hope patterns.
+      const loseHopeMatch = searchText.match(StatblockImporter._parserRegex("actions.loseHope", "(?!)"));
+      if (loseHopeMatch) {
+          const hopeValue = loseHopeMatch[1] ? parseInt(loseHopeMatch[1], 10) : 1;
+          const hopeName = StatblockImporter._detectedActionName("loseHope", hopeValue);
+          const actionId = foundry.utils.randomID(16);
+          detectedActions[actionId] = {
+              type: "effect",
+              _id: actionId,
+              systemPath: "actions",
+              baseAction: false,
+              description: "",
+              chatDisplay: true,
+              originItem: { type: "itemCollection" },
+              actionType: "action",
+              triggers: [],
+              cost: [{
+                  scalable: false,
+                  key: "hope",
+                  value: hopeValue,
+                  itemId: null,
+                  step: null,
+                  consumeOnSuccess: false
+              }],
+              uses: { value: null, max: "", recovery: null, consumeOnSuccess: false },
+              effects: [],
+              target: { type: "any", amount: null },
+              name: hopeName,
+              range: ""
+          };
+      }
+
+      for (const clearAction of StatblockImporter._detectClearResourceActions(searchText)) {
+          detectedActions[clearAction._id] = clearAction;
+      }
+
       // Detect "TRAIT Reaction Roll" patterns (e.g., "Strength Reaction Roll", "Agility Reaction Roll")
       const traits = ["Strength", "Instinct", "Knowledge", "Finesse", "Presence", "Agility"];
       for (const trait of traits) {
           const reactionRollRegex = new RegExp(`${trait}\\s+Reaction\\s+Roll`, "i");
-          if (reactionRollRegex.test(description)) {
+          if (reactionRollRegex.test(searchText)) {
               const actionId = foundry.utils.randomID(16);
               detectedActions[actionId] = {
                   type: "attack",
@@ -1495,7 +2063,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       }
 
       // Detect "make an attack" / "make a standard attack" / "make an attack roll"
-      if (/make\s+(an?\s+)?(standard\s+)?attack(\s+roll)?/i.test(description)) {
+      if (StatblockImporter._parserRegex("actions.attack", "make\\s+(an?\\s+)?(standard\\s+)?attack(\\s+roll)?").test(searchText)) {
           const actionId = foundry.utils.randomID(16);
           detectedActions[actionId] = {
               type: "attack",
@@ -1537,14 +2105,14 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   difficulty: null,
                   damageMod: "none"
               },
-              name: "Attack",
+              name: StatblockImporter._detectedActionName("attack"),
               range: ""
           };
       }
 
       // Detect damage dice patterns only when in damage context
       // Check if text mentions "damage" at all (with or without type specifier)
-      const hasDamageContext = /\bdamage\b/i.test(description);
+      const hasDamageContext = StatblockImporter._parserRegex("actions.damageContext", "\\bdamage\\b").test(searchText);
 
       if (hasDamageContext) {
           // Detect damage type and direct flag
@@ -1552,26 +2120,26 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
           let damageType = ["physical"];
           let isDirect = false;
 
-          if (/direct\s+(?:magic|magical)\s+damage/i.test(description)) {
+          if (StatblockImporter._parserRegex("actions.directMagicalDamage", "direct\\s+(?:magic|magical)\\s+damage").test(searchText)) {
               damageType = ["magical"];
               isDirect = true;
-          } else if (/direct\s+physical\s+damage/i.test(description)) {
+          } else if (StatblockImporter._parserRegex("actions.directPhysicalDamage", "direct\\s+physical\\s+damage").test(searchText)) {
               damageType = ["physical"];
               isDirect = true;
-          } else if (/direct\s+damage/i.test(description)) {
+          } else if (StatblockImporter._parserRegex("actions.directDamage", "direct\\s+damage").test(searchText)) {
               // "direct damage" without type = physical + direct
               damageType = ["physical"];
               isDirect = true;
-          } else if (/(?:magic|magical)\s+damage/i.test(description)) {
+          } else if (StatblockImporter._parserRegex("actions.magicalDamage", "(?:magic|magical)\\s+damage").test(searchText)) {
               damageType = ["magical"];
-          } else if (/physical\s+damage/i.test(description)) {
+          } else if (StatblockImporter._parserRegex("actions.physicalDamage", "physical\\s+damage").test(searchText)) {
               damageType = ["physical"];
           }
           // If just "damage" without type, defaults remain: physical, direct: false
 
           // Pattern: XdY or XdY+Z with optional spaces, with or without [[/r ]] wrapper
           const diceRegex = /(?:\[\[\/r\s+)?(\d+d\d+)(?:\s*([+-])\s*(\d+))?(?:\]\])?/g;
-          const diceMatches = description.matchAll(diceRegex);
+          const diceMatches = searchText.matchAll(diceRegex);
 
           for (const match of diceMatches) {
               const diceBase = match[1]; // e.g., "1d10"
@@ -1621,7 +2189,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                   },
                   target: { type: "any", amount: null },
                   effects: [],
-                  name: `Damage (${formula})`,
+                  name: StatblockImporter._detectedActionName("damage", null, formula),
                   range: ""
               };
           }
@@ -1640,20 +2208,24 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
    */
   static parseFeatureData(text) {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-      if (lines.length === 0) throw new Error("Empty feature block");
+      if (lines.length === 0) throw new Error(localize("Importer.emptyFeatureBlock"));
 
       const firstLine = lines[0];
       let name = firstLine;
       let featureForm = "passive"; // default
+      let description = "";
 
       // Check for ActionType: "Name - Action", "Name - Reaction", "Name - Passive"
-      const actionMatch = firstLine.match(/^(.+?)\s*[-–—]\s*(Action|Reaction|Passive)$/i);
+      const actionMatch = StatblockImporter._parseFeatureHeaderLine(firstLine);
       if (actionMatch) {
-          name = actionMatch[1].trim();
-          featureForm = actionMatch[2].toLowerCase();
+          name = actionMatch.name;
+          featureForm = actionMatch.form.toLowerCase();
+          description = actionMatch.description;
       }
 
-      let description = lines.length > 1 ? lines.slice(1).join(" ") : "";
+      if (lines.length > 1) {
+          description = [description, lines.slice(1).join(" ")].filter(Boolean).join(" ");
+      }
 
       // Wrap dice rolls in [[/r ]] format
       description = StatblockImporter.wrapDiceRolls(description);
@@ -1688,7 +2260,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
    */
   static parseSimpleItemData(text, type) {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-      if (lines.length === 0) throw new Error("Empty item block");
+      if (lines.length === 0) throw new Error(localize("Importer.emptyItemBlock"));
 
       const name = lines[0];
       let description = lines.length > 1 ? lines.slice(1).join(" ") : "";
@@ -1748,7 +2320,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
    */
   static parseDomainCardData(text) {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-      if (lines.length < 3) throw new Error("Invalid Domain Card format. Needs Title, Level/Domain/Type, and Cost.");
+      if (lines.length < 3) throw new Error(localize("Importer.invalidDomainCardFormat"));
 
       const name = lines[0];
       const secondLine = lines[1];
@@ -1759,7 +2331,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       // Using greedy match for domain to allow spaces if needed, but assuming type is last word
       const typeMatch = secondLine.match(/^Level\s+(\d+)\s+(.+?)\s+(Spell|Ability|Grimoire)$/i);
       if (!typeMatch) {
-          throw new Error("Invalid Line 2 format. Expected: 'Level X DOMAIN TYPE'");
+          throw new Error(localize("Importer.invalidDomainCardLine2"));
       }
 
       const level = parseInt(typeMatch[1], 10);
@@ -1771,16 +2343,13 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       const domain = domainMap[domainRaw.toLowerCase()];
 
       if (!domain) {
-          throw new Error(
-              `Domain "${domainRaw}" is not a valid choice. ` +
-              `Check available domains in the system or homebrew settings.`
-          );
+          throw new Error(format("Importer.invalidDomainChoice", { domain: domainRaw }));
       }
 
       // Parse Line 3: Recall Cost: Y
       const costMatch = thirdLine.match(/^Recall\s*Cost:\s*(\d+)$/i);
       if (!costMatch) {
-          throw new Error("Invalid Line 3 format. Expected: 'Recall Cost: Y'");
+          throw new Error(localize("Importer.invalidDomainCardLine3"));
       }
       const recallCost = parseInt(costMatch[1], 10);
 
@@ -1824,7 +2393,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
    */
   static parseWeaponData(text) {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-      if (lines.length === 0) throw new Error("Empty weapon block");
+      if (lines.length === 0) throw new Error(localize("Importer.emptyWeaponBlock"));
 
       let firstLine = lines[0];
       const descriptionLines = lines.length > 1 ? lines.slice(1) : [];
@@ -1850,7 +2419,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       const match = firstLine.match(coreRegex);
 
       if (!match) {
-          throw new Error("Invalid weapon format. Could not find sequence: Trait Range Damage Burden");
+          throw new Error(localize("Importer.invalidWeaponFormat"));
       }
 
       // Extract parts
@@ -1941,7 +2510,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
       // For weapons, remove "Attack" and "Damage" actions (they are redundant with the weapon's base attack)
       for (const [id, action] of Object.entries(detectedActions)) {
-          if (action.name === "Attack" || action.name?.startsWith("Damage")) {
+          if (action.type === "attack" || action.type === "damage") {
               delete detectedActions[id];
           }
       }
@@ -1992,7 +2561,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
    */
   static parseArmorData(text) {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-      if (lines.length === 0) throw new Error("Empty armor block");
+      if (lines.length === 0) throw new Error(localize("Importer.emptyArmorBlock"));
 
       let firstLine = lines[0];
       const descriptionLines = lines.length > 1 ? lines.slice(1) : [];
@@ -2011,7 +2580,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       const match = firstLine.match(thresholdRegex);
 
       if (!match) {
-          throw new Error("Invalid armor format. Could not find: Thresholds (X/Y) and Base Score");
+          throw new Error(localize("Importer.invalidArmorFormat"));
       }
 
       const major = parseInt(match[1], 10);
@@ -2076,14 +2645,16 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   static async parseStatblockData(text, forceActorType = null) {
       StatblockImporter.registerSettings();
 
+      text = StatblockImporter._normalizeActorStatblockText(text);
+
       const rawLines = text.split(/\r?\n/)
                         .map(l => l.trim())
                         .filter(l => l.length > 0);
 
-      if (rawLines.length === 0) throw new Error("Text content is empty.");
+      if (rawLines.length === 0) throw new Error(localize("Importer.emptyText"));
 
       // --- FEATURE COMPENDIUM SETUP ---
-      const selectedFeaturePacks = game.settings.get(MODULE_ID, "selectedCompendiums") || ["dh-statblock-importer.all-features"];
+      const selectedFeaturePacks = game.settings.get(MODULE_ID, "selectedCompendiums") || [`${MODULE_ID}.all-features`];
       const featureIndexMap = new Map();
 
       for (const packId of selectedFeaturePacks) {
@@ -2166,11 +2737,11 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               }
 
               if (actorType === "adversary" && !StatblockImporter.VALID_ADVERSARY_TYPES.includes(systemData.type)) {
-                  throw new Error(`Invalid adversary type: "${rawType}". Valid types are: ${StatblockImporter.VALID_ADVERSARY_TYPES.join(", ")}`);
+                  throw new Error(format("Importer.invalidAdversaryType", { type: rawType, types: StatblockImporter.VALID_ADVERSARY_TYPES.join(", ") }));
               }
 
               if (actorType === "environment" && !StatblockImporter.VALID_ENVIRONMENT_TYPES.includes(systemData.type)) {
-                  throw new Error(`Invalid environment type: "${rawType}". Valid types are: ${StatblockImporter.VALID_ENVIRONMENT_TYPES.join(", ")}`);
+                  throw new Error(format("Importer.invalidEnvironmentType", { type: rawType, types: StatblockImporter.VALID_ENVIRONMENT_TYPES.join(", ") }));
               }
 
               captureState = "description";
@@ -2286,13 +2857,14 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
               // Process ungrouped actors under "Adversaries" label
               if (ungroupedActors.length > 0) {
                   const foundUuids = [];
+                  const adversariesLabel = localizeKey("DAGGERHEART.UI.ItemBrowser.folders.adversaries", actorTypeLabel("adversary"));
                   for (const actorName of ungroupedActors) {
                       const found = adversaryIndex.find(a => a.name.toLowerCase() === actorName.toLowerCase() && a.type === "adversary");
                       if (found) {
                           foundUuids.push(found.uuid);
-                          previewDetails.push({ name: actorName, label: "Adversaries", found: true });
+                          previewDetails.push({ name: actorName, label: adversariesLabel, found: true });
                       } else {
-                          previewDetails.push({ name: actorName, label: "Adversaries", found: false });
+                          previewDetails.push({ name: actorName, label: adversariesLabel, found: false });
                       }
                   }
 
@@ -2300,7 +2872,7 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                       hasFoundActors = true;
                       const groupId = foundry.utils.randomID();
                       potentialAdversaries[groupId] = {
-                          label: "Adversaries",
+                          label: adversariesLabel,
                           adversaries: foundUuids
                       };
                   }
@@ -2427,29 +2999,11 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
                       return;
                   }
               } catch (error) {
-                  StatblockImporter.errorLog(`Failed to load compendium feature: ${currentFeature.name}`, error, { uuid: found.uuid });
+                  StatblockImporter.errorLog(format("Importer.failedCompendiumFeature", { name: currentFeature.name }), error, { uuid: found.uuid });
               }
           }
           
-          let finalDesc = currentFeature.system.description;
-          if (finalDesc.includes("•") || finalDesc.includes("- ")) {
-              const lines = finalDesc.split("</p>").map(l => l.replace("<p>", "").trim()).filter(l => l);
-              let listBuffer = [];
-              let htmlParts = [];
-              for (let l of lines) {
-                  if (l.startsWith("•") || l.startsWith("- ")) {
-                      listBuffer.push(`<li>${l.substring(1).trim()}</li>`);
-                  } else {
-                      if (listBuffer.length > 0) {
-                          htmlParts.push(`<ul>${listBuffer.join("")}</ul>`);
-                          listBuffer = [];
-                      }
-                      htmlParts.push(`<p>${l}</p>`);
-                  }
-              }
-              if (listBuffer.length > 0) htmlParts.push(`<ul>${listBuffer.join("")}</ul>`);
-              finalDesc = htmlParts.join("");
-          }
+          let finalDesc = StatblockImporter._formatFeatureDescriptionHtml(currentFeature.system.description);
 
           // Wrap dice rolls in [[/r ]] format
           finalDesc = StatblockImporter.wrapDiceRolls(finalDesc);
