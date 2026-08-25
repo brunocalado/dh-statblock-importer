@@ -2,22 +2,22 @@
     {{!-- Navegação por Abas --}}
     <nav class="dh-config-nav">
         <button type="button" class="dh-config-tab-btn active" data-action="tab" data-target="features">
-            <i class="fas fa-star"></i> Features
+            <i class="fas fa-star"></i> {{localize "DH_STATBLOCK_IMPORTER.Config.featuresTab"}}
         </button>
         <button type="button" class="dh-config-tab-btn" data-action="tab" data-target="actors">
-            <i class="fas fa-users"></i> Actors
+            <i class="fas fa-users"></i> {{localize "DH_STATBLOCK_IMPORTER.Config.actorsTab"}}
         </button>
         <button type="button" class="dh-config-tab-btn" data-action="tab" data-target="general">
-            <i class="fas fa-sliders-h"></i> General
+            <i class="fas fa-sliders-h"></i> {{localize "DH_STATBLOCK_IMPORTER.Config.generalTab"}}
         </button>
         <button type="button" class="dh-config-tab-btn" data-action="tab" data-target="icons">
-            <i class="fas fa-image"></i> Icons
+            <i class="fas fa-image"></i> {{localize "DH_STATBLOCK_IMPORTER.Config.iconsTab"}}
         </button>
     </nav>
 
     {{!-- Aba: Features --}}
     <div class="dh-config-tab-content active" data-tab="features">
-        <p class="notes dh-config-notes"><strong>Item Compendiums:</strong> Searched for matching Features/Abilities.</p>
+        <p class="notes dh-config-notes"><strong>{{localize "DH_STATBLOCK_IMPORTER.Config.itemCompendiums"}}</strong> {{localize "DH_STATBLOCK_IMPORTER.Config.itemCompendiumsHint"}}</p>
         <div class="form-group-stacked dh-config-list">
             {{#each featureCompendiums}}
             <label class="checkbox dh-config-item">
@@ -33,7 +33,7 @@
 
     {{!-- Aba: Actors --}}
     <div class="dh-config-tab-content" data-tab="actors">
-        <p class="notes dh-config-notes"><strong>Actor Compendiums:</strong> Searched for Potential Adversaries in Environments.</p>
+        <p class="notes dh-config-notes"><strong>{{localize "DH_STATBLOCK_IMPORTER.Config.actorCompendiums"}}</strong> {{localize "DH_STATBLOCK_IMPORTER.Config.actorCompendiumsHint"}}</p>
         <div class="form-group-stacked dh-config-list">
             {{#each actorCompendiums}}
             <label class="checkbox dh-config-item">
@@ -49,72 +49,72 @@
 
     {{!-- Aba: General --}}
     <div class="dh-config-tab-content" data-tab="general">
-        <p class="notes dh-config-notes dh-config-notes--general"><strong>General Settings:</strong> Configure import behavior.</p>
+        <p class="notes dh-config-notes dh-config-notes--general"><strong>{{localize "DH_STATBLOCK_IMPORTER.Config.generalSettings"}}</strong> {{localize "DH_STATBLOCK_IMPORTER.Config.generalSettingsHint"}}</p>
 
         <div class="form-group">
-            <label for="adversaryFolderName">Adversary Folder Name</label>
-            <input type="text" name="adversaryFolderName" value="{{adversaryFolderName}}" placeholder="💀 Imported Adversaries">
+            <label for="adversaryFolderName">{{localize "DH_STATBLOCK_IMPORTER.Settings.adversaryFolderName"}}</label>
+            <input type="text" name="adversaryFolderName" value="{{adversaryFolderName}}" placeholder="{{localize "DH_STATBLOCK_IMPORTER.Folders.importedAdversaries"}}">
         </div>
 
         <div class="form-group">
-            <label for="environmentFolderName">Environment Folder Name</label>
-            <input type="text" name="environmentFolderName" value="{{environmentFolderName}}" placeholder="🏰 Imported Environments">
+            <label for="environmentFolderName">{{localize "DH_STATBLOCK_IMPORTER.Settings.environmentFolderName"}}</label>
+            <input type="text" name="environmentFolderName" value="{{environmentFolderName}}" placeholder="{{localize "DH_STATBLOCK_IMPORTER.Folders.importedEnvironments"}}">
         </div>
 
         <div class="form-group">
-            <label for="lootFolderName">Loot Folder Name</label>
-            <input type="text" name="lootFolderName" value="{{lootFolderName}}" placeholder="👑 Imported Loot">
+            <label for="lootFolderName">{{localize "DH_STATBLOCK_IMPORTER.Settings.lootFolderName"}}</label>
+            <input type="text" name="lootFolderName" value="{{lootFolderName}}" placeholder="{{localize "DH_STATBLOCK_IMPORTER.Folders.importedLoot"}}">
         </div>
 
         <div class="form-group">
-            <label for="consumableFolderName">Consumable Folder Name</label>
-            <input type="text" name="consumableFolderName" value="{{consumableFolderName}}" placeholder="🧪 Imported Consumables">
+            <label for="consumableFolderName">{{localize "DH_STATBLOCK_IMPORTER.Settings.consumableFolderName"}}</label>
+            <input type="text" name="consumableFolderName" value="{{consumableFolderName}}" placeholder="{{localize "DH_STATBLOCK_IMPORTER.Folders.importedConsumables"}}">
         </div>
 
         <div class="form-group">
-            <label for="weaponFolderName">Weapon Folder Name</label>
-            <input type="text" name="weaponFolderName" value="{{weaponFolderName}}" placeholder="⚔️ Imported Weapons">
+            <label for="weaponFolderName">{{localize "DH_STATBLOCK_IMPORTER.Settings.weaponFolderName"}}</label>
+            <input type="text" name="weaponFolderName" value="{{weaponFolderName}}" placeholder="{{localize "DH_STATBLOCK_IMPORTER.Folders.importedWeapons"}}">
         </div>
 
         <div class="form-group">
-            <label for="armorFolderName">Armor Folder Name</label>
-            <input type="text" name="armorFolderName" value="{{armorFolderName}}" placeholder="🛡️ Imported Armors">
+            <label for="armorFolderName">{{localize "DH_STATBLOCK_IMPORTER.Settings.armorFolderName"}}</label>
+            <input type="text" name="armorFolderName" value="{{armorFolderName}}" placeholder="{{localize "DH_STATBLOCK_IMPORTER.Folders.importedArmors"}}">
         </div>
 
         <div class="form-group">
-            <label for="featureFolderName">Feature Folder Name</label>
-            <input type="text" name="featureFolderName" value="{{featureFolderName}}" placeholder="✨ Imported Features">
+            <label for="featureFolderName">{{localize "DH_STATBLOCK_IMPORTER.Settings.featureFolderName"}}</label>
+            <input type="text" name="featureFolderName" value="{{featureFolderName}}" placeholder="{{localize "DH_STATBLOCK_IMPORTER.Folders.importedFeatures"}}">
         </div>
 
          <div class="form-group">
-            <label for="domainCardFolderName">Domain Card Folder Name</label>
-            <input type="text" name="domainCardFolderName" value="{{domainCardFolderName}}" placeholder="📜 Imported Domain Cards">
+            <label for="domainCardFolderName">{{localize "DH_STATBLOCK_IMPORTER.Settings.domainCardFolderName"}}</label>
+            <input type="text" name="domainCardFolderName" value="{{domainCardFolderName}}" placeholder="{{localize "DH_STATBLOCK_IMPORTER.Folders.importedDomainCards"}}">
         </div>
 
         <hr class="dh-config-separator">
 
         <div class="form-group">
-            <label for="separatorMode">Bulk Import Separator</label>
+            <label for="separatorMode">{{localize "DH_STATBLOCK_IMPORTER.Config.separatorLabel"}}</label>
             <select name="separatorMode">
-                <option value="blankLine" {{#if (eq separatorMode "blankLine")}}selected{{/if}}>Blank Line (default)</option>
-                <option value="separator" {{#if (eq separatorMode "separator")}}selected{{/if}}>=== Separator</option>
+                <option value="blankLine" {{#if (eq separatorMode "blankLine")}}selected{{/if}}>{{localize "DH_STATBLOCK_IMPORTER.Config.separatorBlankLine"}}</option>
+                <option value="separator" {{#if (eq separatorMode "separator")}}selected{{/if}}>{{localize "DH_STATBLOCK_IMPORTER.Config.separatorSeparator"}}</option>
             </select>
-            <p class="hint dh-config-hint">How to separate multiple entries when importing in bulk.</p>
+            <p class="hint dh-config-hint">{{localize "DH_STATBLOCK_IMPORTER.Config.separatorHint"}}</p>
         </div>
     </div>
 
     {{!-- Aba: Icons --}}
     <div class="dh-config-tab-content" data-tab="icons">
-        <p class="notes dh-config-notes dh-config-notes--general"><strong>Feature Icons:</strong> Default icons used for features created during import.</p>
+        <p class="notes dh-config-notes dh-config-notes--general"><strong>{{localize "DH_STATBLOCK_IMPORTER.Config.featureIcons"}}</strong> {{localize "DH_STATBLOCK_IMPORTER.Config.featureIconsHint"}}</p>
 
         {{!-- Adversary Features --}}
-        <p class="hint" style="font-weight:bold; margin-bottom:4px; color: var(--color-text-light-highlight);">Adversary Features</p>
+        <p class="hint" style="font-weight:bold; margin-bottom:4px; color: var(--color-text-light-highlight);">{{localize "DH_STATBLOCK_IMPORTER.Config.adversaryFeatures"}}</p>
 
         <div class="form-group">
-            <label>Feature Icon</label>
+            <label>{{localize "DH_STATBLOCK_IMPORTER.Common.featureIcon"}}</label>
             <div class="dh-icon-picker-row">
                 <img class="dh-icon-preview" data-target="featureIconAdversary"
-                     src="{{featureIconAdversary}}" title="Current icon">
+                     src="{{featureIconAdversary}}" title="{{localize "DH_STATBLOCK_IMPORTER.Common.currentIcon"}}">
                 <input type="text" name="featureIconAdversary" value="{{featureIconAdversary}}">
                 <button type="button" class="dh-icon-picker-btn" data-target="featureIconAdversary">
                     <i class="fas fa-file-image"></i>
@@ -125,21 +125,21 @@
         <div class="form-group">
             <label class="checkbox" style="font-weight:normal; display:flex; align-items:center; gap:8px;">
                 <input type="checkbox" name="featureIconMatchAdversary" {{checked featureIconMatchAdversary}}>
-                <span>Use actor portrait as feature icon</span>
+                <span>{{localize "DH_STATBLOCK_IMPORTER.Config.useActorPortrait"}}</span>
             </label>
-            <p class="hint dh-config-hint">When enabled, each feature's icon will match the portrait image of the adversary being imported.</p>
+            <p class="hint dh-config-hint">{{localize "DH_STATBLOCK_IMPORTER.Config.useAdversaryPortraitHint"}}</p>
         </div>
 
         <hr class="dh-config-separator">
 
         {{!-- Environment Features --}}
-        <p class="hint" style="font-weight:bold; margin-bottom:4px; color: var(--color-text-light-highlight);">Environment Features</p>
+        <p class="hint" style="font-weight:bold; margin-bottom:4px; color: var(--color-text-light-highlight);">{{localize "DH_STATBLOCK_IMPORTER.Config.environmentFeatures"}}</p>
 
         <div class="form-group">
-            <label>Feature Icon</label>
+            <label>{{localize "DH_STATBLOCK_IMPORTER.Common.featureIcon"}}</label>
             <div class="dh-icon-picker-row">
                 <img class="dh-icon-preview" data-target="featureIconEnvironment"
-                     src="{{featureIconEnvironment}}" title="Current icon">
+                     src="{{featureIconEnvironment}}" title="{{localize "DH_STATBLOCK_IMPORTER.Common.currentIcon"}}">
                 <input type="text" name="featureIconEnvironment" value="{{featureIconEnvironment}}">
                 <button type="button" class="dh-icon-picker-btn" data-target="featureIconEnvironment">
                     <i class="fas fa-file-image"></i>
@@ -150,21 +150,21 @@
         <div class="form-group">
             <label class="checkbox" style="font-weight:normal; display:flex; align-items:center; gap:8px;">
                 <input type="checkbox" name="featureIconMatchEnvironment" {{checked featureIconMatchEnvironment}}>
-                <span>Use actor portrait as feature icon</span>
+                <span>{{localize "DH_STATBLOCK_IMPORTER.Config.useActorPortrait"}}</span>
             </label>
-            <p class="hint dh-config-hint">When enabled, each feature's icon will match the portrait image of the environment being imported.</p>
+            <p class="hint dh-config-hint">{{localize "DH_STATBLOCK_IMPORTER.Config.useEnvironmentPortraitHint"}}</p>
         </div>
 
         <hr class="dh-config-separator">
 
         {{!-- Standalone Feature Items --}}
-        <p class="hint" style="font-weight:bold; margin-bottom:4px; color: var(--color-text-light-highlight);">Feature Items (standalone import)</p>
+        <p class="hint" style="font-weight:bold; margin-bottom:4px; color: var(--color-text-light-highlight);">{{localize "DH_STATBLOCK_IMPORTER.Config.standaloneFeatureItems"}}</p>
 
         <div class="form-group">
-            <label>Feature Icon</label>
+            <label>{{localize "DH_STATBLOCK_IMPORTER.Common.featureIcon"}}</label>
             <div class="dh-icon-picker-row">
                 <img class="dh-icon-preview" data-target="featureIconFeature"
-                     src="{{featureIconFeature}}" title="Current icon">
+                     src="{{featureIconFeature}}" title="{{localize "DH_STATBLOCK_IMPORTER.Common.currentIcon"}}">
                 <input type="text" name="featureIconFeature" value="{{featureIconFeature}}">
                 <button type="button" class="dh-icon-picker-btn" data-target="featureIconFeature">
                     <i class="fas fa-file-image"></i>
@@ -175,7 +175,7 @@
 
     <div class="form-footer">
         <button type="submit" class="save-button">
-            <i class="fas fa-save"></i> Save Settings
+            <i class="fas fa-save"></i> {{localize "DH_STATBLOCK_IMPORTER.Common.saveSettings"}}
         </button>
     </div>
 </div>

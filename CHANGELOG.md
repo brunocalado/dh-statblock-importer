@@ -1,3 +1,10 @@
+# 0.3.2
+
+- [Fixed] Russian adversary statblocks now accept type-first tier lines such as `Стрелок 1-го тира`.
+- [Fixed] Localized physical and magical damage phrases are parsed correctly in base attacks.
+- [Fixed] Markdown hard line breaks no longer leak into parsed stat fields.
+- [Added] Localized reaction rolls, including `бросок реакции Влияния`, create actions with canonical trait keys.
+
 # 0.3.1
 
 - The Forge filepicker support
