@@ -25,12 +25,11 @@ export const TEMPLATES = {
       description: "",
       quantity: 1,
       actions: {},
-      attached: [],
       tier: 1,
       equipped: false,
       secondary: false,
       burden: "oneHanded",
-      weaponFeatures: [],
+      itemFeatures: {},
       attack: {
         name: "Attack",
         img: "icons/skills/melee/blood-slash-foam-red.webp",
@@ -135,14 +134,13 @@ export const TEMPLATES = {
       description: "",
       quantity: 1,
       actions: {},
-      attached: [],
       tier: 1,
       equipped: false,
       armor: {
         current: 0,
         max: 0
       },
-      armorFeatures: [],
+      itemFeatures: {},
       baseThresholds: {
         major: 0,
         severe: 0
@@ -164,8 +162,6 @@ export const TEMPLATES = {
       description: "",
       resource: null,
       actions: {},
-      originItemType: null,
-      multiclassOrigin: false,
       featureForm: "passive"
     },
     effects: [],
@@ -442,7 +438,6 @@ export const TEMPLATES = {
       type: "standard",
       notes: "",
       difficulty: 1,
-      hordeHp: 1,
       criticalThreshold: 20,
       damageThresholds: {
         major: 0,
@@ -456,28 +451,6 @@ export const TEMPLATES = {
         stress: {
           value: 0,
           max: null
-        }
-      },
-      rules: {
-        conditionImmunities: {
-          hidden: false,
-          restrained: false,
-          vulnerable: false
-        },
-        damageReduction: {
-          thresholdImmunities: {
-            minor: false
-          },
-          reduceSeverity: {
-            magical: 0,
-            physical: 0
-          }
-        },
-        attack: {
-          damage: {
-            hpDamageMultiplier: 1,
-            hpDamageTakenMultiplier: 1
-          }
         }
       },
       attack: {
@@ -560,33 +533,7 @@ export const TEMPLATES = {
           damageMod: "none"
         }
       },
-      experiences: {},
-      bonuses: {
-        roll: {
-          attack: {
-            bonus: 0,
-            dice: []
-          },
-          action: {
-            bonus: 0,
-            dice: []
-          },
-          reaction: {
-            bonus: 0,
-            dice: []
-          }
-        },
-        damage: {
-          physical: {
-            bonus: 0,
-            dice: []
-          },
-          magical: {
-            bonus: 0,
-            dice: []
-          }
-        }
-      }
+      experiences: {}
     },
     prototypeToken: {
       name: "Adversary",

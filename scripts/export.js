@@ -539,32 +539,16 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
             }
         }
 
-        // Starting Items (inventory.take - items the class always grants)
-        // DataModel resolves these into index entry objects with .name and .uuid
-        const takeList = this._toArray(sys.inventory?.take);
-        if (takeList.length > 0) {
-            const takeNames = takeList.map(e => (typeof e === "object" ? e.name : e)).filter(Boolean);
-            if (takeNames.length > 0) {
-                lines.push(`Starting Items: ${takeNames.join(", ")}`);
-            }
-        }
-
-        // Common Items Choice (inventory.choiceA - pick one consumable)
-        const choiceAList = this._toArray(sys.inventory?.choiceA);
-        if (choiceAList.length > 0) {
-            const choiceANames = choiceAList.map(e => (typeof e === "object" ? e.name : e)).filter(Boolean);
-            if (choiceANames.length > 0) {
-                lines.push(`Common Items Choice: ${choiceANames.join(" or ")}`);
-            }
-        }
-
-        // Class Items Choice (inventory.choiceB - pick one class-specific item)
-        const choiceBList = this._toArray(sys.inventory?.choiceB);
-        if (choiceBList.length > 0) {
-            const choiceBNames = choiceBList.map(e => (typeof e === "object" ? e.name : e)).filter(Boolean);
-            if (choiceBNames.length > 0) {
-                lines.push(`Class Items Choice: ${choiceBNames.join(" or ")}`);
-            }
+        // Inventory lists hold plain UUID strings (system 2.12), so resolve them through the class model.
+        const inventory = await sys.fetchInventoryChoices();
+        const inventoryLines = [
+            ["Starting Items", inventory.take, ", "],         // items the class always grants
+            ["Common Items Choice", inventory.choiceA, " or "], // pick one consumable
+            ["Class Items Choice", inventory.choiceB, " or "]   // pick one class-specific item
+        ];
+        for (const [label, docs, separator] of inventoryLines) {
+            const names = docs.filter(Boolean).map(d => d.name);
+            if (names.length > 0) lines.push(`${label}: ${names.join(separator)}`);
         }
 
         // Features - separated by type (hope vs class)
@@ -604,18 +588,13 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
             }
         }
 
-        // Subclasses - resolve each and their nested features
-        // DataModel resolves these into index entry objects; use .uuid for full document lookup
-        const subclassList = this._toArray(sys.subclasses);
+        // Subclasses - a class does not store them; each subclass points back through system.linkedClass
+        const subclassList = await sys.fetchSubclasses();
         if (subclassList.length > 0) {
             lines.push("");
             lines.push("SUBCLASSES");
 
-            for (const subclassEntry of subclassList) {
-                const subclassUuid = (typeof subclassEntry === "object") ? subclassEntry.uuid : subclassEntry;
-                const subclass = await this._resolveItem(subclassUuid);
-                if (!subclass) continue;
-
+            for (const subclass of subclassList) {
                 lines.push("");
                 lines.push(subclass.name);
 

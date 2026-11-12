@@ -1,3 +1,9 @@
+# Unreleased
+
+- [Breaking][Changed] Requires Daggerheart 2.12.8 or newer.
+- [Fixed] Create Statblock on a class listed item UUIDs instead of names in Starting Items, Common Items Choice and Class Items Choice.
+- [Fixed] Create Statblock on a class left out the SUBCLASSES section.
+
 # 0.3.6
 
 - [Added] GM prompts become secret blocks ([#5](https://github.com/brunocalado/dh-statblock-importer/issues/5)). Text wrapped in `*asterisks*` in a feature description is stored as a secret block, the GM-only section Foundry reveals on demand, in adversary, environment and standalone feature imports. In environments, the questions that end a feature are detected on their own when no marker is used, since the italics that set them apart are lost when pasting from a PDF. Checked against all 197 environment features of the Daggerheart system: 195 get exactly the official secret text; the other two differ only where the official secret is a rules note rather than a question, or where the actor name is replaced by a lookup.
