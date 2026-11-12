@@ -1,4 +1,4 @@
-# Unreleased
+# 0.4.0
 
 - [Breaking][Changed] Requires Daggerheart 2.12.8 or newer.
 - [Changed] "All Features" compendium rebuilt from the Daggerheart 2.12.8 adversaries. Steel-Skinned and Stolen Armor reduce damage severity again: their effects targeted the old per-damage-type severity rule, which the system replaced with a single value. Also picks up the system's text and effect corrections (Armor-Shredding Shards, Creeping Fire, Encumber, Last Grasp). Features that share a name but not a text are now all kept (855 features, up from 801), so each adversary's own version is available.
