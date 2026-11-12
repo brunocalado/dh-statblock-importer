@@ -1,0 +1,38 @@
+{
+  "_id": "vn36W1zhQW6FMir6",
+  "name": "Join or Die",
+  "type": "feature",
+  "img": "icons/magic/death/skull-humanoid-worn-teal.webp",
+  "system": {
+    "featureForm": "passive",
+    "description": "<p>The @Lookup[@name] dies if it hasn't reconnected its upper and lower halves by dawn.</p>",
+    "attribution": {},
+    "gmNotes": "",
+    "resource": null,
+    "actions": {},
+    "granter": null,
+    "actorResources": []
+  },
+  "effects": [],
+  "folder": "OWArd59gVR8MImSB",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "importedFrom": {
+      "compendium": "daggerheart.adversaries",
+      "adversary": "Viscera Sucker",
+      "tier": 3,
+      "type": "Skulk",
+      "customTag": "Core Rulebook",
+      "originalId": "RxBlE5YjrtWE5Bzo",
+      "isSpecialCase": false
+    }
+  },
+  "_stats": {
+    "systemId": "daggerheart",
+    "systemVersion": "2.12.8"
+  },
+  "_key": "!items!vn36W1zhQW6FMir6"
+}

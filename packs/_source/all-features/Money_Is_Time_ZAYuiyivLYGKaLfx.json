@@ -1,0 +1,38 @@
+{
+  "_id": "ZAYuiyivLYGKaLfx",
+  "name": "Money Is Time",
+  "type": "feature",
+  "img": "icons/skills/movement/arrows-up-trio-red.webp",
+  "system": {
+    "description": "<p><strong>Spend 3 handfuls of gold (or a Fear)</strong> to spotlight [[/r 1d4+1]] allies.</p>",
+    "resource": null,
+    "actions": {},
+    "featureForm": "action",
+    "attribution": {},
+    "gmNotes": "",
+    "granter": null,
+    "actorResources": []
+  },
+  "effects": [],
+  "folder": "tIC7MmRdnVCpcGAV",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "importedFrom": {
+      "compendium": "daggerheart.adversaries",
+      "adversary": "Demon of Avarice",
+      "tier": 3,
+      "type": "Support",
+      "customTag": "Core Rulebook",
+      "originalId": "BKgv2D1IdI813R8k",
+      "isSpecialCase": false
+    }
+  },
+  "_stats": {
+    "systemId": "daggerheart",
+    "systemVersion": "2.12.8"
+  },
+  "_key": "!items!ZAYuiyivLYGKaLfx"
+}

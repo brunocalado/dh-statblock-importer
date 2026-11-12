@@ -7,7 +7,7 @@
  */
 
 /**
- * Rebuilds the "all-features" compendium (packs/all-features) from the adversaries shipped by
+ * Rebuilds the "all-features" compendium source (packs/_source/all-features) from the adversaries shipped by
  * the Daggerheart system. The importer's statblock parser looks features up in this pack by
  * name, so it has to follow the system's data after every release.
  *
@@ -29,19 +29,17 @@
  * Then:
  *
  *   node tools/build-features.mjs /tmp/dh-unpacked            # print a summary
- *   node tools/build-features.mjs /tmp/dh-unpacked --write    # repack packs/all-features
+ *   node tools/build-features.mjs /tmp/dh-unpacked --write    # rewrite packs/_source/all-features
+ *   npm run pack                                              # compile the LevelDB to test locally
  *
- * --write needs the `fvtt` CLI on the PATH and no Foundry with this module's packs open:
- * a LevelDB opens in one process at a time, and the CLI refuses to pack a locked database.
+ * `npm run pack` needs no Foundry with this module's packs open: a LevelDB opens in one process
+ * at a time. The release workflow compiles the packs from the JSON source on its own.
  */
 
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import crypto from "node:crypto";
-import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { MODULE_ID } from "../scripts/constants.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PACK_NAME = "all-features";
@@ -241,21 +239,17 @@ console.log(`${items.length} features in ${folders.length} folders; ${skipped} d
 report(items);
 
 if (write) {
-    const staging = fs.mkdtempSync(path.join(os.tmpdir(), "si-features-"));
-    try {
-        for (const doc of [...folders, ...items]) {
-            fs.writeFileSync(path.join(staging, `${doc._id}.json`), JSON.stringify(doc, null, 2));
-        }
-        execFileSync("fvtt", [
-            "package", "pack", PACK_NAME,
-            "--inputDirectory", staging,
-            "--outputDirectory", path.join(ROOT, "packs"),
-            "--type", "Module", "--id", MODULE_ID
-        ], { stdio: ["ignore", "ignore", "inherit"] });
-    } finally {
-        fs.rmSync(staging, { recursive: true, force: true });
+    // Replace the folder wholesale so a feature dropped by the system disappears from the pack.
+    const sourceDir = path.join(ROOT, "packs", "_source", PACK_NAME);
+    fs.rmSync(sourceDir, { recursive: true, force: true });
+    fs.mkdirSync(sourceDir, { recursive: true });
+    for (const doc of [...folders, ...items]) {
+        // Same filename and serialization as the CLI's extractPack, so `npm run unpack` after
+        // `npm run pack` leaves these files untouched.
+        const file = `${doc.name.replace(/[^a-zA-Z0-9А-я]/g, "_")}_${doc._id}.json`;
+        fs.writeFileSync(path.join(sourceDir, file), JSON.stringify(doc, null, 2) + "\n");
     }
-    console.log(`\nWrote packs/${PACK_NAME} (${items.length} features, ${folders.length} folders).`);
+    console.log(`\nWrote packs/_source/${PACK_NAME} (${items.length} features, ${folders.length} folders). Run \`npm run pack\` to rebuild the LevelDB.`);
 } else {
-    console.log(`\n(dry run — pass --write to repack packs/${PACK_NAME})`);
+    console.log(`\n(dry run — pass --write to rewrite packs/_source/${PACK_NAME})`);
 }

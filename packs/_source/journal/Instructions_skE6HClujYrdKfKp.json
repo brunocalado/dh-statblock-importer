@@ -1,0 +1,533 @@
+{
+  "name": "Instructions",
+  "_id": "skE6HClujYrdKfKp",
+  "pages": [
+    {
+      "sort": 100000,
+      "name": "Adversaries",
+      "type": "text",
+      "_id": "nlrsgNbZXTGn1nts",
+      "system": {},
+      "title": {
+        "show": false,
+        "level": 1
+      },
+      "image": {},
+      "text": {
+        "format": 1,
+        "content": "<h2>Adversaries</h2><hr><h3>📋 Structure Layout</h3><p>Use the following format exactly as shown to ensure the module processes the data correctly.</p><p><code>[ADVERSARY NAME]<br>Tier [X] [Type]<br>[Description text...]<br>Motives &amp; Tactics: [Motive 1, Motive 2...]<br>Difficulty: [X] | HP: [X] | Stress: [X] | Thresholds: [Major]/[Severe]<br>ATK: [+/-X] | [Weapon Name]: [Range] | [Damage Formula] [Type]<br>Experience: [Name] [+X]<br>FEATURES<br>[Feature Name] - [Passive/Action/Reaction]: [Description...]</code></p><hr><h3>🔍 Key Fields Breakdown</h3><ul><li><p><strong>Name:</strong> Must be the very first line of the text.</p></li><li><p><strong>Tier &amp; Type:</strong> The second line must follow the format <code>Tier X Type</code>.</p><ul><li><p><em>Standard:</em> <code>Tier 1 Solo</code></p></li><li><p><em>Horde:</em> <code>Tier 2 Horde (5/HP)</code> (The module automatically extracts the Horde HP).</p></li></ul></li><li><p><strong>Stats:</strong> Can be on a single line or separated by <code>|</code>.</p><ul><li><p><strong>Difficulty:</strong> <code>Difficulty: 12</code> (Handles typos like \"Diffi culty\").</p></li><li><p><strong>HP / Stress:</strong> <code>HP: 5</code> | <code>Stress: 3</code>.</p></li><li><p><strong>Thresholds:</strong> <code>Thresholds: 6/12</code> (Major/Severe).</p></li></ul></li><li><p><strong>Attack:</strong></p><ul><li><p><strong>Bonus:</strong> <code>ATK: +3</code> or <code>ATK: -1</code>.</p></li><li><p><strong>Range:</strong> Valid ranges are <em>Very Close, Close, Far, Melee, Very Far</em>.</p></li><li><p><strong>Damage:</strong> <code>1d8+2 physical</code> or <code>3 magical</code>.</p><ul><li><p><em>Supported Types:</em> physical (phy), magical (mag).</p></li></ul></li></ul></li><li><p><strong>Experiences:</strong> <code>Experience: Tracker +2, Ancient Knowledge +1</code>.</p></li><li><p><strong>Secret notes:</strong> Text wrapped in asterisks inside a feature description becomes a GM-only secret block, e.g. <code>*Only the leader knows the way out.*</code>.</p></li></ul><hr><h3>💡 Example (Adversary)</h3><p><code>CAVE OGRE<br>Tier 1 Solo<br>A massive humanoid who sees all sapient life as food.<br>Motives &amp; Tactics: Bite off heads, feast, rip limbs, stomp,<br>throw enemies<br>Difficulty: 13 | Thresholds: 8/15 | HP: 8 | Stress: 3<br>ATK: +1 | Club: Very Close | 1d10+2 phy<br>Experience: Throw +2<br>FEATURES<br>Ramp Up - Passive: You must spend a Fear to spotlight the Ogre.<br>While spotlighted, they can make their standard attack against<br>all targets within range.<br>Bone Breaker - Passive: The Ogre's attacks deal direct damage.<br>Hail of Boulders - Action: Mark a Stress to pick up heavy objects<br>and throw them at all targets in front of the Ogre within Far<br>range. Make an attack against these targets. Targets the Ogre<br>succeeds against take 1d10+2 physical damage. If they succeed<br>against more than one target, you gain a Fear.<br>Rampaging Fury - Reaction: When the Ogre marks 2 or more HP,<br>they can rampage. Move the Ogre to a point within Close range<br>and deal 2d6+3 direct physical damage to all targets in their<br>path.</code></p>"
+      },
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "category": null,
+      "ownership": {
+        "default": -1,
+        "3eQnOSvnfoYbqF31": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.368",
+        "systemId": "daggerheart",
+        "systemVersion": "1.5.4",
+        "createdTime": 1769266787179,
+        "modifiedTime": 1790443078819,
+        "lastModifiedBy": "rJydsixomlerZ6wP"
+      },
+      "_key": "!journal.pages!skE6HClujYrdKfKp.nlrsgNbZXTGn1nts"
+    },
+    {
+      "sort": 200000,
+      "name": "Environment",
+      "type": "text",
+      "_id": "fAxQ9BhNIrtqrrsp",
+      "system": {},
+      "title": {
+        "show": false,
+        "level": 1
+      },
+      "image": {},
+      "text": {
+        "format": 1,
+        "content": "<h2>Environment</h2><hr><h3>📋 Structure Layout</h3><p>Use this structure for non-combat or scene-based challenges.</p><p><code>[ENVIRONMENT NAME]<br>Tier [X] [Environment Type]<br>[Description text...]<br>Impulses: [Impulse 1, Impulse 2...]<br>Difficulty: [X]<br>Potential Adversaries: [Group Name] ([Actor1], [Actor2]), [Group B] ([Actor3])<br>FEATURES<br>[Feature Name] - [Passive/Action/Reaction]: [Description...] [GM prompt questions?]</code></p><hr><h3>🔍 Key Fields Breakdown</h3><ul><li><p><strong>Type:</strong> Example: <code>Tier 1 Exploration</code>.</p></li><li><p><strong>Impulses:</strong> Replaces \"Motives &amp; Tactics\". Example: <code>Impulses: Confuse the explorers, Shift the path</code>.</p></li><li><p><strong>Potential Adversaries:</strong> Parses groups of actors to help populate the scene.</p><ul><li><p><em>Format:</em> <code>GroupName (ActorName, ActorName)</code></p></li><li><p><em>Behavior:</em> The module looks up these names in your configured <strong>Actor Compendiums</strong> (e.g., <code>daggerheart.adversaries</code>) and links them.</p></li></ul></li><li><p><strong>Features:</strong> Bullet points (<code>•</code> or <code>-</code>) in descriptions are automatically converted to HTML lists for the Foundry sheet.</p></li><li><p><strong>GM Prompts (secret):</strong> The italic questions that end an environment feature become a <strong>secret block</strong>, visible only to the GM until revealed.</p><ul><li><p><em>Automatic:</em> Questions at the end of a feature's description are detected on their own. Put them after the rules text, on the same line or the next one.</p></li><li><p><em>Explicit:</em> Wrap any text in asterisks to make it secret, e.g. <code>*The hum is the dryad's song.*</code>. Use this for secret notes that are not questions.</p></li><li><p><em>Settings:</em> Configure → General → <strong>GM Prompts as Secrets</strong> switches between marker + questions (default), marker only, or off.</p></li></ul></li></ul><hr><h3>💡 Example (Environment)</h3><p><code>ABANDONED GROVE<br>Tier 1 Exploration<br>A former druidic grove lying fallow and fully reclaimed by nature.<br>Impulses: Draw in the curious, echo the past<br>Difficulty: 11<br>Potential Adversaries: Beasts (Bear, Dire Wolf), Guardians (Treant, Dryad)<br>FEATURES<br>Overgrown Battlefield - Passive: There has been a battle here. A PC can make an Instinct Roll to investigate.<br>• Traces of a battle litter the ground.<br>• A moss-covered tree is actually a corpse.<br>Barbed Vines - Action: Pick a point within the grove. Targets take 1d8+3 physical damage.<br>How many vines are there? Where do they grab you?</code></p><p>The last line of <em>Barbed Vines</em> becomes a secret block.</p>"
+      },
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "category": null,
+      "ownership": {
+        "default": -1,
+        "3eQnOSvnfoYbqF31": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.368",
+        "systemId": "daggerheart",
+        "systemVersion": "1.5.4",
+        "createdTime": 1769266875890,
+        "modifiedTime": 1790443078818,
+        "lastModifiedBy": "rJydsixomlerZ6wP"
+      },
+      "_key": "!journal.pages!skE6HClujYrdKfKp.fAxQ9BhNIrtqrrsp"
+    },
+    {
+      "sort": 300000,
+      "name": "Loot",
+      "type": "text",
+      "_id": "vlcNkeXV3hQTZclx",
+      "system": {},
+      "title": {
+        "show": false,
+        "level": 1
+      },
+      "image": {},
+      "text": {
+        "format": 1,
+        "content": "<h1>Loot</h1><h3>📋 Structure Layout</h3><p>Use the following format exactly as shown. For batch importing, separate each item with <strong>one empty line</strong>.</p><p><code>[ITEM NAME]<br>[Description text...]<br>[More description text...]</code></p><h3>🔍 Key Fields Breakdown</h3><ul><li><p><strong>Name:</strong> Must be the <strong>very first line</strong> of the item block.</p></li><li><p><strong>Description:</strong> All lines following the name are combined into the description.</p></li><li><p><strong>Batching:</strong> To import multiple items at once, leave at least one empty line between them.</p></li></ul><h3>💡 Example (Loot)</h3><p><code>Ancient Golden Chalice<br>A heavy goblet encrusted with rubies, likely from the Old Era.<br>It hums slightly when touched.<br><br>Iron Strongbox<br>A rusted box containing 50 gold pieces and a strange map.</code></p>"
+      },
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "category": null,
+      "ownership": {
+        "default": -1,
+        "3eQnOSvnfoYbqF31": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.363",
+        "systemId": "daggerheart",
+        "systemVersion": "1.5.4",
+        "createdTime": 1769266883426,
+        "modifiedTime": 1780493845319,
+        "lastModifiedBy": "1XySCPpaFX8RnFhs"
+      },
+      "_key": "!journal.pages!skE6HClujYrdKfKp.vlcNkeXV3hQTZclx"
+    },
+    {
+      "sort": 400000,
+      "name": "Consumable",
+      "type": "text",
+      "_id": "nuyINYV4GIjtC1lF",
+      "system": {},
+      "title": {
+        "show": false,
+        "level": 1
+      },
+      "image": {},
+      "text": {
+        "format": 1,
+        "content": "<h1>Consumables</h1><h3>📋 Structure Layout</h3><p>Use the following format exactly as shown. For batch importing, separate each item with <strong>one empty line</strong>.</p><p><code>[CONSUMABLE NAME]<br>[Description text...]<br>[Effect details...]</code></p><h3>🔍 Key Fields Breakdown</h3><ul><li><p><strong>Name:</strong> Must be the <strong>very first line</strong> of the item block.</p></li><li><p><strong>Description:</strong> All lines following the name are combined into the description.</p></li><li><p><strong>Batching:</strong> To import multiple items at once, leave at least one empty line between them.</p></li></ul><h3>💡 Example (Consumable)</h3><p><code>Potion of Minor Healing<br>Restores 2 Hit Points or clears 1 Stress when consumed.<br>Tastes like strawberries.<br><br>Elixir of Stone<br>Gain +2 Armor Slots until next rest. Your skin turns grey and hard.</code></p>"
+      },
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "category": null,
+      "ownership": {
+        "default": -1,
+        "3eQnOSvnfoYbqF31": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.363",
+        "systemId": "daggerheart",
+        "systemVersion": "1.5.4",
+        "createdTime": 1769266903082,
+        "modifiedTime": 1780493825414,
+        "lastModifiedBy": "1XySCPpaFX8RnFhs"
+      },
+      "_key": "!journal.pages!skE6HClujYrdKfKp.nuyINYV4GIjtC1lF"
+    },
+    {
+      "sort": 500000,
+      "name": "How to Use Unformatted Stats",
+      "type": "text",
+      "_id": "Tulbfr9sCYlhHEzA",
+      "system": {},
+      "title": {
+        "show": false,
+        "level": 1
+      },
+      "image": {},
+      "text": {
+        "format": 1,
+        "content": "<h1>How to Use Unformatted Stats</h1><p>The <strong>Statblock Importer</strong> is a strict parser—it expects data in a specific order. However, real-world data (PDF copy-pastes, homebrew notes) is often messy. Instead of fixing it manually, use an AI (like me) to clean it up instantly.</p><hr><h3>🔄 The Workflow</h3><ol><li><p><strong>Copy</strong> your messy/raw text.</p></li><li><p><strong>Paste</strong> it into your AI of choice along with the <strong>\"Magic Prompt\"</strong> below.</p></li><li><p><strong>Copy</strong> the clean output and <strong>Paste</strong> it into the Foundry module.</p></li></ol><hr><h3>🔮 The Magic Prompt</h3><p>Copy and save the block below. Paste this followed by your raw text whenever you need to import a statblock.</p><p><code>Role: You are a Daggerheart Statblock Formatter.<br>Task: Convert the provided \"Raw Text\" into the strict format required by the Importer module.<br>Constraint: Output ONLY the formatted text block. Do not add conversational text.<br><br>Formatting Rules:<br>1. Name: First line MUST be the name.<br>2. Meta: Second line MUST be \"Tier X Type\" (e.g., Tier 1 Solo).<br>3. Line Breaks: Force a new line after Name, Meta, Description, and before/after each Feature.<br>4. Blocks: Use Environment Format for Exploration, Social, Traversal, or Event. Otherwise, use Adversary Format.<br>5. Stats: Keep stats on separate lines or separated by \"|\".<br>6. Features: List under header FEATURES. Format: Name - Type: Description.<br>7. Damage: Use \"Dice+Mod Type\" or \"Value Type\". Use \"phy\" for physical or \"mag\" for magical.<br>8. GM Prompts: Italic GM prompt questions or GM-only notes go at the end of their feature's description, wrapped in *asterisks*.<br><br>Target Formats:<br><br>[ADVERSARY]<br>{Name}<br>Tier {X} {Type}<br>{Description}<br>Motives &amp; Tactics: {Motive 1, Motive 2...}<br>Difficulty: {X} | HP: {X} | Stress: {X} | Thresholds: {Major}/{Severe}<br>ATK: {Signed Bonus} | {Weapon}: {Range} | {Damage Formula} {Type}<br>Experience: {Name} {Bonus}<br>FEATURES<br>{Feature Name} - {Type}: {Description}<br><br>[ENVIRONMENT]<br>{Name}<br>Tier {X} {Type}<br>{Description}<br>Impulses: {Impulse 1...}<br>Difficulty: {X}<br>Potential Adversaries: {Group} ({Actor1}, {Actor2})<br>FEATURES<br>{Feature Name} - {Type}: {Description}<br><br>Raw Text to Convert:<br>[PASTE YOUR TEXT HERE]</code></p><hr><h3>⚠️ Troubleshooting AI Errors</h3><p>If the parser fails, check the following:</p><ul><li><p><strong>Line Breaks:</strong> Ensure the <strong>Name</strong>, <strong>Tier</strong>, and <strong>Motives/Impulses</strong> are not merged into the description.</p></li><li><p><strong>Damage Types:</strong> Ensure they are written as <code>phy</code> or <code>mag</code>.</p></li></ul><p><strong>The Quick Fix:</strong> If the AI output is messy, tell it:</p><p><em>\"You forgot the line breaks. Put Name, Tier, Description, and Motives on separate lines.\"</em></p><hr><h3>📝 Example</h3><p><strong>Input (Raw PDF):</strong></p><p><code>ABANDONED GROVE Tier 1 Exploration. A former druidic <br>grove... Impulses: Draw in the curious... Diffi culty: 11</code></p><p><strong>Output (Cleaned):</strong></p><p><code>ABANDONED GROVE<br>Tier 1 Exploration<br>A former druidic grove lying fallow and fully reclaimed by nature.<br>Impulses: Draw in the curious, echo the past<br>Difficulty: 11</code></p>"
+      },
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "category": null,
+      "ownership": {
+        "default": -1,
+        "3eQnOSvnfoYbqF31": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.368",
+        "systemId": "daggerheart",
+        "systemVersion": "1.5.4",
+        "createdTime": 1769268028523,
+        "modifiedTime": 1790443078820,
+        "lastModifiedBy": "rJydsixomlerZ6wP"
+      },
+      "_key": "!journal.pages!skE6HClujYrdKfKp.Tulbfr9sCYlhHEzA"
+    },
+    {
+      "sort": 450000,
+      "name": "Weapon",
+      "type": "text",
+      "_id": "6v8fr6yfNI4a9OUL",
+      "system": {},
+      "title": {
+        "show": false,
+        "level": 1
+      },
+      "image": {},
+      "text": {
+        "format": 1,
+        "content": "<h1>Weapons</h1><h3>📋 Structure Layout</h3><p>Use the following format exactly as shown. For batch importing, separate each item with <strong>one empty line</strong>.</p><p><code>Tier [X] [WEAPON NAME] [Trait] [Range] [Damage] [Burden] [Feature]<br>[Description text...]</code></p><h3>🔍 Key Fields Breakdown</h3><ul><li><p><strong>First Line Structure:</strong> The first line must contain <strong>all</strong> the mechanical statistics in the specific order:</p><ol><li><p><strong>Tier (Optional):</strong> <code>Tier 1</code>, <code>Tier 2</code>, etc. If omitted, defaults to Tier 1.</p></li><li><p><strong>Name:</strong> Everything before the Trait. e.g., <code>Broadsword</code>, <code>Recall Dagger</code>.</p></li><li><p><strong>Trait:</strong> One of the following: <code>Agility</code>, <code>Finesse</code>, <code>Strength</code>, <code>Knowledge</code>, <code>Presence</code>, <code>Instinct</code>.</p></li><li><p><strong>Range:</strong> One of the following: <code>Melee</code>, <code>Very Close</code>, <code>Close</code>, <code>Far</code>, <code>Very Far</code>.</p></li><li><p><strong>Damage:</strong> Dice notation followed by type. e.g., <code>d8 phy</code>, <code>1d10+2 mag</code>, <code>d6 phy/mag</code>.</p><ul><li><p>Supported dice: d4, d6, d8, d10, d12, d20.</p></li><li><p>Supported types: <code>phy</code> (physical), <code>mag</code> (magical).</p></li></ul></li><li><p><strong>Burden:</strong> <code>One-Handed</code> or <code>Two-Handed</code>.</p></li><li><p><strong>Feature (Optional):</strong> Any text remaining on the first line after Burden is treated as the weapon's feature name/short description.</p></li></ol></li><li><p><strong>Description:</strong> All lines following the first line are combined into the full description.</p></li></ul><h3>💡 Examples (Weapon)</h3><p><strong>Simple Sword:</strong></p><p><code>Tier 1 Broadsword Strength Melee d10 phy Two-Handed<br>A heavy blade favored by knights.</code></p><p><strong>Complex Magic Weapon:</strong></p><p><code>Tier 2 Nightblade Finesse Close d8+2 mag One-Handed Shadowstep: Teleport to target on hit.<br>This blade seems to be made of solidified shadow.<br>It feels cold to the touch.</code></p><p><strong>Crossbow (No Tier specified):</strong></p><p><code>Heavy Crossbow Agility Far d10 phy Two-Handed Piercing: Ignores 1 armor.<br>Requires a moment to reload.</code></p>"
+      },
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "category": null,
+      "ownership": {
+        "default": -1,
+        "3eQnOSvnfoYbqF31": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.363",
+        "systemId": "daggerheart",
+        "systemVersion": "1.5.4",
+        "createdTime": 1769271754140,
+        "modifiedTime": 1780493902431,
+        "lastModifiedBy": "1XySCPpaFX8RnFhs"
+      },
+      "_key": "!journal.pages!skE6HClujYrdKfKp.6v8fr6yfNI4a9OUL"
+    },
+    {
+      "sort": 425000,
+      "name": "Armor",
+      "type": "text",
+      "_id": "lvHdUjqE5GMmApWZ",
+      "system": {},
+      "title": {
+        "show": false,
+        "level": 1
+      },
+      "image": {},
+      "text": {
+        "format": 1,
+        "content": "<h1>Armor</h1><h3>📋 Structure Layout</h3><p>Use the following format exactly as shown. For batch importing, separate each item with <strong>one empty line</strong>.</p><p><code>Tier [X] [ARMOR NAME] [Base Thresholds] [Base Score] [Feature]<br>[Description text...]</code></p><h3>🔍 Key Fields Breakdown</h3><ul><li><p><strong>First Line Structure:</strong> The first line must contain <strong>all</strong> the mechanical statistics in the specific order:</p><ol><li><p><strong>Tier (Optional):</strong> <code>Tier 1</code>, <code>Tier 2</code>, etc. If omitted, defaults to Tier 1.</p></li><li><p><strong>Name:</strong> Everything before the Threshold numbers. e.g., <code>Improved Gambeson</code>, <code>Elundrian Chain Armor</code>.</p></li><li><p><strong>Base Thresholds:</strong> Two integer numbers separated by a slash. e.g., <code>7 / 16</code> or <code>13/28</code>.</p><ul><li><p>The first number is mapped to <strong>Major Threshold</strong>.</p></li><li><p>The second number is mapped to <strong>Severe Threshold</strong>.</p></li></ul></li><li><p><strong>Base Score:</strong> A single integer number representing the Armor Score value. e.g., <code>4</code>, <code>5</code>.</p></li><li><p><strong>Feature (Optional):</strong> Any text remaining on the first line after the <em>Base Score</em> is treated as the armor's feature.</p><ul><li><p>Typical format: <code>Feature Name: Description</code>. e.g., <code>Heavy: -1 to Evasion</code>.</p></li></ul></li></ol></li><li><p><strong>Description:</strong> All lines following the first line are combined into the full description.</p></li></ul><h3>💡 Examples (Armor)</h3><p><strong>Standard Armor (No Tier specified):</strong></p><p><code>Improved Gambeson Armor 7 / 16 4 Flexible: +1 to Evasion<br>A sturdy padded jacket reinforced with rivets.</code></p><p><strong>Tier 2 Armor:</strong></p><p><code>Tier 2 Improved Chainmail Armor 11 / 24 5 Heavy: -1 to Evasion<br>Interlocking metal rings form this protective mesh.<br>It jingles slightly when you move.</code></p><p><strong>Complex Magic Armor:</strong></p><p><code>Elundrian Chain Armor 9 / 21 4 Warded: You reduce incoming magic damage by your Armor Score before applying it to your damage thresholds.<br>Forged by the ancient elves, this chainmail glows with a faint blue light.</code></p><p><strong>High Tier Heavy Armor:</strong></p><p><code>Tier 3 Improved Full Plate Armor 13 / 28 5 Very Heavy: -2 to Evasion; -1 to Agility<br>A masterwork of steel plates covering the entire body.</code></p>"
+      },
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "category": null,
+      "ownership": {
+        "default": -1,
+        "3eQnOSvnfoYbqF31": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.363",
+        "systemId": "daggerheart",
+        "systemVersion": "1.5.4",
+        "createdTime": 1769343524841,
+        "modifiedTime": 1780493935497,
+        "lastModifiedBy": "1XySCPpaFX8RnFhs"
+      },
+      "_key": "!journal.pages!skE6HClujYrdKfKp.lvHdUjqE5GMmApWZ"
+    },
+    {
+      "sort": 475000,
+      "name": "Feature",
+      "type": "text",
+      "_id": "BcLq3PdLENjijqLI",
+      "system": {},
+      "title": {
+        "show": false,
+        "level": 1
+      },
+      "image": {},
+      "text": {
+        "format": 1,
+        "content": "<h1>Features</h1><h3>📋 Structure Layout</h3><p>Use the following format exactly as shown. For batch importing, separate each item with <strong>one empty line</strong>.</p><p><code>[FEATURE NAME] - [Action Type]<br>[Description text...]</code></p><h3>🔍 Key Fields Breakdown</h3><ul><li><p><strong>First Line Structure:</strong> The first line contains the name and optionally the type of the feature.</p><ol><li><p><strong>Name:</strong> Everything before the hyphen (<code>-</code>). e.g., <code>True Attack</code>, <code>Iron Skin</code>.</p></li><li><p><strong>Action Type (Optional):</strong> Specifies the form of the feature. Must be one of:</p><ul><li><p><code>Action</code></p></li><li><p><code>Reaction</code></p></li><li><p><code>Passive</code></p></li><li><p>If omitted, the feature is created without a specific form.</p></li></ul></li></ol></li><li><p><strong>Description:</strong> All lines following the first line are combined into the full description.</p></li><li><p><strong>Secret text:</strong> Wrap text in asterisks to make it a GM-only secret block, e.g. <code>*What does its whisper sound like?*</code>.</p></li></ul><h3>💡 Examples (Feature)</h3><p><strong>Action Feature:</strong></p><p><code>True Attack - Action<br>You attack with advantage.</code></p><p><strong>Passive Feature:</strong></p><p><code>Iron Will - Passive<br>You have resistance to Fear effects.<br>Your mind is a fortress.</code></p><p><strong>Reaction Feature:</strong></p><p><code>Counterspell - Reaction<br>When a creature you can see casts a spell, you can attempt to interrupt it.</code></p><p><strong>Simple Feature (No Type):</strong></p><p><code>Hidden Pockets<br>You can conceal small items on your person with ease.</code></p>"
+      },
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "category": null,
+      "ownership": {
+        "default": -1,
+        "3eQnOSvnfoYbqF31": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.368",
+        "systemId": "daggerheart",
+        "systemVersion": "1.6.0",
+        "createdTime": 1769368072543,
+        "modifiedTime": 1790443078820,
+        "lastModifiedBy": "rJydsixomlerZ6wP"
+      },
+      "_key": "!journal.pages!skE6HClujYrdKfKp.BcLq3PdLENjijqLI"
+    },
+    {
+      "sort": 487500,
+      "name": "Domain Card",
+      "type": "text",
+      "_id": "VXRK8rb5UBdOOLa2",
+      "system": {},
+      "title": {
+        "show": false,
+        "level": 1
+      },
+      "image": {},
+      "text": {
+        "format": 1,
+        "content": "<h1>Domain Cards</h1><h3>📋 Structure Layout</h3><p>Use the following format exactly as shown. For batch importing, separate each item with <strong>one empty line</strong>.</p><p><code>[CARD NAME]<br>Level [X] [DOMAIN] [TYPE]<br>Recall Cost: [Y]<br>[Description text...]</code></p><h3>🔍 Key Fields Breakdown</h3><ul><li><p><strong>First Line:</strong> The name of the Domain Card. e.g., <code>Arcane Blast</code>, <code>Healing Touch</code>.</p></li><li><p><strong>Second Line:</strong> Contains Level, Domain, and Type.</p><ul><li><p><strong>Level:</strong> An integer from 1 to 10. (e.g., <code>Level 1</code>)</p></li><li><p><strong>Domain:</strong> The name of the domain (string). e.g., <code>Blade</code>, <code>Codex</code>, <code>Splendor</code>.</p></li><li><p><strong>Type:</strong> The type of card. Must be one of:</p><ul><li><p><code>spell</code></p></li><li><p><code>ability</code></p></li><li><p><code>grimoire</code></p></li></ul></li></ul></li><li><p><strong>Third Line:</strong></p><ul><li><p><strong>Recall Cost:</strong> An integer from 0 to 20. Format must be <code>Recall Cost: Y</code>.</p></li></ul></li><li><p><strong>Description:</strong> All lines following the Recall Cost line are combined into the full description of the card.</p></li></ul><h3>💡 Examples (Domain Card)</h3><p><strong>Spell Card:</strong></p><p><code>Fireball<br>Level 3 Codex Spell<br>Recall Cost: 2<br>You unleash a massive ball of fire at your enemies.<br>Deal 3d8 magic damage to all enemies in Close range.</code></p><p><strong>Ability Card:</strong></p><p><code>Battle Cry<br>Level 1 Blade Ability<br>Recall Cost: 1<br>You shout with such ferocity that your allies feel emboldened.<br>All allies within Far range gain a Hope.</code></p><p><strong>Grimoire Card:</strong></p><p><code>Book of Shadows<br>Level 5 Midnight Grimoire<br>Recall Cost: 2<br>Wild Flame: Make a Spellcast Roll against up to three adversaries within Melee range. Targets you succeed against take 2d6 magic damage and must mark a Stress as flames erupt from your hand.<br>Magic Hand: You conjure a magical hand with the same size and strength as your own within Far range.<br>Mysterious Mist: Make a Spellcast Roll (13) to cast a temporary thick fog that gathers in a stationary area within Very Close range. The fog heavily obscures this area and everything in it.</code></p>"
+      },
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "category": null,
+      "ownership": {
+        "default": -1,
+        "3eQnOSvnfoYbqF31": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.363",
+        "systemId": "daggerheart",
+        "systemVersion": "1.6.0",
+        "createdTime": 1769368257415,
+        "modifiedTime": 1780494012565,
+        "lastModifiedBy": "1XySCPpaFX8RnFhs"
+      },
+      "_key": "!journal.pages!skE6HClujYrdKfKp.VXRK8rb5UBdOOLa2"
+    },
+    {
+      "sort": 600000,
+      "name": "+Features",
+      "type": "text",
+      "_id": "wvgvxX1ksmUL2Ahj",
+      "system": {},
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "text": {
+        "format": 1,
+        "content": "<p>Enabling this toggle when importing an adversary or environment will also create the imported features within the items directory.</p>\n<p>Check the folders \"✨ Adversary Features\" e \"✨ Environment Features\".</p>"
+      },
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "category": null,
+      "ownership": {
+        "default": -1,
+        "3eQnOSvnfoYbqF31": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.363",
+        "systemId": "daggerheart",
+        "systemVersion": "1.6.0",
+        "createdTime": 1769515158696,
+        "modifiedTime": 1780494501141,
+        "lastModifiedBy": "1XySCPpaFX8RnFhs"
+      },
+      "_key": "!journal.pages!skE6HClujYrdKfKp.wvgvxX1ksmUL2Ahj"
+    },
+    {
+      "sort": 700000,
+      "name": "Action Creation Rules",
+      "type": "text",
+      "_id": "PYH8ERKOLTKJINYT",
+      "system": {},
+      "title": {
+        "show": false,
+        "level": 1
+      },
+      "image": {},
+      "text": {
+        "format": 1,
+        "content": "<h1>Feature Action Detection Rules</h1><p>When importing features, the system automatically detects certain patterns in the description text and creates corresponding action buttons on the feature. This allows for quick dice rolls and resource tracking directly from the feature sheet.</p><hr><h2>Detected Patterns</h2><h3>1. Mark Stress</h3><p><strong>Pattern:</strong> <code>mark stress</code>, <code>mark a stress</code>, <code>mark 1 stress</code>, <code>mark 2 stress</code>, etc.</p><p>Creates an action button that costs Stress to activate. The number of stress is extracted from the text (defaults to 1 if not specified).</p><p><strong>Examples:</strong></p><ul><li><p>\"Mark a Stress to gain advantage\" → Creates \"Mark Stress\" action (costs 1 stress)</p></li><li><p>\"Mark 2 Stress to teleport\" → Creates \"Mark 2 Stress\" action (costs 2 stress)</p></li></ul><hr><h3>2. Spend Fear</h3><p><strong>Pattern:</strong> <code>spend fear</code>, <code>spend a fear</code>, <code>spend 1 fear</code>, <code>spend 2 fear</code>, etc.</p><p>Creates an action button that costs Fear to activate. The number of fear is extracted from the text (defaults to 1 if not specified).</p><p><strong>Examples:</strong></p><ul><li><p>\"Spend a Fear to reroll\" → Creates \"Spend Fear\" action (costs 1 fear)</p></li><li><p>\"Spend 3 Fear to summon\" → Creates \"Spend 3 Fear\" action (costs 3 fear)</p></li></ul><hr><h3>3. Trait Reaction Roll</h3><p><strong>Pattern:</strong> <code>{Trait} Reaction Roll</code></p><p>Creates an action button that prompts the target to make a reaction roll using the specified trait.</p><p><strong>Supported traits:</strong> Strength, Agility, Finesse, Instinct, Presence, Knowledge.</p><p><strong>Examples:</strong></p><ul><li><p>\"Target makes a Strength Reaction Roll\" → Creates \"Strength Reaction Roll\" action</p></li><li><p>\"Agility Reaction Roll to avoid\" → Creates \"Agility Reaction Roll\" action</p></li></ul><hr><h3>4. Make an Attack</h3><p><strong>Pattern:</strong> <code>make an attack</code>, <code>make a standard attack</code>, <code>make an attack roll</code></p><p>Creates an action button configured as an attack roll.</p><p><strong>Examples:</strong></p><ul><li><p>\"You may make an attack\" → Creates \"Attack\" action</p></li><li><p>\"Make a standard attack against the target\" → Creates \"Attack\" action</p></li></ul><hr><h3>5. Wrapping Dice in Descriptions</h3><p><strong>Pattern:</strong> <code>XdY</code> or <code>XdY+Z</code> or <code>XdY-Z</code></p><p>The system automatically wraps ALL dice formulas found in any description with the Foundry inline roll format <code>[[/r ]]</code>, regardless of context.</p><p><strong>Examples:</strong></p><ul><li><p>\"Deal 1d10 damage\" → \"Deal [[/r 1d10]] damage\"</p></li><li><p>\"Take 2d6+3 fire damage\" → \"Take [[/r 2d6+3]] fire damage\"</p></li><li><p>\"Suffer 1d8-2 stress\" → \"Suffer [[/r 1d8-2]] stress\"</p></li><li><p>\"3d4 + 8 physical damage\" → \"[[/r 3d4+8]] physical damage\"</p></li></ul><hr><h3>6. Damage Actions</h3><p><strong>Pattern:</strong> Detects damage type and direct flag from description text containing \"damage\".</p><p>When the description mentions \"damage\" along with dice formulas (like <code>2d6</code>, <code>1d10+3</code>), the system creates a clickable damage action button.</p><h4>Damage Type Detection</h4><p>The system checks for these keywords in order:</p><ol><li><p><code>direct magic damage</code> → <strong>type: magical, direct: true</strong></p></li><li><p><code>direct physical damage</code> → <strong>type: physical, direct: true</strong></p></li><li><p><code>direct damage</code> → <strong>type: physical, direct: true</strong></p></li><li><p><code>magic damage</code> → <strong>type: magical, direct: false</strong></p></li><li><p><code>physical damage</code> → <strong>type: physical, direct: false</strong></p></li><li><p><code>damage</code> (default) → <strong>type: physical, direct: false</strong></p></li></ol><h4>Examples</h4><table border=\"1\"><thead><tr><th><p>Description</p></th><th><p>Action Created</p></th><th><p>Damage Type</p></th><th><p>Direct</p></th></tr></thead><tbody><tr><td><p>\"deal 3d4+8 physical damage\"</p></td><td><p>Damage (3d4+8)</p></td><td><p>physical</p></td><td><p>false</p></td></tr><tr><td><p>\"take 1d12+1 direct magic damage\"</p></td><td><p>Damage (1d12+1)</p></td><td><p>magical</p></td><td><p>true</p></td></tr><tr><td><p>\"on success, deal 2d6 damage\"</p></td><td><p>Damage (2d6)</p></td><td><p>physical</p></td><td><p>false</p></td></tr><tr><td><p>\"inflict 1d8 direct damage\"</p></td><td><p>Damage (1d8)</p></td><td><p>physical</p></td><td><p>true</p></td></tr></tbody></table><hr><h2>Notes</h2><ul><li><p>Multiple actions can be detected from a single description.</p></li><li><p>Detection is case-insensitive.</p></li><li><p>Dice formulas are wrapped regardless of whether a damage action is created.</p></li></ul>"
+      },
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "category": null,
+      "ownership": {
+        "default": -1,
+        "3eQnOSvnfoYbqF31": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.363",
+        "systemId": "daggerheart",
+        "systemVersion": "1.6.0",
+        "createdTime": 1769516985897,
+        "modifiedTime": 1780494235062,
+        "lastModifiedBy": "1XySCPpaFX8RnFhs"
+      },
+      "_key": "!journal.pages!skE6HClujYrdKfKp.PYH8ERKOLTKJINYT"
+    },
+    {
+      "sort": 800000,
+      "name": "Support",
+      "type": "text",
+      "_id": "raAqi4B3CwBTVesZ",
+      "system": {},
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "text": {
+        "format": 1,
+        "content": "<p>If you need support talk to me at this <a href=\"https://discord.com/channels/1374793429191491725/1464356204179361812\">Discord</a></p>\n<p>You can also use github with <a href=\"https://github.com/brunocalado/dh-statblock-importer/issues\">Open Issue</a></p>\n<p></p>"
+      },
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "category": null,
+      "ownership": {
+        "default": -1,
+        "zWDd1mciIe4rp82O": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.363",
+        "systemId": "daggerheart",
+        "systemVersion": "1.6.3",
+        "createdTime": 1770123574906,
+        "modifiedTime": 1780494313652,
+        "lastModifiedBy": "1XySCPpaFX8RnFhs"
+      },
+      "_key": "!journal.pages!skE6HClujYrdKfKp.raAqi4B3CwBTVesZ"
+    },
+    {
+      "sort": 900000,
+      "name": "Auto Add Features",
+      "type": "text",
+      "_id": "LiVwLebJ7Ih66gBw",
+      "system": {},
+      "title": {
+        "show": false,
+        "level": 1
+      },
+      "image": {},
+      "text": {
+        "format": 1,
+        "content": "<h1>Auto Add Features</h1><p>This module generates code so you can use for a template module. This approach saves significant time.</p><h2>Installation</h2><ol><li><p><strong>Download the Template:</strong> Obtain the module template at <a href=\"https://github.com/brunocalado/dh-statblock-importer/raw/refs/heads/main/assets/zips/my-daggerheart-features.zip\">https://github.com/brunocalado/dh-statblock-importer/raw/refs/heads/main/assets/zips/my-daggerheart-features.zip</a>.</p></li><li><p><strong>Directory Placement:</strong> Extract the folder into your Foundry VTT data path: <code>Data/modules/my-daggerheart-features</code></p></li></ol><h2>Configuration</h2><ol><li><p>Generate the feature code required for your items.</p></li><li><p>Open <code>features.js</code> inside the module folder.</p></li><li><p><strong>Manual Edit:</strong> Paste the generated code into the designated section.</p></li><li><p>Enable the module <strong>\"My Daggerheart Features\"</strong> in your world.</p></li><li><p><strong>Save &amp; Refresh:</strong> Restart your Foundry VTT world to apply the changes.</p></li></ol>"
+      },
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "category": null,
+      "ownership": {
+        "default": -1,
+        "zWDd1mciIe4rp82O": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.363",
+        "systemId": "daggerheart",
+        "systemVersion": "1.6.3",
+        "createdTime": 1770126147207,
+        "modifiedTime": 1780494306571,
+        "lastModifiedBy": "1XySCPpaFX8RnFhs"
+      },
+      "_key": "!journal.pages!skE6HClujYrdKfKp.LiVwLebJ7Ih66gBw"
+    }
+  ],
+  "folder": null,
+  "categories": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "3eQnOSvnfoYbqF31": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.351",
+    "systemId": "daggerheart",
+    "systemVersion": "1.5.4",
+    "createdTime": 1769266730450,
+    "modifiedTime": 1769272691804,
+    "lastModifiedBy": "3eQnOSvnfoYbqF31"
+  },
+  "_key": "!journal!skE6HClujYrdKfKp"
+}

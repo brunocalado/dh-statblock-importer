@@ -1,0 +1,28 @@
+{
+  "name": "Create Statblock",
+  "type": "script",
+  "_id": "MdqvsiDH4Wmtb3Ke",
+  "author": "3eQnOSvnfoYbqF31",
+  "img": "icons/sundries/documents/document-sealed-signatures-red.webp",
+  "scope": "global",
+  "command": "SI.CreateStatblock();",
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "3eQnOSvnfoYbqF31": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.351",
+    "systemId": "daggerheart",
+    "systemVersion": "1.6.0",
+    "createdTime": 1769363236420,
+    "modifiedTime": 1769363549517,
+    "lastModifiedBy": "3eQnOSvnfoYbqF31"
+  },
+  "_key": "!macros!MdqvsiDH4Wmtb3Ke"
+}

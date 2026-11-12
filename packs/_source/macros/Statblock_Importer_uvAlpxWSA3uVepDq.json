@@ -1,0 +1,28 @@
+{
+  "name": "Statblock Importer",
+  "type": "script",
+  "command": "SI.Open();",
+  "img": "icons/sundries/documents/document-symbol-eye.webp",
+  "author": "zWDd1mciIe4rp82O",
+  "scope": "global",
+  "folder": null,
+  "ownership": {
+    "default": 0,
+    "zWDd1mciIe4rp82O": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.351",
+    "systemId": "daggerheart",
+    "systemVersion": "1.4.4",
+    "createdTime": 1767795040247,
+    "modifiedTime": 1769203039628,
+    "lastModifiedBy": "zWDd1mciIe4rp82O"
+  },
+  "_id": "uvAlpxWSA3uVepDq",
+  "sort": 0,
+  "_key": "!macros!uvAlpxWSA3uVepDq"
+}

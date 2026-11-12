@@ -67,7 +67,7 @@ The importer reads best when the text follows the recommended format.
 Install it from the Foundry VTT module browser, or use this manifest link:
 
 ```
-https://raw.githubusercontent.com/brunocalado/dh-statblock-importer/main/module.json
+https://github.com/brunocalado/dh-statblock-importer/releases/latest/download/module.json
 ```
 
 It needs Foundry VTT v14 and the Daggerheart system 2.12.8 or newer.

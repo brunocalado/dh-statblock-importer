@@ -1,0 +1,12 @@
+{
+  "name": "dh-statblock-importer",
+  "private": true,
+  "description": "Build scripts for Daggerheart: Stats Toolbox. Not an npm package.",
+  "scripts": {
+    "pack": "node tools/build-packs.mjs pack",
+    "unpack": "node tools/build-packs.mjs unpack"
+  },
+  "devDependencies": {
+    "@foundryvtt/foundryvtt-cli": "^3.0.5"
+  }
+}

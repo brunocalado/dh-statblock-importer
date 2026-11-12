@@ -1,0 +1,38 @@
+{
+  "_id": "6sMP0AKbf7oKjmKl",
+  "name": "Arcane Steel",
+  "type": "feature",
+  "img": "icons/weapons/swords/sword-runed-glowing.webp",
+  "system": {
+    "description": "<p>Damage dealt by the @Lookup[@name]'s standard attack is considered both physical and magic.</p>",
+    "resource": null,
+    "actions": {},
+    "attribution": {},
+    "gmNotes": "",
+    "featureForm": "passive",
+    "granter": null,
+    "actorResources": []
+  },
+  "effects": [],
+  "folder": "F8new8F1pedOrVWY",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "importedFrom": {
+      "compendium": "daggerheart.adversaries",
+      "adversary": "Spellblade",
+      "tier": 1,
+      "type": "Leader",
+      "customTag": "Core Rulebook",
+      "originalId": "BwuoAv3EWT0m1apk",
+      "isSpecialCase": false
+    }
+  },
+  "_stats": {
+    "systemId": "daggerheart",
+    "systemVersion": "2.12.8"
+  },
+  "_key": "!items!6sMP0AKbf7oKjmKl"
+}
