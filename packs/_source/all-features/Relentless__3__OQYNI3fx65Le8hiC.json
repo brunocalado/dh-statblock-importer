@@ -1,0 +1,38 @@
+{
+  "_id": "OQYNI3fx65Le8hiC",
+  "name": "Relentless (3)",
+  "type": "feature",
+  "img": "icons/magic/unholy/silhouette-evil-horned-giant.webp",
+  "system": {
+    "featureForm": "passive",
+    "description": "<p>The Titan can be spotlighted up to three times per GM turn. Spend Fear as usual to spotlight them.</p>",
+    "attribution": {},
+    "gmNotes": "",
+    "resource": null,
+    "actions": {},
+    "granter": null,
+    "actorResources": []
+  },
+  "effects": [],
+  "folder": "NGVQVvqf6ncoSU4E",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "importedFrom": {
+      "compendium": "daggerheart.adversaries",
+      "adversary": "Hill Titan",
+      "tier": 2,
+      "type": "Solo",
+      "customTag": "Core Rulebook",
+      "originalId": "M0xm1RuRp8RKZ9U2",
+      "isSpecialCase": false
+    }
+  },
+  "_stats": {
+    "systemId": "daggerheart",
+    "systemVersion": "2.12.8"
+  },
+  "_key": "!items!OQYNI3fx65Le8hiC"
+}

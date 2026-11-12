@@ -1,0 +1,77 @@
+{
+  "_id": "xUigZNXTqfCDTtYb",
+  "name": "Overwhelm",
+  "type": "feature",
+  "img": "icons/skills/melee/strike-slashes-orange.webp",
+  "system": {
+    "description": "<p>When the @Lookup[@name] takes Minor damage from an attack within Melee range, you can <strong>mark a Stress</strong> to make a standard attack with advantage against the attacker.</p>",
+    "resource": null,
+    "actions": {
+      "TJ9DhHRuqK5X5Zx5": {
+        "type": "effect",
+        "_id": "TJ9DhHRuqK5X5Zx5",
+        "systemPath": "actions",
+        "description": "",
+        "chatDisplay": true,
+        "actionType": "action",
+        "cost": [
+          {
+            "scalable": false,
+            "key": "stress",
+            "value": 1,
+            "step": null,
+            "itemId": null,
+            "consumeOnSuccess": false
+          }
+        ],
+        "uses": {
+          "value": null,
+          "max": "",
+          "recovery": null,
+          "consumeOnSuccess": false
+        },
+        "effects": [],
+        "target": {
+          "type": "self",
+          "amount": null
+        },
+        "name": "Mark Stress",
+        "img": "icons/skills/melee/strike-slashes-orange.webp",
+        "range": "",
+        "baseAction": false,
+        "originItem": {
+          "type": "itemCollection"
+        },
+        "triggers": [],
+        "areas": []
+      }
+    },
+    "featureForm": "reaction",
+    "attribution": {},
+    "gmNotes": "",
+    "granter": null,
+    "actorResources": []
+  },
+  "effects": [],
+  "folder": "bqVsG6smLMrzLkfi",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "importedFrom": {
+      "compendium": "daggerheart.adversaries",
+      "adversary": "Zombie Legion",
+      "tier": 4,
+      "type": "Horde",
+      "customTag": "Core Rulebook",
+      "originalId": "d5Vilu9cUub1O6TD",
+      "isSpecialCase": false
+    }
+  },
+  "_stats": {
+    "systemId": "daggerheart",
+    "systemVersion": "2.12.8"
+  },
+  "_key": "!items!xUigZNXTqfCDTtYb"
+}

@@ -1,7 +1,10 @@
 # Unreleased
 
 - [Breaking][Changed] Requires Daggerheart 2.12.8 or newer.
-- [Changed] "All Features" compendium rebuilt from the Daggerheart 2.12.8 adversaries. Steel-Skinned and Stolen Armor reduce damage severity again: their effects targeted the old per-damage-type severity rule, which the system replaced with a single value. Also picks up the system's text and effect corrections (Armor-Shredding Shards, Creeping Fire, Encumber, Last Grasp).
+- [Changed] "All Features" compendium rebuilt from the Daggerheart 2.12.8 adversaries. Steel-Skinned and Stolen Armor reduce damage severity again: their effects targeted the old per-damage-type severity rule, which the system replaced with a single value. Also picks up the system's text and effect corrections (Armor-Shredding Shards, Creeping Fire, Encumber, Last Grasp). Features that share a name but not a text are now all kept (855 features, up from 801), so each adversary's own version is available.
+- [Fixed] A feature name shared by several adversaries (Group Attack, Minion (3), Terrifying and 42 others) could link another adversary's feature from the compendium, with its text or damage: the Giant Rat got the Darkweave Crawler's "Minion (3)" and a Group Attack dealing 2 damage instead of 1. The importer now takes the feature from the same adversary or, failing that, the one whose text is closest to the pasted text.
+- [Fixed] Create Statblock on a horde with half or more of its HP marked wrote `@system.typeData.hordeDamage` as the attack damage.
+- [Fixed] Thresholds with a missing value were ignored, so Tiny Red Ooze, Phantom and similar adversaries imported with no Major threshold. The importer now reads `None` as in the book (`Thresholds: 5/None`, or `Thresholds: None` for a minion), and Create Statblock writes it that way instead of `5/?`.
 - [Fixed] Create Statblock on a class listed item UUIDs instead of names in Starting Items, Common Items Choice and Class Items Choice.
 - [Fixed] Create Statblock on a class left out the SUBCLASSES section.
 

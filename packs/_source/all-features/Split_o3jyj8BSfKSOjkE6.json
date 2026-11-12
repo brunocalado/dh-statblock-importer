@@ -1,0 +1,77 @@
+{
+  "_id": "o3jyj8BSfKSOjkE6",
+  "name": "Split",
+  "type": "feature",
+  "img": "icons/creatures/slimes/slime-movement-splashing-red.webp",
+  "system": {
+    "description": "<p>When the @Lookup[@name] has 3 or more HP marked, you can <strong>spend a Fear</strong> to split them into two @UUID[Compendium.daggerheart.adversaries.Actor.1fkLQXVtmILqfJ44]{Tiny Red Oozes} (with no marked HP or Stress). Immediately spotlight both of them.</p>",
+    "resource": null,
+    "actions": {
+      "BMEr77hDxaQyYBna": {
+        "type": "summon",
+        "_id": "BMEr77hDxaQyYBna",
+        "systemPath": "actions",
+        "baseAction": false,
+        "description": "",
+        "chatDisplay": true,
+        "originItem": {
+          "type": "itemCollection"
+        },
+        "actionType": "action",
+        "cost": [
+          {
+            "scalable": false,
+            "key": "fear",
+            "value": 1,
+            "itemId": null,
+            "step": null,
+            "consumeOnSuccess": false
+          }
+        ],
+        "uses": {
+          "value": null,
+          "max": "",
+          "recovery": null,
+          "consumeOnSuccess": false
+        },
+        "summon": [
+          {
+            "actorUUID": "Compendium.daggerheart.adversaries.Actor.1fkLQXVtmILqfJ44",
+            "count": "2"
+          }
+        ],
+        "name": "Spend Fear",
+        "range": "",
+        "triggers": [],
+        "areas": []
+      }
+    },
+    "featureForm": "reaction",
+    "attribution": {},
+    "gmNotes": "",
+    "granter": null,
+    "actorResources": []
+  },
+  "effects": [],
+  "folder": "eaP1x4bc1yUkBWsp",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "importedFrom": {
+      "compendium": "daggerheart.adversaries",
+      "adversary": "Red Ooze",
+      "tier": 1,
+      "type": "Skulk",
+      "customTag": "Core Rulebook",
+      "originalId": "M9gAcPrgKfSg9Tjb",
+      "isSpecialCase": false
+    }
+  },
+  "_stats": {
+    "systemId": "daggerheart",
+    "systemVersion": "2.12.8"
+  },
+  "_key": "!items!o3jyj8BSfKSOjkE6"
+}

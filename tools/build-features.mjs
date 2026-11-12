@@ -160,7 +160,10 @@ function buildFeatures(adversaries, systemVersion) {
         for (const item of adversary.items ?? []) {
             const categoryFolder = folder(getFeatureCategory(item), typeFolder, null, 0);
             const isSpecialCase = ALWAYS_DUPLICATE.includes(item.name);
-            const dedupKey = `${item.name}|${item.type}|${categoryFolder._id}|${tier}`;
+            // The description is part of the key: adversaries of the same type and tier share feature
+            // names whose text differs (a Minion (3) naming "the Crawler", a Group Attack dealing 2
+            // damage instead of 1), and the importer picks between them by text.
+            const dedupKey = `${item.name}|${item.type}|${categoryFolder._id}|${tier}|${item.system?.description ?? ""}`;
             if (!isSpecialCase && seen.has(dedupKey)) {
                 skipped++;
                 continue;

@@ -1,0 +1,123 @@
+{
+  "_id": "oVhOKu3XXUxAaOSe",
+  "name": "Group Attack",
+  "type": "feature",
+  "img": "icons/creatures/abilities/tail-strike-bone-orange.webp",
+  "system": {
+    "description": "<p><strong>Spend a Fear</strong> to choose a target and spotlight all @Lookup[@name] within Close range of them. Those Minions move into Melee range of the target and make one shared attack roll. On a success, they deal @Lookup[@system.attack.damageFormula] physical damage each. Combine this damage.</p>",
+    "resource": null,
+    "actions": {
+      "ferZO3BuiP9zU46m": {
+        "type": "attack",
+        "_id": "ferZO3BuiP9zU46m",
+        "systemPath": "actions",
+        "baseAction": false,
+        "description": "",
+        "chatDisplay": true,
+        "originItem": {
+          "type": "itemCollection"
+        },
+        "actionType": "action",
+        "triggers": [],
+        "cost": [
+          {
+            "consumeOnSuccess": false,
+            "scalable": false,
+            "key": "fear",
+            "value": 1,
+            "itemId": null,
+            "step": null
+          }
+        ],
+        "uses": {
+          "value": null,
+          "max": "",
+          "recovery": null,
+          "consumeOnSuccess": false
+        },
+        "damage": {
+          "main": {
+            "applyTo": "hitPoints",
+            "resultBased": false,
+            "value": {
+              "multiplier": "flat",
+              "flatMultiplier": 1,
+              "dice": "d6",
+              "bonus": null,
+              "custom": {
+                "enabled": true,
+                "formula": "2"
+              }
+            },
+            "valueAlt": null,
+            "base": false,
+            "type": [
+              "physical"
+            ],
+            "includeBase": false,
+            "direct": false,
+            "groupAttack": "close",
+            "fullRestore": false,
+            "itemId": null
+          },
+          "resources": {}
+        },
+        "target": {
+          "type": "any",
+          "amount": null
+        },
+        "effects": [],
+        "roll": {
+          "type": "attack",
+          "trait": null,
+          "difficulty": null,
+          "bonus": null,
+          "advState": "neutral",
+          "diceRolling": {
+            "multiplier": "prof",
+            "flatMultiplier": 1,
+            "dice": "d6",
+            "compare": null,
+            "treshold": null
+          },
+          "useDefault": false
+        },
+        "save": {
+          "trait": null,
+          "difficulty": null,
+          "damageMod": "none"
+        },
+        "name": "Spend Fear",
+        "range": "",
+        "areas": []
+      }
+    },
+    "featureForm": "action",
+    "attribution": {},
+    "gmNotes": "",
+    "granter": null,
+    "actorResources": []
+  },
+  "effects": [],
+  "folder": "V3DUtFmrOg6qcmcq",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "importedFrom": {
+      "compendium": "daggerheart.adversaries",
+      "adversary": "Jagged Knife Lackey",
+      "tier": 1,
+      "type": "Minion",
+      "customTag": "Core Rulebook",
+      "originalId": "1k5TmQIAunM7Bv32",
+      "isSpecialCase": false
+    }
+  },
+  "_stats": {
+    "systemId": "daggerheart",
+    "systemVersion": "2.12.8"
+  },
+  "_key": "!items!oVhOKu3XXUxAaOSe"
+}

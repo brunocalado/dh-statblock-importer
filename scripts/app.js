@@ -492,6 +492,42 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
   }
 
   /**
+   * Choose among compendium features that share the pasted feature's name. The one taken from
+   * this same adversary wins; otherwise the one whose text is closest to the pasted text.
+   * @param {object[]} candidates Compendium index entries with the same name
+   * @param {string} pastedHtml   The pasted feature description
+   * @param {string} actorName    Name of the actor being imported
+   * @returns {object}
+   */
+  static pickCompendiumFeature(candidates, pastedHtml, actorName) {
+      if (candidates.length === 1) return candidates[0];
+
+      const sameAdversary = candidates.find(c =>
+          c.flags?.importedFrom?.adversary?.toLowerCase() === actorName.toLowerCase());
+      if (sameAdversary) return sameAdversary;
+
+      // Word sets without markup or lookups: a lookup such as @Lookup[@system.attack.damageFormula]
+      // adapts to the actor, so it should not count against a candidate the way a wrong number does.
+      // A link keeps its label ("Tiny Red Oozes"), since that is the text a pasted statblock shows.
+      const words = (html) => new Set((html ?? "")
+          .replace(/<[^>]+>/g, " ")
+          .replace(/@\w+\[[^\]]*\](?:\{([^}]*)\})?/g, (_, label) => ` ${label ?? ""} `)
+          .replace(/\[\[\/r\s*([^\]]*)\]\]/g, " $1 ")
+          .toLowerCase()
+          .split(/[^a-z0-9+]+/)
+          .filter(Boolean));
+      const pasted = words(pastedHtml);
+      const score = (candidate) => {
+          const text = words(candidate.system?.description);
+          let shared = 0;
+          for (const w of text) if (pasted.has(w)) shared++;
+          return (2 * shared) / ((text.size + pasted.size) || 1);
+      };
+
+      return candidates.reduce((best, c) => (score(c) > score(best) ? c : best));
+  }
+
+  /**
    * Pull GM prompts out of a feature description so they can be stored as a secret block.
    * `*text*` marks a prompt explicitly. With autoDetect (environments), the trailing run of
    * questions in the last paragraph is taken instead — every official environment feature
@@ -738,9 +774,11 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
              fullHtml += show("Stress", data.resources?.stress?.max);
 
              // Damage Thresholds
-             const threshStr = (data.damageThresholds?.major || data.damageThresholds?.severe)
-                 ? `${data.damageThresholds.major || "?"}/${data.damageThresholds.severe || "?"}`
-                 : null;
+             const thresholds = data.damageThresholds;
+             const threshStr = !thresholds ? null
+                 : (thresholds.major || thresholds.severe)
+                     ? `${thresholds.major || "None"}/${thresholds.severe || "None"}`
+                     : "None";
              fullHtml += show("Thresholds", threshStr);
 
              // Attack details - separate fields
@@ -2144,16 +2182,19 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
       // --- FEATURE COMPENDIUM SETUP ---
       const selectedFeaturePacks = game.settings.get(MODULE_ID, "selectedCompendiums") || ["dh-statblock-importer.all-features"];
+      // Every match per name is kept: features that share a name differ between adversaries
+      // (Group Attack deals 1 damage for one and 2 for another), so the name alone cannot pick one.
       const featureIndexMap = new Map();
 
       for (const packId of selectedFeaturePacks) {
           const pack = game.packs.get(packId);
           if (pack) {
-              const index = await pack.getIndex({fields: ["name", "type"]});
+              const index = await pack.getIndex({fields: ["name", "type", "system.description", "flags.importedFrom.adversary"]});
               index.forEach(i => {
-                  if (i.type === "feature") {
-                      featureIndexMap.set(i.name.toLowerCase(), { uuid: i.uuid, pack: pack });
-                  }
+                  if (i.type !== "feature") return;
+                  const key = i.name.toLowerCase();
+                  if (!featureIndexMap.has(key)) featureIndexMap.set(key, []);
+                  featureIndexMap.get(key).push(i);
               });
           }
       }
@@ -2392,9 +2433,12 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
 
           if (actorType === "environment") continue;
 
-          const thresholdsMatch = segment.match(/Thresholds:\s*(\d+)\s*\/\s*(\d+)/i);
+          // Statblocks write a missing threshold as "None": "5/None" for an adversary with no Severe
+          // threshold, a bare "None" for minions. The system stores a missing threshold as 0.
+          const thresholdsMatch = segment.match(/Thresholds:\s*(?:(\d+|none)\s*\/\s*(\d+|none)|none\b)/i);
           if (thresholdsMatch) {
-              systemData.damageThresholds = { major: parseInt(thresholdsMatch[1], 10), severe: parseInt(thresholdsMatch[2], 10) };
+              const threshold = (value) => parseInt(value, 10) || 0;
+              systemData.damageThresholds = { major: threshold(thresholdsMatch[1]), severe: threshold(thresholdsMatch[2]) };
           }
 
           const hpMatch = segment.match(/HP:\s*(\d+)/i);
@@ -2480,7 +2524,8 @@ export class StatblockImporter extends HandlebarsApplicationMixin(ApplicationV2)
       const pushCurrentFeature = async () => {
           if (!currentFeature) return;
 
-          const found = featureIndexMap.get(currentFeature.name.toLowerCase());
+          const matches = featureIndexMap.get(currentFeature.name.toLowerCase());
+          const found = matches && StatblockImporter.pickCompendiumFeature(matches, currentFeature.system.description, name);
           if (found) {
               try {
                   const doc = await fromUuid(found.uuid);

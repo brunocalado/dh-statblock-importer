@@ -1,0 +1,38 @@
+{
+  "_id": "7Aj0ejTPwfdOOrm8",
+  "name": "Minion (12)",
+  "type": "feature",
+  "img": "icons/creatures/magical/humanoid-silhouette-aliens-green.webp",
+  "system": {
+    "description": "<p>The @Lookup[@name] is defeated when they take any damage. For every 12 damage a PC deals to the @Lookup[@name], defeat an additional Minion within range the attack would succeed against.</p>",
+    "resource": null,
+    "actions": {},
+    "attribution": {},
+    "gmNotes": "",
+    "featureForm": "passive",
+    "granter": null,
+    "actorResources": []
+  },
+  "effects": [],
+  "folder": "c2h6VagAkIeUjj23",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "importedFrom": {
+      "compendium": "daggerheart.adversaries",
+      "adversary": "Fallen Shock Troop",
+      "tier": 4,
+      "type": "Minion",
+      "customTag": "Core Rulebook",
+      "originalId": "yvyAJTEyCDsDXgkb",
+      "isSpecialCase": false
+    }
+  },
+  "_stats": {
+    "systemId": "daggerheart",
+    "systemVersion": "2.12.8"
+  },
+  "_key": "!items!7Aj0ejTPwfdOOrm8"
+}

@@ -1,0 +1,38 @@
+{
+  "_id": "9Vaqs4okcKZp1edu",
+  "name": "Minion (13)",
+  "type": "feature",
+  "img": "icons/magic/symbols/runes-carved-stone-yellow.webp",
+  "system": {
+    "featureForm": "passive",
+    "description": "<p>The @Lookup[@name] is defeated when it takes any damage. For every 13 damage a PC deals to the @Lookup[@name], the PC defeats an additional Minion within range the attack would succeed against.</p>",
+    "attribution": {},
+    "gmNotes": "",
+    "resource": null,
+    "actions": {},
+    "granter": null,
+    "actorResources": []
+  },
+  "effects": [],
+  "folder": "c2h6VagAkIeUjj23",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "importedFrom": {
+      "compendium": "daggerheart.adversaries",
+      "adversary": "Wyrmfiend",
+      "tier": 4,
+      "type": "Minion",
+      "customTag": "Core Rulebook",
+      "originalId": "JWxL57vzZ3m1ZTol",
+      "isSpecialCase": false
+    }
+  },
+  "_stats": {
+    "systemId": "daggerheart",
+    "systemVersion": "2.12.8"
+  },
+  "_key": "!items!9Vaqs4okcKZp1edu"
+}

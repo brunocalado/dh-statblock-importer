@@ -1,0 +1,38 @@
+{
+  "_id": "ah1tJOL9NBZsMM0t",
+  "name": "Relentless (3)",
+  "type": "feature",
+  "img": "icons/magic/unholy/silhouette-evil-horned-giant.webp",
+  "system": {
+    "featureForm": "passive",
+    "description": "<p>Mitera can be spotlighted up to three times per GM turn. Spend Fear as usual to spotlight her.</p>",
+    "attribution": {},
+    "gmNotes": "",
+    "resource": null,
+    "actions": {},
+    "granter": null,
+    "actorResources": []
+  },
+  "effects": [],
+  "folder": "NGVQVvqf6ncoSU4E",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "importedFrom": {
+      "compendium": "daggerheart.adversaries",
+      "adversary": "Dragon Mother Mitera",
+      "tier": 4,
+      "type": "Solo",
+      "customTag": "Core Rulebook",
+      "originalId": "l9rctm6HcPOyKGsG",
+      "isSpecialCase": false
+    }
+  },
+  "_stats": {
+    "systemId": "daggerheart",
+    "systemVersion": "2.12.8"
+  },
+  "_key": "!items!ah1tJOL9NBZsMM0t"
+}

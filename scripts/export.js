@@ -253,9 +253,13 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
         const statParts = [];
         if (sys.difficulty) statParts.push(`Difficulty: ${sys.difficulty}`);
 
+        // The system stores a missing threshold as 0; statblocks write it as "None" ("5/None"),
+        // and a minion, which has neither, as a bare "None".
         const thresholds = sys.damageThresholds;
         if (thresholds?.major || thresholds?.severe) {
-            statParts.push(`Thresholds: ${thresholds.major || "?"}/${thresholds.severe || "?"}`);
+            statParts.push(`Thresholds: ${thresholds.major || "None"}/${thresholds.severe || "None"}`);
+        } else {
+            statParts.push("Thresholds: None");
         }
 
         if (sys.resources?.hitPoints?.max) statParts.push(`HP: ${sys.resources.hitPoints.max}`);
@@ -287,7 +291,9 @@ export class StatblockExporter extends HandlebarsApplicationMixin(ApplicationV2)
             // System 2.x moved the attack's HP damage from the `damage.parts` map into
             // `damage.main`. DHBaseAction.migrateData strips `parts` when the actor loads,
             // so a live actor never exposes it — reading `parts` here returned nothing.
-            const dmgStr = this._formatDamage(attack.damage?.main);
+            // Read the stored damage, not the prepared one: at half HP a horde's Horde effect swaps the
+            // prepared formula for "@system.typeData.hordeDamage", which is not a statblock value.
+            const dmgStr = this._formatDamage(actor._source.system.attack?.damage?.main);
             if (dmgStr) atkParts.push(dmgStr);
 
             if (atkParts.length > 0) {

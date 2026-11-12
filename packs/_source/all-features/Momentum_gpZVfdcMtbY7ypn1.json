@@ -1,0 +1,38 @@
+{
+  "_id": "gpZVfdcMtbY7ypn1",
+  "name": "Momentum",
+  "type": "feature",
+  "img": "icons/skills/melee/strike-weapons-orange.webp",
+  "system": {
+    "featureForm": "reaction",
+    "description": "<p>When the Titan makes a successful attack against a PC, you gain a Fear.</p>",
+    "attribution": {},
+    "gmNotes": "",
+    "resource": null,
+    "actions": {},
+    "granter": null,
+    "actorResources": []
+  },
+  "effects": [],
+  "folder": "nMRuaPQV1fMwZUNv",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "importedFrom": {
+      "compendium": "daggerheart.adversaries",
+      "adversary": "Hill Titan",
+      "tier": 2,
+      "type": "Solo",
+      "customTag": "Core Rulebook",
+      "originalId": "OdMvmwBr3mD0gwaL",
+      "isSpecialCase": false
+    }
+  },
+  "_stats": {
+    "systemId": "daggerheart",
+    "systemVersion": "2.12.8"
+  },
+  "_key": "!items!gpZVfdcMtbY7ypn1"
+}
