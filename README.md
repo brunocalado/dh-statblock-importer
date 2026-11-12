@@ -1,91 +1,78 @@
-# Stats Toolbox
+# Daggerheart: Stats Toolbox
 
-## for Daggerheart
+Daggerheart: Stats Toolbox creates Foundry actors and items from statblock text. Paste an adversary or environment copied from a PDF, click **Validate** to see what was read, then **Create** builds the actor with its stats, attack, experiences and features, including the actions a feature describes. It also imports weapons, armor, loot, consumables, domain cards and standalone features, and works in reverse, turning an adversary, environment, class, ancestry or community back into text.
 
-Effortlessly import **Adversaries** and **Environments** and **more** into Foundry VTT by pasting text statblocks. This module parses raw text, detects stats, links features from compendiums, and creates actors instantly.
-
-<p align="center"><img width="800" src="docs/preview.webp"></p>
+<p align="center"><img width="800" src="docs/preview.webp" alt="The importer with an adversary statblock pasted on the left and the validation preview on the right"></p>
 
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy_Me_a_Coffee-Donate-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/mestredigital) [![More Modules](https://img.shields.io/badge/Foundry%20VTT-More%20Modules-red?style=for-the-badge&logo=gamepad)](https://mestredigital.online/pages/projetos-en)
 
-## 🌟 Overview & Features
+## What it imports
 
-### 🛠️ Smart Parsing
+From an adversary statblock it reads the Tier, Type, Difficulty, HP, Stress, damage thresholds, the attack (bonus, name, range and damage), the experiences and the features. From an environment it reads the impulses, the Difficulty and the Potential Adversaries. Weapons, armor, loot, consumables, domain cards and features each have their own mode.
 
-* **Adversaries:** Automatically detects Tier, Type, Difficulty, HP, Stress, Thresholds, Attack (Bonus, Name, Range, Damage), Experiences and Features.
+You can paste as many statblocks as you want at once, and each one becomes its own actor or item.
 
-* **Environments:** Detects Impulses, Difficulty, and Potential Adversaries.
+Before creating a feature, the module looks for one with the same name in the compendiums you selected. When it finds one, the actor gets that feature instead of a new copy. The groups listed under Potential Adversaries are linked to actors in your compendiums the same way. The preview marks each feature as Compendium or New, so you see what was found before anything is created.
 
-* **Weapons, Armors, Loot, Consumables, Domain Cards or Features:** You can easily add a lot of different content.
+The prompt questions that end environment features, and any text wrapped in `*asterisks*`, become GM-only secret blocks.
 
-* **Mass Import:** You can paste how many statblocks you want.
+Everything you import goes into folders, one per kind of content.
 
-* **GM Prompts:** The prompt questions that end environment features, and any text wrapped in `*asterisks*`, become GM-only secret blocks.
+<p align="center"><img width="800" src="docs/folders.webp" alt="Imported adversaries, environments and items sorted into folders in the sidebar"></p>
 
-### 🔍 Advanced Lookups
+Features get an icon for their type, Passive, Action or Reaction, so a sheet shows which features are passive or reactions without opening them.
 
-* **Feature Linking:** Checks your configured Compendiums for existing features.
+## Turning an actor back into text
 
-* **Potential Adversaries:** Identifies actor groups in Environments and links them to actors in your compendiums.
+The exporter writes a statblock from your homebrew. Drop an adversary, environment, class, ancestry or community into it and copy the text. Open it with **Create Statblock** in the Daggerheart Menu, or with this macro:
 
-### ✅ Validation & Organization
+```
+SI.CreateStatblock();
+```
 
-* **Real-time Preview:** Verify parsed data before creating the entity.
+<p align="center"><img width="800" src="docs/exporter.webp" alt="The exporter with an adversary dropped on the left and its statblock text on the right"></p>
 
-* **Visual Feedback:** Clearly see which features are new and which are linked from Compendiums.
+## How to use it
 
-* **Organized in Folders:** Imports are automatically organized into folders.
-
-* **Feature Icons:** Pick an icon for Passive, Action and Reaction features, so a sheet shows at a glance which features are passive or reactions.
-
-<p align="center"><img width="800" src="docs/folders.webp"></p>
-
-### ✅ Export your Homebrew
-
-* **Statblock Creator:** Convert any actor into a text-based statblock. Use `SI.CreateStatblock();`.
-
-<p align="center"><img width="800" src="docs/exporter.webp"></p>
-
-## ⚙️ Usage
-
-1. **Open the Importer:** You can use the button in Daggerheart Menu or Actors directory. You can also use the macro command:
+1. Open the importer with the button in the Daggerheart Menu or in the Actors directory, or with this macro:
 
    ```
    SI.Open();   
    ```
 
-<p align="center"><img width="700" src="docs/buttons.webp"></p>
+<p align="center"><img width="700" src="docs/buttons.webp" alt="The Statblock Importer buttons in the Daggerheart Menu and in the Actors directory"></p>
 
-2. **Paste Text:** Copy the statblock text from a PDF or document and paste it into the left panel. You can paste as many as you want.
+2. Copy the statblock text from a PDF or document and paste it into the left panel. You can paste as many as you want.
 
-3. **Validate:** Click "Validate" to preview the data.
+3. Click **Validate** to preview the data.
 
-4. **Create:** Click "Create" to generate the entity (Adversary, Environment, Weapon, Armor, Loot, Consumable, Domain Card or Feature).
+4. Click **Create** to make the adversary, environment, weapon, armor, loot, consumable, domain card or feature.
 
-### ⚙️ Configuration
+### Settings
 
-Click the **Config** button in the importer window to select which Compendiums should be searched for **Features** and **Potential Adversaries**.
+Click **Config** in the importer window to choose which compendiums are searched for features and for Potential Adversaries. The same window sets the folder names, the separator for bulk imports, how GM prompts become secrets, and the feature icons.
 
-<p align="center"><img width="700" src="docs/settings.webp"></p>
+<p align="center"><img width="700" src="docs/settings.webp" alt="The Config window listing the compendiums searched for features"></p>
 
-## 📚 Formatting Guide
+## Formatting guide
 
-For the best results, ensure your text follows the recommended format.
+The importer reads best when the text follows the recommended format.
 
-📖 [**Read the Formatting Wiki**](https://github.com/brunocalado/dh-statblock-importer/wiki)
+[Read the Formatting Wiki](https://github.com/brunocalado/dh-statblock-importer/wiki)
 
-📖 [**How to Use Unformatted Stats**](https://github.com/brunocalado/dh-statblock-importer/wiki/How-to-Use-Unformatted-Stats)
+[How to Use Unformatted Stats](https://github.com/brunocalado/dh-statblock-importer/wiki/How-to-Use-Unformatted-Stats)
 
+## Installation
 
-## 🚀 Installation
-
-Install via the Foundry VTT Module browser or use this manifest link:
+Install it from the Foundry VTT module browser, or use this manifest link:
 
 ```
 https://raw.githubusercontent.com/brunocalado/dh-statblock-importer/main/module.json
 ```
 
-## 📜 Changelog
+It needs Foundry VTT v14 and the Daggerheart system 2.12.8 or newer.
+
+## Changelog
 
 You can read the full history of changes in the [CHANGELOG](CHANGELOG.md).
 
